@@ -1,0 +1,315 @@
+{
+  "salas": [
+    {
+      "id": "1",
+      "nome": "Sala 1",
+      "rows": [
+        "P",
+        "O",
+        "N",
+        "M",
+        "L",
+        "K",
+        "J",
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 22,
+      "colsByRow": {
+        "B": 21,
+        "C": 21,
+        "D": 17,
+        "E": 21,
+        "P": 28
+      },
+      "spacingBetweenRows": {},
+      "aislesByRow": {
+        "O": [12],
+        "N": [12],
+        "M": [12],
+        "L": [12],
+        "K": [12],
+        "J": [12],
+        "I": [12],
+        "H": [12],
+        "G": [12],
+        "F": [12],
+        "E": [12],
+        "D": [12],
+        "C": [12],
+        "B": [12],
+        "A": [12]
+      },
+      "excecoes": {}
+    },
+    {
+      "id": "2",
+      "nome": "Sala 2",
+      "rows": [
+        "M",
+        "L",
+        "K",
+        "J",
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 14,
+      "colsByRow": {
+        "A": 15,
+        "C": 12,
+        "M": 18
+      },
+      "spacingBetweenRows": {
+        "C": 24
+      },
+      "aislesByRow": {
+        "O": [12],
+        "N": [12],
+        "M": [12],
+        "L": [12],
+        "K": [12],
+        "J": [12],
+        "I": [12],
+        "H": [12],
+        "G": [12],
+        "F": [12],
+        "E": [12],
+        "D": [12],
+        "C": [12],
+        "B": [12],
+        "A": [12]
+      },
+      "excecoes": {}
+    },
+    {
+      "id": "3",
+      "nome": "Sala 3",
+      "rows": [
+        "L",
+        "K",
+        "J",
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 16,
+      "colsByRow": {
+        "L": 21,
+        "H": 13,
+        "G": 13,
+        "F": 13,
+        "E": 13,
+        "D": 13,
+        "C": 11,
+        "B": 15
+      },
+      "spacingBetweenRows": {
+        "C": 24
+      },
+      "aislesByRow": {
+        "C": [11],
+        "B": [11],
+        "A": [11]
+      },
+      "excecoes": {}
+    },
+    {
+      "id": "4",
+      "nome": "Sala 4",
+      "rows": [
+        "P",
+        "O",
+        "N",
+        "M",
+        "L",
+        "K",
+        "J",
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 22,
+      "colsByRow": {
+        "B": 21,
+        "C": 21,
+        "D": 17,
+        "E": 21,
+        "P": 28
+      },
+      "spacingBetweenRows": {
+        "C": 24
+      },
+      "aislesByRow": {
+        "O": [12],
+        "N": [12],
+        "M": [12],
+        "L": [12],
+        "K": [12],
+        "J": [12],
+        "I": [12],
+        "H": [12],
+        "G": [12],
+        "F": [12],
+        "E": [12],
+        "D": [12],
+        "C": [12],
+        "B": [12],
+        "A": [12]
+      },
+      "excecoes": {}
+    },
+    {
+      "id": "5",
+      "nome": "Sala 5",
+      "rows": [
+        "L",
+        "K",
+        "J",
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 15,
+      "colsByRow": {
+        "L": 19,
+        "D": 13,
+        "C": 16,
+        "B": 17,
+        "A": 17
+      },
+      "spacingBetweenRows": {
+        "D": 24
+      },
+      "aislesByRow": {
+        "C": [11],
+        "B": [11],
+        "A": [11]
+      },
+      "excecoes": {}
+    },
+    {
+      "id": "6",
+      "nome": "Sala 6",
+      "rows": [
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 14,
+      "colsByRow": {
+        "A": 17,
+        "B": 16,
+        "C": 10,
+        "D": 13,
+        "E": 13,
+        "F": 13,
+        "G": 13,
+        "H": 13,
+        "I": 21
+      },
+      "spacingBetweenRows": {
+        "C": 24
+      },
+      "aislesByRow": {
+        "C": [11],
+        "B": [11],
+        "A": [11]
+      },
+      "excecoes": {}
+    },
+    {
+      "id": "7",
+      "nome": "Sala 7",
+      "rows": [
+        "O",
+        "N",
+        "M",
+        "L",
+        "K",
+        "J",
+        "I",
+        "H",
+        "G",
+        "F",
+        "E",
+        "D",
+        "C",
+        "B",
+        "A"
+      ],
+      "colsDefault": 22,
+      "colsByRow": {
+        "A": 21,
+        "C": 20,
+        "O": 28
+      },
+      "spacingBetweenRows": {
+        "D": 24,
+        "G": 40
+      },
+      "aislesByRow": {
+        "O": [11],
+        "N": [11],
+        "M": [11],
+        "L": [11],
+        "K": [11],
+        "J": [11],
+        "I": [11],
+        "H": [11],
+        "G": [11],
+        "F": [11],
+        "E": [11],
+        "D": [11],
+        "C": [11],
+        "B": [11],
+        "A": [11]
+      },
+      "excecoes": {
+        "D5": "acessibilidade",
+        "D6": "acessibilidade",
+        "D7": "acessibilidade",
+        "D8": "acessibilidade",
+        "C4": "acompanhante",
+        "C5": "acompanhante"
+      }
+    }
+  ]
+}
