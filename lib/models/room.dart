@@ -9,6 +9,9 @@ class Room {
   final Map<String, List<int>> aislesByRow;
   final Map<String, String> excecoes;
 
+  int get totalSeats {
+    return rows.fold(0, (sum, row) => sum + (colsByRow[row] ?? colsDefault));
+  }
 
   Room({
     required this.id,

@@ -20,17 +20,15 @@ class RoomController extends ChangeNotifier {
   Room? get selectRoom => _selectRoom;
 
   Future<void> loadRooms() async {
+    if (_isLoading) return;
     _isLoading = true;
-    notifyListeners();
-
+    
     try {
       final jsonString = await rootBundle.loadString('assets/salas.json');
       final Map<String, dynamic> data = json.decode(jsonString);
-      _rooms =
-          (data['salas'] as List).map((sala) => Room.fromJson(sala)).toList();
+      final newRooms = (data['salas'] as List).map((sala) => Room.fromJson(sala)).toList();
       
-      // Inicializa os assentos para cada sala
-      for (var room in _rooms) {
+      for (var room in newRooms) {
         for (var row in room.rows) {
           final cols = room.colsByRow[row] ?? room.colsDefault;
           for (var col = 1; col <= cols; col++) {
@@ -41,22 +39,42 @@ class RoomController extends ChangeNotifier {
           }
         }
       }
+
+      _rooms = newRooms;
+      await loadIssues();
     } catch (e) {
       print('Erro ao carregar salas.json: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
+  }
 
-    await loadIssues();
-
-    _isLoading = false;
-    notifyListeners();
+  Room? getRoomByName(String nomeSala) {
+    try {
+      return _rooms.firstWhere((room) => room.nome == nomeSala);
+    } catch (e) {
+      print('Erro ao buscar sala: $e');
+      return null;
+    }
   }
 
   void selectRoomById(String roomId) {
-    _selectRoom = _rooms.firstWhere(
-      (room) => room.id == roomId,
-      orElse: () => throw Exception('Room not found'),
-    );
-    notifyListeners();
+    if (_selectRoom?.id == roomId) return;
+    
+    try {
+      final room = _rooms.firstWhere(
+        (room) => room.id == roomId,
+        orElse: () => throw Exception('Room not found'),
+      );
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _selectRoom = room;
+        notifyListeners();
+      });
+    } catch (e) {
+      print('Erro ao selecionar sala: $e');
+    }
   }
 
   Future<void> registerIssue(MaintenanceIssue issue) async {

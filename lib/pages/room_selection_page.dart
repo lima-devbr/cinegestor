@@ -117,7 +117,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 'Sala ${room.id}',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text('${room.rows.length} fileiras'),
+              subtitle: Text('${room.totalSeats} assentos'),
               trailing: Icon(Icons.arrow_forward_ios),
               onTap: () => _onRoomTap(room),
             ),
