@@ -10,12 +10,12 @@ class MaintenancePage extends StatefulWidget {
   final RoomController roomController;
   final Room room;
 
-  const MaintenancePage( {
-    super.key, 
+  const MaintenancePage({
+    super.key,
     required this.roomId,
-    required this.room, 
+    required this.room,
     required this.roomController,
-    });
+  });
 
   @override
   State<MaintenancePage> createState() => _MaintenancePageState();
@@ -26,12 +26,18 @@ class _MaintenancePageState extends State<MaintenancePage> {
   String? selectedUrgency;
   String notes = '';
   Seat? selectedSeat;
+  final TransformationController _transformationController = TransformationController();
+  final GlobalKey _seatLayoutKey = GlobalKey();
 
   final List<String> issueTypes = [
     'Encosto Solto',
-    'Rasgo',
-    'Não Reclina',
+    'Trocar Capa Encosto',
+    'Trocar Capa Assento',
+    'Trocar Mola',
+    'Sem número',
+    'Sem Bracinho',
     'Barulho',
+    'Não Reclina',
     'Outro',
   ];
 
@@ -41,6 +47,38 @@ class _MaintenancePageState extends State<MaintenancePage> {
   void initState() {
     super.initState();
     widget.roomController.selectRoomById(widget.roomId);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resetZoom());
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  void _resetZoom() {
+    final RenderBox? renderBox = _seatLayoutKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
+    final Size roomSize = renderBox.size;
+    final Size viewSize = MediaQuery.of(context).size;
+
+    // Calcula o zoom necessário para caber a sala na tela
+    final double scaleX = (viewSize.width * 0.9) / roomSize.width;
+    final double scaleY = (viewSize.height * 0.6) / roomSize.height; // Mantém 60% da altura para acomodar o formulário
+    final double scale = scaleX < scaleY ? scaleX : scaleY;
+
+    // Calcula a posição para centralizar horizontalmente e alinhar próximo ao topo
+    final double xOffset = (viewSize.width - (roomSize.width * scale)) / 2;
+    final double yOffset = viewSize.height * 0.09; // 5% da altura da tela como margem superior
+
+    final matrix = Matrix4.identity()
+      ..translate(xOffset, yOffset)
+      ..scale(scale);
+
+    setState(() {
+      _transformationController.value = matrix;
+    });
   }
 
   void registerIssue() {
@@ -75,6 +113,178 @@ class _MaintenancePageState extends State<MaintenancePage> {
     );
   }
 
+  Widget _buildSeatLayout(Room room) {
+    return Container(
+      key: _seatLayoutKey,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+         
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Rótulo da fileira
+              Column(
+                children: room.rows.map((rowLabel) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    child: SizedBox(
+                      width: 30,
+                      child: Text(
+                        rowLabel,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              // Assentos
+              Column(
+                children: room.rows.map((rowLabel) {
+                  final numCols = room.colsByRow[rowLabel] ?? room.colsDefault;
+                  final aisles = room.aislesByRow[rowLabel] ?? [];
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(numCols, (index) {
+                        final colNumber = index + 1;
+                        final seatId = '$rowLabel$colNumber';
+
+                        if (aisles.contains(colNumber)) {
+                          return const SizedBox(width: 20);
+                        }
+
+                        final exception = room.excecoes[seatId];
+                        final seat = widget.roomController.getSeat(rowLabel, colNumber);
+                        if (seat == null) {
+                          return const SizedBox(width: 30);
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedSeat = seat;
+                                widget.roomController.toggleSeatDefect(rowLabel, colNumber);
+                              });
+                            },
+                            child: SeatWidget(
+                              seat: seat,
+                              exceptionType: exception,
+                              isSelected: selectedSeat == seat,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  );
+                }).toList(),
+              ),
+              
+            ],
+          ),
+          const SizedBox(height: 48), // Semapra tela dos assentos
+           // Tela no final da coluna
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 200,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'TELA',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMaintenanceForm() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Registrar Problema no Assento',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          if (selectedSeat != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Assento selecionado: ${selectedSeat!.row}${selectedSeat!.number}',
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+          DropdownButtonFormField<String>(
+            value: selectedIssueType,
+            decoration: const InputDecoration(
+              labelText: 'Tipo de Problema',
+              filled: true,
+              fillColor: Colors.black12,
+            ),
+            items: issueTypes.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: (val) => setState(() => selectedIssueType = val),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: selectedUrgency,
+            decoration: const InputDecoration(
+              labelText: 'Urgência',
+              filled: true,
+              fillColor: Colors.black12,
+            ),
+            items: urgencyLevels.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: (val) => setState(() => selectedUrgency = val),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            initialValue: notes,
+            maxLines: 2,
+            decoration: const InputDecoration(
+              labelText: 'Observações',
+              filled: true,
+              fillColor: Colors.black12,
+            ),
+            onChanged: (val) => notes = val,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: registerIssue,
+              child: const Text('Registrar Problema'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectRoom = widget.roomController.selectRoom;
@@ -87,6 +297,16 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(selectRoom.nome),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _resetZoom,
+            tooltip: 'Resetar visualização',
+          ),
+        ],
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -98,118 +318,22 @@ class _MaintenancePageState extends State<MaintenancePage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Título
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  selectRoom.nome,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-
-              // Layout dos assentos com zoom
               Expanded(
                 flex: 3,
                 child: InteractiveViewer(
-                  panEnabled: true,
+                  transformationController: _transformationController,
+                  constrained: false,
+                  boundaryMargin: const EdgeInsets.all(100),
                   minScale: 0.5,
                   maxScale: 2.0,
-                  child: Column(
-                    children: selectRoom.rows.map((rowLabel) {
-                      final numCols = selectRoom.colsByRow[rowLabel] ?? selectRoom.colsDefault;
-                      final aisles = selectRoom.aislesByRow[rowLabel] ?? [];
-
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(numCols, (index) {
-                          final colNumber = index + 1;
-                          final seatId = '$rowLabel$colNumber';
-
-                          if (aisles.contains(colNumber)) {
-                            return const SizedBox(
-                              width: 20,
-                              height: 40,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(color: Colors.grey),
-                              ),
-                            );
-                          }
-
-                          final exception = selectRoom.excecoes[seatId];
-                          final seat = widget.roomController.getSeat(rowLabel, colNumber);
-                            if (seat == null){
-                              return const SizedBox.shrink();
-                            }
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedSeat = seat;
-                                widget.roomController.toggleSeatDefect(rowLabel, colNumber);
-                              });
-                            },
-                            child: SeatWidget(
-                              seat: seat,
-                              exceptionType: exception,
-                              isSelected: selectedSeat == seat,
-                            ),
-                          );
-                        }),
-                      );
-                    }).toList(),
-                  ),
+                  child: _buildSeatLayout(selectRoom),
                 ),
               ),
-
-              // Formulário de problema
               Expanded(
                 flex: 2,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Registrar Problema no Assento', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
-                      const SizedBox(height: 10),
-
-                      DropdownButtonFormField<String>(
-                        value: selectedIssueType,
-                        decoration: const InputDecoration(labelText: 'Tipo de Problema'),
-                        items: issueTypes.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                        onChanged: (val) => setState(() => selectedIssueType = val),
-                      ),
-                      const SizedBox(height: 10),
-
-                      DropdownButtonFormField<String>(
-                        value: selectedUrgency,
-                        decoration: const InputDecoration(labelText: 'Urgência'),
-                        items: urgencyLevels.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                        onChanged: (val) => setState(() => selectedUrgency = val),
-                      ),
-                      const SizedBox(height: 10),
-
-                      TextFormField(
-                        initialValue: notes,
-                        maxLines: 2,
-                        decoration: const InputDecoration(labelText: 'Observações'),
-                        onChanged: (val) => notes = val,
-                      ),
-                      const SizedBox(height: 20),
-
-                      ElevatedButton.icon(
-                        onPressed: registerIssue,
-                        icon: const Icon(Icons.report),
-                        label: const Text('Registrar Problema'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(50),
-                        ),
-                      ),
-                    ],
-                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: _buildMaintenanceForm(),
                 ),
               ),
             ],
