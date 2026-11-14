@@ -1,0 +1,388 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: users
+// Document ID: {userId} (matches Firebase Auth UID or managed user ID)
+// Fields:
+//   - id: string (required, 1..128 chars, immutable, must match userId)
+//   - name: string (required, 1..100 chars) - User display name
+//   - email: string (required, 1..150 chars, immutable for self-update) - User email
+//   - role: string (required, enum: ['operacao', 'assistente', 'encarregado', 'gerente'])
+//   - cinemaId: string (required, 1..50 chars, immutable) - Cinema unit ID (e.g. '2159')
+//   - cinemaName: string (required, 1..120 chars) - Cinema unit display name
+//
+// Collection: maintenance_issues
+// Document ID: {issueId}
+// Fields:
+//   - id: string (required, 1..150 chars, immutable, must match issueId)
+//   - cinemaId: string (required, 1..50 chars, immutable) - Cinema unit ID
+//   - roomId: string (required, 1..50 chars, immutable) - Room identifier
+//   - seatId: string (required, 1..20 chars, immutable) - Seat identifier (e.g. 'A12')
+//   - problemType: string (required, 1..100 chars) - Defect category/type
+//   - urgency: string (required, enum: ['Baixa', 'Média', 'Alta']) - Issue urgency
+//   - notes: string or null (optional, 0..1000 chars) - Additional observations
+//   - dateTime: string or timestamp (required, immutable) - Creation timestamp/ISO-8601
+//   - reportedBy: string or null (optional, 1..150 chars, immutable) - Reporter name/email
+//   - reportedRole: string or null (optional, 1..50 chars, immutable) - Reporter role key or label
+//   - status: string (required, enum: ['staging', 'active', 'resolved', 'rejected'])
+//   - resolvedAt: string, timestamp, or null (optional) - Resolution timestamp/ISO-8601
+//   - resolvedBy: string or null (optional, 1..150 chars) - Resolver name/email
+//   - rejectionReason: string or null (optional, 0..500 chars) - Triage rejection reason
+//
+// Collection: rooms
+// Document ID: {roomDocId}
+// Fields:
+//   - id: string (required, 1..50 chars, immutable) - Room ID
+//   - cinemaId: string (required, 1..50 chars, immutable) - Cinema unit ID
+//   - nome: string or null (optional, 1..120 chars) - Room name
+//   - theaterBoxOfficeId: string or null (optional, 1..50 chars)
+//   - theaterName: string or null (optional, 1..120 chars)
+//   - theaterLocationBoxOfficeId: string or null (optional, 1..50 chars)
+//   - theaterLocationName: string or null (optional, 1..120 chars)
+//   - totalSeats: int or null (optional, 0..2000)
+//   - bounds: map or null (optional, max 10 keys)
+//   - stage: map or null (optional, max 10 keys)
+//   - labels: list or null (optional, max 250 items)
+//   - lines: list or null (optional, max 100 items)
+//   - rows: list or null (optional, max 100 items)
+//   - colsDefault: int or null (optional, 0..100)
+//   - colsByRow: map or null (optional, max 100 keys)
+//   - spacingBetweenRows: map or null (optional, max 100 keys)
+//   - aislesByRow: map or null (optional, max 100 keys)
+//   - excecoes: map or null (optional, max 500 keys)
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the document by userId path variable
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user is owner based on document's id field
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.id;
+    }
+
+    // Verify UID hasn't been tampered with on create
+    function uidUnchanged() {
+      return !('id' in request.resource.data) ||
+        request.resource.data.id == request.auth.uid;
+    }
+
+    // Ensure id field is not modified on update
+    function uidNotModified() {
+      return !('id' in request.resource.data) ||
+        request.resource.data.id == resource.data.id;
+    }
+
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that the document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate that immutable fields have not changed on update
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Validate string length on request.resource.data
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate optional or nullable string field
+    function isValidNullableString(data, field, minLen, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string &&
+         data[field].size() >= minLen &&
+         data[field].size() <= maxLen);
+    }
+
+    // Validate optional or nullable integer within bounds
+    function isValidNullableInt(data, field, minVal, maxVal) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is int &&
+         data[field] >= minVal &&
+         data[field] <= maxVal);
+    }
+
+    // Validate optional or nullable list with size bound
+    function isValidNullableList(data, field, maxSize) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is list && data[field].size() <= maxSize);
+    }
+
+    // Validate optional or nullable map with key count bound
+    function isValidNullableMap(data, field, maxKeys) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is map && data[field].keys().size() <= maxKeys);
+    }
+
+    // Validate email format (supports standard email addresses)
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() >= 3 &&
+        email.size() <= 150 &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // Validate ISO-8601 date string or Firestore timestamp
+    function isValidDateOrTimestamp(val) {
+      return val is timestamp ||
+        (val is string &&
+         val.size() >= 10 &&
+         val.size() <= 60 &&
+         val.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*"));
+    }
+
+    // ===============================================================
+    // Multi-Tenant Cinema & RBAC Helper Functions
+    // ===============================================================
+
+    function callerUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function hasCallerProfile() {
+      return isAuthenticated() && exists(callerUserPath());
+    }
+
+    function callerProfile() {
+      return get(callerUserPath()).data;
+    }
+
+    function callerCinemaId() {
+      return callerProfile().cinemaId;
+    }
+
+    function callerRole() {
+      return callerProfile().role;
+    }
+
+    function belongsToCinema(cinemaId) {
+      return hasCallerProfile() &&
+        cinemaId is string &&
+        callerCinemaId() == cinemaId;
+    }
+
+    function isCinemaManager(cinemaId) {
+      return belongsToCinema(cinemaId) && callerRole() == 'gerente';
+    }
+
+    function isBootstrappedRoleAllowed(role) {
+      return isAuthenticated() &&
+        request.auth.token.email is string &&
+        request.auth.token.email == request.resource.data.email &&
+        (
+          (request.auth.token.email == 'operacao@cinegestor.com' && role == 'operacao') ||
+          (request.auth.token.email == 'assistente@cinegestor.com' && role == 'assistente') ||
+          (request.auth.token.email == 'encarregado@cinegestor.com' && role == 'encarregado') ||
+          (request.auth.token.email in ['gerente@cinegestor.com', 'admin@cinegestor.com'] && role == 'gerente')
+        );
+    }
+
+    // ===============================================================
+    // Domain Validators (Called on BOTH create and update)
+    // ===============================================================
+
+    function isValidUser(data, userId) {
+      return hasOnlyAllowedFields(['id', 'name', 'email', 'role', 'cinemaId', 'cinemaName']) &&
+        hasRequiredFields(['id', 'name', 'email', 'role', 'cinemaId', 'cinemaName']) &&
+        data.id is string && data.id == userId && data.id.size() >= 1 && data.id.size() <= 128 &&
+        validStringLength('name', 1, 100) &&
+        isValidEmail(data.email) &&
+        data.role in ['operacao', 'assistente', 'encarregado', 'gerente'] &&
+        validStringLength('cinemaId', 1, 50) &&
+        validStringLength('cinemaName', 1, 120);
+    }
+
+    function isValidMaintenanceIssue(data, issueId) {
+      return hasOnlyAllowedFields([
+          'id', 'cinemaId', 'roomId', 'seatId', 'problemType', 'urgency',
+          'notes', 'dateTime', 'reportedBy', 'reportedRole', 'status',
+          'resolvedAt', 'resolvedBy', 'rejectionReason'
+        ]) &&
+        hasRequiredFields([
+          'id', 'cinemaId', 'roomId', 'seatId', 'problemType', 'urgency',
+          'dateTime', 'status'
+        ]) &&
+        data.id is string && data.id == issueId && data.id.size() >= 1 && data.id.size() <= 150 &&
+        validStringLength('cinemaId', 1, 50) &&
+        validStringLength('roomId', 1, 50) &&
+        validStringLength('seatId', 1, 20) &&
+        validStringLength('problemType', 1, 100) &&
+        data.urgency in ['Baixa', 'Média', 'Alta'] &&
+        isValidNullableString(data, 'notes', 0, 1000) &&
+        isValidDateOrTimestamp(data.dateTime) &&
+        isValidNullableString(data, 'reportedBy', 1, 150) &&
+        isValidNullableString(data, 'reportedRole', 1, 50) &&
+        data.status in ['staging', 'active', 'resolved', 'rejected'] &&
+        (!('resolvedAt' in data) ||
+          data.resolvedAt == null ||
+          isValidDateOrTimestamp(data.resolvedAt)) &&
+        isValidNullableString(data, 'resolvedBy', 1, 150) &&
+        isValidNullableString(data, 'rejectionReason', 0, 500);
+    }
+
+    function isValidIssueStatusOnCreate(data) {
+      let role = callerRole();
+      return (role == 'operacao' && data.status == 'staging') ||
+        (role in ['assistente', 'encarregado', 'gerente'] && data.status in ['staging', 'active']);
+    }
+
+    function isValidIssueStatusTransition() {
+      let role = callerRole();
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+
+      return (
+        // Encarregado and Gerente can approve or reject staging issues, or resolve active issues
+        (role in ['encarregado', 'gerente'] && (
+          (oldStatus == 'staging' && newStatus in ['staging', 'active', 'rejected']) ||
+          (oldStatus == 'active' && newStatus in ['active', 'resolved'])
+        )) ||
+        // Only Gerente can reopen a resolved or rejected issue back to active
+        (role == 'gerente' && oldStatus in ['resolved', 'rejected'] && newStatus in ['active', 'resolved', 'rejected'])
+      );
+    }
+
+    function isValidRoom(data) {
+      return hasOnlyAllowedFields([
+          'id', 'cinemaId', 'nome', 'theaterBoxOfficeId', 'theaterName',
+          'theaterLocationBoxOfficeId', 'theaterLocationName', 'totalSeats',
+          'bounds', 'stage', 'labels', 'lines', 'rows', 'colsDefault',
+          'colsByRow', 'spacingBetweenRows', 'aislesByRow', 'excecoes'
+        ]) &&
+        hasRequiredFields(['id', 'cinemaId']) &&
+        validStringLength('id', 1, 50) &&
+        validStringLength('cinemaId', 1, 50) &&
+        isValidNullableString(data, 'nome', 1, 120) &&
+        isValidNullableString(data, 'theaterBoxOfficeId', 1, 50) &&
+        isValidNullableString(data, 'theaterName', 1, 120) &&
+        isValidNullableString(data, 'theaterLocationBoxOfficeId', 1, 50) &&
+        isValidNullableString(data, 'theaterLocationName', 1, 120) &&
+        isValidNullableInt(data, 'totalSeats', 0, 2000) &&
+        isValidNullableMap(data, 'bounds', 10) &&
+        isValidNullableMap(data, 'stage', 10) &&
+        isValidNullableList(data, 'labels', 250) &&
+        isValidNullableList(data, 'lines', 100) &&
+        isValidNullableList(data, 'rows', 100) &&
+        isValidNullableInt(data, 'colsDefault', 0, 100) &&
+        isValidNullableMap(data, 'colsByRow', 100) &&
+        isValidNullableMap(data, 'spacingBetweenRows', 100) &&
+        isValidNullableMap(data, 'aislesByRow', 100) &&
+        isValidNullableMap(data, 'excecoes', 500);
+    }
+
+    // ===============================================================
+    // Collection Rules: /users/{userId}
+    // ===============================================================
+    match /users/{userId} {
+      // Authenticated user can read their own profile or users in the same cinemaId
+      allow get: if isOwner(userId) || belongsToCinema(resource.data.cinemaId);
+      allow list: if belongsToCinema(resource.data.cinemaId);
+
+      // Self-registration restricts role to 'operacao' (or mapped initial role for the 5 bootstrapped accounts),
+      // or a manager ('gerente') from the same cinemaId can create user profiles.
+      allow create: if isAuthenticated() &&
+        isValidUser(request.resource.data, userId) &&
+        (
+          (isOwner(userId) && uidUnchanged() && (
+            request.resource.data.role == 'operacao' ||
+            isBootstrappedRoleAllowed(request.resource.data.role)
+          )) ||
+          isCinemaManager(request.resource.data.cinemaId)
+        );
+
+      // Users can update their own name/cinemaName (cannot change id, email, role, or cinemaId).
+      // Managers ('gerente') from the same cinemaId can update users in their cinema (id & cinemaId remain immutable).
+      allow update: if isAuthenticated() &&
+        isValidUser(request.resource.data, userId) &&
+        uidNotModified() &&
+        (
+          (isOwner(userId) && areImmutableFieldsUnchanged(['id', 'email', 'role', 'cinemaId'])) ||
+          (isCinemaManager(resource.data.cinemaId) && areImmutableFieldsUnchanged(['id', 'cinemaId']))
+        );
+
+      // Only a manager ('gerente') from the same cinemaId can delete a user document
+      allow delete: if isCinemaManager(resource.data.cinemaId);
+    }
+
+    // ===============================================================
+    // Collection Rules: /maintenance_issues/{issueId}
+    // ===============================================================
+    match /maintenance_issues/{issueId} {
+      // Any authenticated user belonging to the issue's cinemaId can read/list issues
+      allow read: if belongsToCinema(resource.data.cinemaId);
+
+      // Create requires membership in the issue's cinemaId, valid schema, and role-permitted initial status
+      allow create: if belongsToCinema(request.resource.data.cinemaId) &&
+        isValidMaintenanceIssue(request.resource.data, issueId) &&
+        isValidIssueStatusOnCreate(request.resource.data);
+
+      // Update requires membership in the issue's cinemaId, valid schema, immutable core fields, and valid status transition
+      allow update: if belongsToCinema(resource.data.cinemaId) &&
+        isValidMaintenanceIssue(request.resource.data, issueId) &&
+        areImmutableFieldsUnchanged([
+          'id', 'cinemaId', 'roomId', 'seatId', 'dateTime', 'reportedBy', 'reportedRole'
+        ]) &&
+        isValidIssueStatusTransition();
+
+      // Only a manager ('gerente') from the same cinemaId can delete a maintenance issue
+      allow delete: if isCinemaManager(resource.data.cinemaId);
+    }
+
+    // ===============================================================
+    // Collection Rules: /rooms/{roomDocId}
+    // ===============================================================
+    match /rooms/{roomDocId} {
+      // Authenticated users belonging to the room's cinemaId can read/list rooms
+      allow read: if belongsToCinema(resource.data.cinemaId);
+
+      // Only a manager ('gerente') from the same cinemaId can create, update, or delete rooms
+      allow create: if isCinemaManager(request.resource.data.cinemaId) &&
+        isValidRoom(request.resource.data);
+
+      allow update: if isCinemaManager(resource.data.cinemaId) &&
+        isValidRoom(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'cinemaId']);
+
+      allow delete: if isCinemaManager(resource.data.cinemaId);
+    }
+
+    // ===============================================================
+    // Default Deny All Other Paths
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

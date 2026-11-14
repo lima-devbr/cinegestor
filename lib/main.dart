@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/room_controller.dart';
 import 'pages/login_page.dart';
@@ -10,7 +12,21 @@ import 'pages/history_page.dart';
 import 'pages/staging_page.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+bool isFirebaseInitialized = false;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    isFirebaseInitialized = true;
+  } catch (e) {
+    debugPrint('Firebase init fallback (modo local ativo): $e');
+    isFirebaseInitialized = false;
+  }
+
   runApp(
     MultiProvider(
       providers: [

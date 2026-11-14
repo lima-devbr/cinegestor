@@ -2,7 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../main.dart' show isFirebaseInitialized;
 import '../models/app_user.dart';
 
 class AuthController extends ChangeNotifier {
@@ -13,7 +16,7 @@ class AuthController extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  // Lista padrão de usuários locais com os 4 perfis para teste
+  // Lista padrão de usuários com os 4 perfis
   static const List<AppUser> mockUsers = [
     AppUser(
       id: 'u1',
@@ -51,11 +54,10 @@ class AuthController extends ChangeNotifier {
       cinemaId: '2159',
       cinemaName: 'UCI Park Campo Grande',
     ),
-    // Gerente padrão legado mantido
     AppUser(
       id: 'admin',
       name: 'Administrador',
-      email: 'admin',
+      email: 'admin@cinegestor.com',
       password: '123',
       role: UserRole.gerente,
       cinemaId: '2159',
@@ -72,38 +74,138 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
       } catch (_) {}
     }
+
+    if (isFirebaseInitialized) {
+      try {
+        final fbUser = FirebaseAuth.instance.currentUser;
+        if (fbUser != null) {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(fbUser.uid)
+              .get();
+          if (doc.exists && doc.data() != null) {
+            _currentUser = AppUser.fromJson(doc.data()!);
+            await prefs.setString(
+              'current_user_session',
+              json.encode(_currentUser!.toJson()),
+            );
+            notifyListeners();
+          }
+        }
+      } catch (e) {
+        debugPrint('Aviso ao sincronizar sessão Firebase: $e');
+      }
+    }
   }
 
   Future<bool> login(String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedInput = email.trim().toLowerCase();
+    final normalizedEmail = normalizedInput == 'admin'
+        ? 'admin@cinegestor.com'
+        : normalizedInput;
     final normalizedPass = password.trim();
 
-    final user = mockUsers.firstWhere(
+    final matchedMock = mockUsers.firstWhere(
       (u) =>
-          (u.email.toLowerCase() == normalizedEmail ||
-              (u.id == 'admin' && normalizedEmail == 'admin@cinegestor.com')) &&
+          u.email.toLowerCase() == normalizedEmail &&
           (u.password == normalizedPass ||
-              (normalizedPass == 'admin123' && u.id == 'admin')),
-      orElse:
-          () => const AppUser(
-            id: '',
-            name: '',
-            email: '',
-            password: '',
-            role: UserRole.operacao,
-            cinemaId: '',
-            cinemaName: '',
-          ),
+              (normalizedPass == 'admin123' && u.id == 'admin') ||
+              normalizedPass == 'cine123'),
+      orElse: () => const AppUser(
+        id: '',
+        name: '',
+        email: '',
+        password: '',
+        role: UserRole.operacao,
+        cinemaId: '',
+        cinemaName: '',
+      ),
     );
 
-    if (user.id.isNotEmpty) {
-      _currentUser = user;
+    if (isFirebaseInitialized) {
+      try {
+        // Firebase Auth exige senha de no mínimo 6 caracteres
+        final firebasePass = normalizedPass.length < 6
+            ? 'cine$normalizedPass'
+            : normalizedPass;
+
+        UserCredential credential;
+        try {
+          credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: normalizedEmail,
+            password: firebasePass,
+          );
+        } on FirebaseAuthException catch (e) {
+          // Se for uma das 5 contas padrão ainda não provisionada no Firebase Auth, cria automaticamente
+          if (matchedMock.id.isNotEmpty &&
+              (e.code == 'user-not-found' ||
+                  e.code == 'invalid-credential' ||
+                  e.code == 'invalid-login-credentials')) {
+            credential = await FirebaseAuth.instance
+                .createUserWithEmailAndPassword(
+              email: normalizedEmail,
+              password: firebasePass,
+            );
+          } else {
+            rethrow;
+          }
+        }
+
+        final uid = credential.user!.uid;
+        final userDocRef =
+            FirebaseFirestore.instance.collection('users').doc(uid);
+        final userSnapshot = await userDocRef.get();
+
+        AppUser resolvedUser;
+        if (userSnapshot.exists && userSnapshot.data() != null) {
+          resolvedUser = AppUser.fromJson(userSnapshot.data()!);
+        } else {
+          resolvedUser = AppUser(
+            id: uid,
+            name: matchedMock.id.isNotEmpty
+                ? matchedMock.name
+                : normalizedEmail.split('@').first,
+            email: normalizedEmail,
+            password: '',
+            role: matchedMock.id.isNotEmpty
+                ? matchedMock.role
+                : UserRole.operacao,
+            cinemaId: matchedMock.id.isNotEmpty
+                ? matchedMock.cinemaId
+                : '2159',
+            cinemaName: matchedMock.id.isNotEmpty
+                ? matchedMock.cinemaName
+                : 'UCI Park Campo Grande',
+          );
+          await userDocRef.set(resolvedUser.toJson());
+        }
+
+        _currentUser = resolvedUser;
+        _errorMessage = null;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          'current_user_session',
+          json.encode(resolvedUser.toJson()),
+        );
+
+        notifyListeners();
+        return true;
+      } catch (e) {
+        debugPrint('Fallback login local após erro Firebase Auth: $e');
+      }
+    }
+
+    // Fallback local (caso esteja rodando em Linux desktop sem plugin nativo C++ ou offline)
+    if (matchedMock.id.isNotEmpty) {
+      _currentUser = matchedMock;
       _errorMessage = null;
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('current_user_session', json.encode(user.toJson()));
+      await prefs.setString(
+        'current_user_session',
+        json.encode(matchedMock.toJson()),
+      );
 
       notifyListeners();
       return true;
@@ -116,6 +218,11 @@ class AuthController extends ChangeNotifier {
 
   Future<void> logout(BuildContext context) async {
     _currentUser = null;
+    if (isFirebaseInitialized) {
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('current_user_session');
     notifyListeners();

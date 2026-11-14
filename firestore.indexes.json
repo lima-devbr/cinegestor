@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "maintenance_issues",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "cinemaId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateTime",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
