@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/auth_controller.dart';
+import '../models/app_user.dart';
 
 class LoginPage extends StatefulWidget {
   final AuthController authController;
@@ -25,7 +26,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
 
-    _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 600));
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeIn);
 
     _animationController.forward();
@@ -37,6 +38,11 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _fillQuickLogin(AppUser user) {
+    _emailController.text = user.email;
+    _passwordController.text = '123';
   }
 
   void _tryLogin() async {
@@ -53,7 +59,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     setState(() {
       _isLoading = false;
       if (!success) {
-        _errorMessage = 'Credenciais inválidas. Tente novamente.';
+        _errorMessage = widget.authController.errorMessage ?? 'Credenciais inválidas.';
       } else {
         _errorMessage = null;
         Navigator.pushReplacementNamed(context, '/rooms');
@@ -61,22 +67,26 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
     });
   }
 
-  void _showCreateAccountPlaceholder() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Criar Conta'),
-        content: Text('Função em desenvolvimento.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('Fechar')),
-        ],
+  Widget _buildQuickLoginChip(AppUser user) {
+    return ActionChip(
+      avatar: CircleAvatar(
+        backgroundColor: Colors.deepPurple,
+        child: Text(
+          user.role.shortName[0],
+          style: const TextStyle(color: Colors.white, fontSize: 11),
+        ),
       ),
+      label: Text(
+        '${user.role.shortName}: ${user.name.split(" ")[0]}',
+        style: const TextStyle(fontSize: 12),
+      ),
+      onPressed: () => _fillQuickLogin(user),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final gradient = LinearGradient(
+    const gradient = LinearGradient(
       colors: [Color(0xFF1E3A8A), Color(0xFF6B46C1)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -84,8 +94,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(gradient: gradient),
-        padding: EdgeInsets.symmetric(horizontal: 24),
+        decoration: const BoxDecoration(gradient: gradient),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Center(
@@ -99,70 +109,74 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      shadows: [Shadow(blurRadius: 5, color: Colors.black45, offset: Offset(2, 2))],
+                      shadows: const [Shadow(blurRadius: 5, color: Colors.black45, offset: Offset(2, 2))],
                     ),
                   ),
-                  SizedBox(height: 48),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Gestão de Manutenção de Salas',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  const SizedBox(height: 36),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.email, color: Colors.white70),
+                      prefixIcon: const Icon(Icons.email, color: Colors.white70),
                       labelText: 'E-mail',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white54),
+                        borderSide: const BorderSide(color: Colors.white54),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
+                        borderSide: const BorderSide(color: Colors.white),
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock, color: Colors.white70),
+                      prefixIcon: const Icon(Icons.lock, color: Colors.white70),
                       labelText: 'Senha',
-                      labelStyle: TextStyle(color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white54),
+                        borderSide: const BorderSide(color: Colors.white54),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
+                        borderSide: const BorderSide(color: Colors.white),
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                  SizedBox(height: 24),
-                  _errorMessage != null
-                      ? Container(
-                          padding: EdgeInsets.all(12),
-                          margin: EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade700,
-                            borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 24),
+                  if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade700,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.error, color: Colors.white),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : SizedBox.shrink(),
+                        ],
+                      ),
+                    ),
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -181,7 +195,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                         ),
                         child: Center(
                           child: _isLoading
-                              ? CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(color: Colors.white)
                               : Text(
                                   'Entrar',
                                   style: GoogleFonts.poppins(
@@ -194,18 +208,32 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: _showCreateAccountPlaceholder,
-                    child: Text(
-                      'Criar conta',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        decoration: TextDecoration.underline,
-                      ),
+                  const SizedBox(height: 28),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Acessos rápidos de teste (senha padrão: 123):',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: AuthController.mockUsers
+                              .where((u) => u.id != 'admin')
+                              .map((u) => _buildQuickLoginChip(u))
+                              .toList(),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 48),
                 ],
               ),
             ),

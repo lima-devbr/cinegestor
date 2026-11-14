@@ -1,21 +1,46 @@
 class Seat {
   final String row;
   final int number;
-  bool  hasDefect; // indica se está com problema
+  final int? line;
+  final int? column;
+  final String type; // 'Regular', 'Disability', 'Companion', 'Obese'
+  bool hasDefect; // indica se está com problema confirmado (ativo)
+  bool hasStaging; // indica se está em triagem/análise (solicitação pendente)
 
   Seat({
     required this.row,
     required this.number,
-    this. hasDefect = false,
+    this.line,
+    this.column,
+    this.type = 'Regular',
+    this.hasDefect = false,
+    this.hasStaging = false,
   });
 
   String get id => '$row$number';
+
+  String? get typeLabel {
+    switch (type) {
+      case 'Disability':
+        return 'Cadeirante';
+      case 'Companion':
+        return 'Acompanhante';
+      case 'Obese':
+        return 'Obeso';
+      default:
+        return null;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'row': row,
       'number': number,
-      ' hasDefect':  hasDefect,
+      'line': line,
+      'column': column,
+      'type': type,
+      'hasDefect': hasDefect,
+      'hasStaging': hasStaging,
     };
   }
 
@@ -23,7 +48,11 @@ class Seat {
     return Seat(
       row: json['row'],
       number: json['number'],
-       hasDefect: json[' hasDefect'] ?? false,
+      line: json['line'],
+      column: json['column'],
+      type: json['type'] ?? 'Regular',
+      hasDefect: json['hasDefect'] ?? json[' hasDefect'] ?? false,
+      hasStaging: json['hasStaging'] ?? false,
     );
   }
 }

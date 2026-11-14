@@ -7,13 +7,14 @@ import 'pages/login_page.dart';
 import 'pages/room_selection_page.dart';
 import 'pages/maintenance_page.dart';
 import 'pages/history_page.dart';
+import 'pages/staging_page.dart';
 import 'theme/app_theme.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) => AuthController()..initSession()),
         ChangeNotifierProvider(create: (_) => RoomController()..loadRooms()),
       ],
       child: const GineGestorApp(),
@@ -42,7 +43,7 @@ class GineGestorApp extends StatelessWidget {
             );
           case '/rooms':
             return MaterialPageRoute(
-              builder: (_) =>  RoomSelectionPage(roomController: roomController,),
+              builder: (_) => RoomSelectionPage(roomController: roomController),
             );
           case '/maintenance':
             final args = settings.arguments as Map<String, dynamic>;
@@ -55,7 +56,11 @@ class GineGestorApp extends StatelessWidget {
             );
           case '/history':
             return MaterialPageRoute(
-              builder: (_) =>  HistoryPage(),
+              builder: (_) => const HistoryPage(),
+            );
+          case '/staging':
+            return MaterialPageRoute(
+              builder: (_) => const StagingPage(),
             );
           default:
             return null;

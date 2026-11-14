@@ -17,8 +17,21 @@ class SeatWidget extends StatelessWidget {
     if (isSelected) {
       return Colors.deepPurpleAccent;
     }
-    if (seat. hasDefect) {
+    // Defeito confirmado / ativo tem prioridade (vermelho)
+    if (seat.hasDefect) {
       return Colors.redAccent;
+    }
+    // Demanda em triagem / staging da operação (amarelo/âmbar pulsante)
+    if (seat.hasStaging) {
+      return Colors.amberAccent.shade400;
+    }
+    switch (seat.type) {
+      case 'Disability':
+        return Colors.lightBlueAccent;
+      case 'Companion':
+        return Colors.orangeAccent;
+      case 'Obese':
+        return Colors.amber;
     }
     if (exceptionType != null) {
       return Colors.orangeAccent;
@@ -36,17 +49,25 @@ class SeatWidget extends StatelessWidget {
         color: _getSeatColor(),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isSelected ? Colors.white : Colors.black26,
-          width: isSelected ? 2 : 1,
+          color: isSelected
+              ? Colors.white
+              : seat.hasStaging
+                  ? Colors.white70
+                  : Colors.black26,
+          width: isSelected || seat.hasStaging ? 2 : 1,
         ),
       ),
       alignment: Alignment.center,
       child: Text(
         '${seat.row}${seat.number}',
         style: TextStyle(
-          color: isSelected ? Colors.white : Colors.black87,
+          color: isSelected
+              ? Colors.white
+              : seat.hasStaging
+                  ? Colors.black87
+                  : Colors.black87,
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 10,
         ),
       ),
     );

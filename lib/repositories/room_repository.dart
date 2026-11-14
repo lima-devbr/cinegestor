@@ -3,15 +3,70 @@ import 'package:flutter/services.dart';
 import '../models/room.dart';
 
 class RoomRepository {
-  static Future<List<Room>> loadRoomsFromJson() async {
-    try {
-      final String jsonString = await rootBundle.loadString('assets/salas.json');
-      final Map<String, dynamic> jsonMap = json.decode(jsonString);
-      final List<dynamic> roomsJson = jsonMap['salas'];
+  static const List<String> _defaultUciRooms = [
+    'assets/cinemas/uci_park_campo_grande/sala_1.json',
+    'assets/cinemas/uci_park_campo_grande/sala_2.json',
+    'assets/cinemas/uci_park_campo_grande/sala_3.json',
+    'assets/cinemas/uci_park_campo_grande/sala_4.json',
+    'assets/cinemas/uci_park_campo_grande/sala_5.json',
+    'assets/cinemas/uci_park_campo_grande/sala_6.json',
+    'assets/cinemas/uci_park_campo_grande/sala_7.json',
+  ];
 
-      return roomsJson.map((e) => Room.fromJson(e)).toList();
+  static Future<List<Room>> loadRoomsFromJson() async {
+    final Map<String, Room> roomsById = {};
+
+    try {
+      // 1. Descobre automaticamente todos os JSONs dentro de assets/cinemas/
+      List<String> cinemaAssets = [];
+      try {
+        final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+        cinemaAssets = assetManifest
+            .listAssets()
+            .where((path) => path.startsWith('assets/cinemas/') && path.endsWith('.json'))
+            .toList()
+          ..sort();
+      } catch (_) {}
+
+      if (cinemaAssets.isEmpty) {
+        cinemaAssets = _defaultUciRooms;
+      } else {
+        for (final path in _defaultUciRooms) {
+          if (!cinemaAssets.contains(path)) {
+            cinemaAssets.add(path);
+          }
+        }
+      }
+
+      for (final assetPath in cinemaAssets) {
+        try {
+          final roomJsonStr = await rootBundle.loadString(assetPath);
+          final Map<String, dynamic> roomMap = json.decode(roomJsonStr);
+          final room = Room.fromJson(roomMap);
+          roomsById[room.id] = room;
+        } catch (_) {}
+      }
+
+      // 2. Fallback para salas.json caso alguma sala não esteja na pasta cinemas
+      if (roomsById.isEmpty) {
+        final String jsonString = await rootBundle.loadString('assets/salas.json');
+        final Map<String, dynamic> jsonMap = json.decode(jsonString);
+        final List<dynamic> roomsJson = jsonMap['salas'];
+        for (final e in roomsJson) {
+          final room = Room.fromJson(e as Map<String, dynamic>);
+          roomsById.putIfAbsent(room.id, () => room);
+        }
+      }
+
+      final rooms = roomsById.values.toList();
+      rooms.sort((a, b) {
+        final aNum = int.tryParse(a.id) ?? 999;
+        final bNum = int.tryParse(b.id) ?? 999;
+        return aNum.compareTo(bNum);
+      });
+      return rooms;
     } catch (e) {
-      throw Exception('Erro ao carregar salas.json: $e');
+      throw Exception('Erro ao carregar salas: $e');
     }
   }
 }
