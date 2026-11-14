@@ -37,14 +37,15 @@ class _MaintenancePageState extends State<MaintenancePage> {
   static const double _maxZoom = 2.5;
 
   final List<String> issueTypes = [
-    'Encosto Solto',
+    'Capa Rasgada',
+    'Bracinho Solto',
+    'Poltrona sem Número',
     'Trocar Capa Encosto',
     'Trocar Capa Assento',
+    'Encosto Solto',
     'Trocar Mola',
-    'Sem número',
-    'Sem Bracinho',
-    'Barulho',
     'Não Reclina',
+    'Barulho',
     'Outro',
   ];
 

@@ -5,6 +5,7 @@ import '../controllers/auth_controller.dart';
 import '../models/room.dart';
 import '../models/app_user.dart';
 import '../utils/responsive_utils.dart';
+import 'defect_summary_page.dart';
 
 class RoomSelectionPage extends StatefulWidget {
   final RoomController roomController;
@@ -72,37 +73,138 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
         ? ((operationalSeats / totalSeats) * 100).toStringAsFixed(1)
         : '100.0';
 
+    // Contabiliza os problemas ativos por tipo padronizado
+    final Map<String, int> defectCounts = {
+      'Capa Rasgada': 0,
+      'Bracinho Solto': 0,
+      'Poltrona sem Número': 0,
+    };
+    for (final issue in activeIssues) {
+      final type = DefectSummaryPage.normalizeProblemType(issue.problemType);
+      defectCounts[type] = (defectCounts[type] ?? 0) + 1;
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatCard(
-            icon: Icons.theaters,
-            label: 'Salas',
-            value: '${rooms.length}',
-            color: Colors.deepPurpleAccent,
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _buildStatCard(
+                icon: Icons.theaters,
+                label: 'Salas',
+                value: '${rooms.length}',
+                color: Colors.deepPurpleAccent,
+              ),
+              _buildStatCard(
+                icon: Icons.event_seat,
+                label: 'Operacionais',
+                value: '$operationalSeats/$totalSeats ($operationalPercent%)',
+                color: Colors.greenAccent.shade700,
+              ),
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, '/defects'),
+                borderRadius: BorderRadius.circular(12),
+                child: _buildStatCard(
+                  icon: Icons.build_circle_outlined,
+                  label: 'Manutenção Ativa (ver tarefas)',
+                  value: '${activeIssues.length} ($defectiveSeatsCount assentos)',
+                  color: activeIssues.isNotEmpty ? Colors.redAccent : Colors.grey,
+                ),
+              ),
+              if (stagingCount > 0)
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/staging'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: _buildStatCard(
+                    icon: Icons.pending_actions,
+                    label: 'Em Triagem',
+                    value: '$stagingCount solicitações',
+                    color: Colors.amberAccent,
+                  ),
+                ),
+            ],
           ),
-          _buildStatCard(
-            icon: Icons.event_seat,
-            label: 'Operacionais',
-            value: '$operationalSeats/$totalSeats ($operationalPercent%)',
-            color: Colors.greenAccent.shade700,
-          ),
-          _buildStatCard(
-            icon: Icons.build_circle_outlined,
-            label: 'Manutenção Ativa',
-            value: '${activeIssues.length} ($defectiveSeatsCount assentos)',
-            color: activeIssues.isNotEmpty ? Colors.redAccent : Colors.grey,
-          ),
-          if (stagingCount > 0)
-            _buildStatCard(
-              icon: Icons.pending_actions,
-              label: 'Em Triagem',
-              value: '$stagingCount solicitações',
-              color: Colors.amberAccent,
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white10),
             ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.handyman_outlined, size: 15, color: Colors.white70),
+                    SizedBox(width: 6),
+                    Text(
+                      'Por Defeito:',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                ...defectCounts.entries.map((entry) {
+                  final hasItems = entry.value > 0;
+                  return InkWell(
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      '/defects',
+                      arguments: entry.key,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: hasItems
+                            ? Colors.orangeAccent.withValues(alpha: 0.15)
+                            : Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: hasItems
+                              ? Colors.orangeAccent.withValues(alpha: 0.5)
+                              : Colors.white12,
+                        ),
+                      ),
+                      child: Text(
+                        '${entry.key}: ${entry.value}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: hasItems ? FontWeight.bold : FontWeight.normal,
+                          color: hasItems ? Colors.orangeAccent : Colors.white54,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                TextButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/defects'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  icon: const Icon(Icons.checklist_rtl, size: 16),
+                  label: const Text(
+                    'Roteiro por Sala',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -413,6 +515,11 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               ],
             ),
           IconButton(
+            icon: const Icon(Icons.checklist_rtl),
+            tooltip: 'Tarefas por Tipo de Defeito',
+            onPressed: () => Navigator.pushNamed(context, '/defects'),
+          ),
+          IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'Histórico de Manutenções',
             onPressed: () => Navigator.pushNamed(context, '/history'),
@@ -421,6 +528,9 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
               switch (value) {
+                case 'defects':
+                  Navigator.pushNamed(context, '/defects');
+                  break;
                 case 'staging':
                   Navigator.pushNamed(context, '/staging');
                   break;
@@ -433,6 +543,13 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'defects',
+                child: ListTile(
+                  leading: Icon(Icons.checklist_rtl, color: Colors.orangeAccent),
+                  title: Text('Tarefas por Defeito'),
+                ),
+              ),
               if (currentUser?.role.canApproveStaging ?? false)
                 PopupMenuItem(
                   value: 'staging',

@@ -219,6 +219,30 @@ class RoomController extends ChangeNotifier {
     }
   }
 
+  Future<void> resolveIssuesBatch(List<String> issueIds, {String? resolvedBy}) async {
+    final now = DateTime.now();
+    final updatedIssues = <MaintenanceIssue>[];
+
+    for (final id in issueIds) {
+      final index = _issues.indexWhere((i) => i.id == id);
+      if (index != -1 && !_issues[index].resolved) {
+        _issues[index].status = IssueStatus.resolved;
+        _issues[index].resolvedAt = now;
+        _issues[index].resolvedBy = resolvedBy;
+        updatedIssues.add(_issues[index]);
+      }
+    }
+
+    if (updatedIssues.isEmpty) return;
+
+    _syncSeatsWithIssues();
+    notifyListeners();
+    await _saveIssuesLocally();
+    for (final issue in updatedIssues) {
+      await _syncIssueToFirestore(issue);
+    }
+  }
+
   Future<void> reopenIssue(String issueId) async {
     final index = _issues.indexWhere((i) => i.id == issueId);
     if (index != -1) {
