@@ -7,6 +7,7 @@ import 'package:cinegestor/models/seat.dart';
 import 'package:cinegestor/models/maintenance_issue.dart';
 import 'package:cinegestor/models/app_user.dart';
 import 'package:cinegestor/widgets/seat_widget.dart';
+import 'package:cinegestor/widgets/apple_surfaces.dart';
 import 'package:cinegestor/models/room.dart';
 
 class MaintenancePage extends StatefulWidget {
@@ -27,10 +28,11 @@ class MaintenancePage extends StatefulWidget {
 
 class _MaintenancePageState extends State<MaintenancePage> {
   String? selectedIssueType;
-  String? selectedUrgency;
+  String selectedUrgency = 'Média';
   Seat? selectedSeat;
   final TextEditingController _notesController = TextEditingController();
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   final GlobalKey _seatLayoutKey = GlobalKey();
   double _currentZoom = 0.8;
   static const double _minZoom = 0.3;
@@ -66,18 +68,20 @@ class _MaintenancePageState extends State<MaintenancePage> {
   }
 
   void _resetZoom() {
-    final RenderBox? renderBox = _seatLayoutKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _seatLayoutKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final Size roomSize = renderBox.size;
     final Size viewSize = MediaQuery.of(context).size;
 
     final double scaleX = (viewSize.width * 0.9) / roomSize.width;
-    final double scaleY = (viewSize.height * 0.5) / roomSize.height;
-    final double scale = (scaleX < scaleY ? scaleX : scaleY).clamp(_minZoom, _maxZoom);
+    final double scaleY = (viewSize.height * 0.48) / roomSize.height;
+    final double scale =
+        (scaleX < scaleY ? scaleX : scaleY).clamp(_minZoom, _maxZoom);
 
     final double xOffset = (viewSize.width - (roomSize.width * scale)) / 2;
-    final double yOffset = 16.0;
+    const double yOffset = 16.0;
 
     final matrix = Matrix4.identity()
       ..translateByDouble(xOffset, yOffset, 0.0, 1.0)
@@ -103,9 +107,11 @@ class _MaintenancePageState extends State<MaintenancePage> {
   }
 
   void registerIssue() {
-    if (selectedSeat == null || selectedIssueType == null || selectedUrgency == null) {
+    if (selectedSeat == null || selectedIssueType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione um assento, o tipo de problema e a urgência.')),
+        const SnackBar(
+          content: Text('Toque em uma poltrona no mapa e escolha o tipo de defeito.'),
+        ),
       );
       return;
     }
@@ -120,7 +126,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
       roomId: roomController.selectRoom!.id,
       seatId: '${selectedSeat!.row}${selectedSeat!.number}',
       problemType: selectedIssueType!,
-      urgency: selectedUrgency!,
+      urgency: selectedUrgency,
       notes: _notesController.text.trim(),
       dateTime: DateTime.now(),
       reportedBy: currentUser?.name ?? 'Usuário',
@@ -132,13 +138,13 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
     setState(() {
       selectedIssueType = null;
-      selectedUrgency = null;
+      selectedUrgency = 'Média';
       _notesController.clear();
     });
 
     final msg = isOperacao
         ? 'Solicitação enviada para a fila de Triagem com sucesso!'
-        : 'Problema registrado em manutenção com sucesso.';
+        : 'Demanda registrada em manutenção com sucesso.';
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg)),
@@ -150,18 +156,27 @@ class _MaintenancePageState extends State<MaintenancePage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 14,
-          height: 14,
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black26),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.4),
+                blurRadius: 4,
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: const TextStyle(
+            color: AppleColors.textSecondary,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -169,20 +184,26 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
   Widget _buildLegend() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      color: Colors.black26,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: const BoxDecoration(
+        color: AppleColors.backgroundSecondary,
+        border: Border(
+          bottom: BorderSide(color: AppleColors.glassBorder, width: 1),
+        ),
+      ),
       child: Wrap(
-        spacing: 14,
+        spacing: 16,
         runSpacing: 6,
         alignment: WrapAlignment.center,
         children: [
-          _buildLegendItem(Colors.greenAccent.shade700, 'Normal'),
-          _buildLegendItem(Colors.lightBlueAccent, 'Cadeirante'),
-          _buildLegendItem(Colors.orangeAccent, 'Acompanhante'),
-          _buildLegendItem(Colors.amber, 'Obeso'),
-          _buildLegendItem(Colors.amberAccent.shade400, 'Em Triagem'),
-          _buildLegendItem(Colors.redAccent, 'Com Defeito'),
-          _buildLegendItem(Colors.deepPurpleAccent, 'Selecionado'),
+          _buildLegendItem(const Color(0xFF248A3D), 'Operacional'),
+          _buildLegendItem(AppleColors.systemCyan, 'Cadeirante'),
+          _buildLegendItem(AppleColors.systemOrange, 'Acompanhante'),
+          _buildLegendItem(AppleColors.systemPurple, 'Obeso'),
+          _buildLegendItem(AppleColors.systemAmber, 'Em Triagem'),
+          _buildLegendItem(AppleColors.systemRed, 'Com Defeito'),
+          _buildLegendItem(AppleColors.accentBlue, 'Selecionado'),
         ],
       ),
     );
@@ -190,34 +211,91 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
   Widget _buildZoomControls() {
     return Positioned(
-      right: 12,
-      bottom: 12,
-      child: Card(
-        color: Colors.black54,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.add, size: 20),
-                onPressed: () => _updateZoom(_currentZoom + 0.15),
-                tooltip: 'Aumentar zoom',
-                visualDensity: VisualDensity.compact,
-              ),
-              Text(
+      right: 14,
+      bottom: 14,
+      child: AppleGlassCard(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        borderRadius: 14,
+        blurSigma: 20,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.add_rounded, size: 19),
+              onPressed: () => _updateZoom(_currentZoom + 0.15),
+              tooltip: 'Aumentar zoom',
+              visualDensity: VisualDensity.compact,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
                 '${(_currentZoom * 100).round()}%',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                style: const TextStyle(
+                  color: AppleColors.textSecondary,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.remove, size: 20),
-                onPressed: () => _updateZoom(_currentZoom - 0.15),
-                tooltip: 'Diminuir zoom',
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.remove_rounded, size: 19),
+              onPressed: () => _updateZoom(_currentZoom - 0.15),
+              tooltip: 'Diminuir zoom',
+              visualDensity: VisualDensity.compact,
+            ),
+            const Divider(height: 8),
+            IconButton(
+              icon: const Icon(Icons.center_focus_strong_rounded, size: 17),
+              onPressed: _resetZoom,
+              tooltip: 'Centralizar mapa',
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCinemaScreenBanner(double width) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 28, bottom: 10),
+      child: Column(
+        children: [
+          Container(
+            width: width,
+            height: 6,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              gradient: const LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  AppleColors.accentBlue,
+                  Colors.white,
+                  AppleColors.accentBlue,
+                  Colors.transparent,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppleColors.accentBlue.withValues(alpha: 0.55),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'T E L A   D E   P R O J E Ç Ã O',
+            style: TextStyle(
+              color: AppleColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 3.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -241,36 +319,14 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
     return Container(
       key: _seatLayoutKey,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: List.generate(maxLine, (lineIdx) {
           final lineNum = lineIdx + 1;
 
           if (lineNum == stageLine) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 24, bottom: 8),
-              child: Container(
-                width: (maxCol - 2) * 38.0,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'TELA',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 6,
-                  ),
-                ),
-              ),
-            );
+            return _buildCinemaScreenBanner((maxCol - 2) * 38.0);
           }
 
           return Row(
@@ -287,9 +343,10 @@ class _MaintenancePageState extends State<MaintenancePage> {
                   child: Center(
                     child: Text(
                       labelByCoord[coordKey]!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
+                      style: const TextStyle(
+                        color: AppleColors.textTertiary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -299,8 +356,9 @@ class _MaintenancePageState extends State<MaintenancePage> {
               final seat = seatByCoord[coordKey];
               if (seat != null) {
                 final exception = room.excecoes[seat.id];
-                return GestureDetector(
-                  onTap: () {
+                return ApplePressable(
+                  pressedScale: 0.90,
+                  onPressed: () {
                     setState(() {
                       selectedSeat = seat;
                     });
@@ -313,7 +371,6 @@ class _MaintenancePageState extends State<MaintenancePage> {
                 );
               }
 
-              // Célula vazia do grid (corredor vertical/horizontal ou recuo lateral)
               return const SizedBox(width: 38, height: 38);
             }),
           );
@@ -329,7 +386,7 @@ class _MaintenancePageState extends State<MaintenancePage> {
 
     return Container(
       key: _seatLayoutKey,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -338,10 +395,10 @@ class _MaintenancePageState extends State<MaintenancePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Rótulo da fileira
               Column(
                 children: room.rows.map((rowLabel) {
-                  final extraSpacing = (room.spacingBetweenRows[rowLabel] ?? 8).toDouble();
+                  final extraSpacing =
+                      (room.spacingBetweenRows[rowLabel] ?? 8).toDouble();
                   return Padding(
                     padding: EdgeInsets.only(bottom: extraSpacing),
                     child: SizedBox(
@@ -350,9 +407,9 @@ class _MaintenancePageState extends State<MaintenancePage> {
                       child: Center(
                         child: Text(
                           rowLabel,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          style: const TextStyle(
+                            color: AppleColors.textTertiary,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -360,12 +417,12 @@ class _MaintenancePageState extends State<MaintenancePage> {
                   );
                 }).toList(),
               ),
-              // Assentos
               Column(
                 children: room.rows.map((rowLabel) {
                   final numCols = room.colsByRow[rowLabel] ?? room.colsDefault;
                   final aisles = room.aislesByRow[rowLabel] ?? [];
-                  final extraSpacing = (room.spacingBetweenRows[rowLabel] ?? 8).toDouble();
+                  final extraSpacing =
+                      (room.spacingBetweenRows[rowLabel] ?? 8).toDouble();
 
                   return Padding(
                     padding: EdgeInsets.only(bottom: extraSpacing),
@@ -381,15 +438,17 @@ class _MaintenancePageState extends State<MaintenancePage> {
                         }
 
                         final exception = room.excecoes[seatId];
-                        final seat = widget.roomController.getSeat(rowLabel, colNumber);
+                        final seat =
+                            widget.roomController.getSeat(rowLabel, colNumber);
                         if (seat == null) {
                           return const SizedBox(width: 30);
                         }
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: GestureDetector(
-                            onTap: () {
+                          child: ApplePressable(
+                            pressedScale: 0.90,
+                            onPressed: () {
                               setState(() {
                                 selectedSeat = seat;
                               });
@@ -408,25 +467,8 @@ class _MaintenancePageState extends State<MaintenancePage> {
               ),
             ],
           ),
-          const SizedBox(height: 48),
-          // Tela no final da coluna
-          Container(
-            padding: const EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 200,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              'TELA',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          const SizedBox(height: 36),
+          _buildCinemaScreenBanner(360),
         ],
       ),
     );
@@ -449,25 +491,32 @@ class _MaintenancePageState extends State<MaintenancePage> {
     final canResolve = currentUser?.role.canResolveIssue ?? false;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+        color: AppleColors.systemRed.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppleColors.systemRed.withValues(alpha: 0.38),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.build_circle, color: Colors.redAccent, size: 20),
+              const Icon(
+                Icons.build_circle_rounded,
+                color: AppleColors.systemRed,
+                size: 19,
+              ),
               const SizedBox(width: 8),
               Text(
-                'Demandas no assento $seatId (${activeIssues.length})',
+                'Demandas na poltrona $seatId (${activeIssues.length})',
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  color: AppleColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
                 ),
               ),
             ],
@@ -484,46 +533,44 @@ class _MaintenancePageState extends State<MaintenancePage> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              '${issue.problemType} • Urgência ${issue.urgency}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                            Flexible(
+                              child: Text(
+                                '${issue.problemType} • Urgência ${issue.urgency}',
+                                style: const TextStyle(
+                                  color: AppleColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             if (issue.isStaging)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.amberAccent.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Triagem',
-                                  style: TextStyle(
-                                    color: Colors.amberAccent,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              const AppleStatusPill(
+                                label: 'Triagem',
+                                color: AppleColors.systemAmber,
                               ),
                           ],
                         ),
                         if (issue.notes != null && issue.notes!.isNotEmpty)
                           Text(
                             issue.notes!,
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            style: const TextStyle(
+                              color: AppleColors.textSecondary,
+                              fontSize: 12,
+                            ),
                           ),
                         Text(
-                          'Reportado por: ${issue.reportedBy ?? "Operação"} • ${DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime)}',
-                          style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          'Por ${issue.reportedBy ?? "Operação"} • ${DateFormat('dd/MM HH:mm').format(issue.dateTime)}',
+                          style: const TextStyle(
+                            color: AppleColors.textTertiary,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  if (issue.isStaging && (currentUser?.role.canApproveStaging ?? false))
+                  if (issue.isStaging &&
+                      (currentUser?.role.canApproveStaging ?? false))
                     TextButton.icon(
                       onPressed: () async {
                         await widget.roomController.approveStagingIssue(
@@ -534,15 +581,24 @@ class _MaintenancePageState extends State<MaintenancePage> {
                           setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Demanda do assento $seatId aprovada para manutenção!'),
+                              content: Text(
+                                'Demanda do assento $seatId aprovada para manutenção!',
+                              ),
                             ),
                           );
                         }
                       },
-                      icon: const Icon(Icons.check, color: Colors.amberAccent, size: 18),
+                      icon: const Icon(
+                        Icons.check_rounded,
+                        color: AppleColors.systemAmber,
+                        size: 18,
+                      ),
                       label: const Text(
                         'Aprovar',
-                        style: TextStyle(color: Colors.amberAccent),
+                        style: TextStyle(
+                          color: AppleColors.systemAmber,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     )
                   else if (issue.isActive && canResolve)
@@ -556,15 +612,24 @@ class _MaintenancePageState extends State<MaintenancePage> {
                           setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Manutenção do assento $seatId marcada como resolvida!'),
+                              content: Text(
+                                'Manutenção do assento $seatId concluída!',
+                              ),
                             ),
                           );
                         }
                       },
-                      icon: const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 18),
+                      icon: const Icon(
+                        Icons.check_circle_outline_rounded,
+                        color: AppleColors.systemGreen,
+                        size: 18,
+                      ),
                       label: const Text(
-                        'Resolver',
-                        style: TextStyle(color: Colors.greenAccent),
+                        'Concluir',
+                        style: TextStyle(
+                          color: AppleColors.systemGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
@@ -576,104 +641,239 @@ class _MaintenancePageState extends State<MaintenancePage> {
     );
   }
 
-  Widget _buildMaintenanceForm(Room room) {
-    final exceptionLabel = selectedSeat != null ? room.excecoes[selectedSeat!.id] : null;
+  Widget _buildMaintenanceSheet(Room room) {
+    final exceptionLabel =
+        selectedSeat != null ? room.excecoes[selectedSeat!.id] : null;
+    final isOperacao = Provider.of<AuthController>(context, listen: false)
+            .currentUser
+            ?.role
+            .createsAsStaging ??
+        false;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return AppleGlassCard(
+      elevated: true,
+      borderRadius: 22,
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Grabber handle estilo iOS Sheet
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
           _buildActiveIssuesForSeat(room),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Registrar Problema no Assento',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                'Registrar Ocorrência',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               if (selectedSeat != null)
-                Chip(
-                  label: Text(
-                    'Assento ${selectedSeat!.id}${exceptionLabel != null ? ' ($exceptionLabel)' : ''}',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  backgroundColor: Colors.deepPurple,
+                AppleStatusPill(
+                  label:
+                      'Poltrona ${selectedSeat!.id}${exceptionLabel != null ? ' • $exceptionLabel' : ''}',
+                  color: AppleColors.accentBlue,
+                  icon: Icons.event_seat_rounded,
+                )
+              else
+                const AppleStatusPill(
+                  label: 'Toque em um assento no mapa',
+                  color: AppleColors.systemAmber,
                 ),
             ],
           ),
-          if (selectedSeat == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'Toque em um assento no mapa acima para selecioná-lo.',
-                style: TextStyle(color: Colors.amberAccent, fontSize: 13),
-              ),
+          const SizedBox(height: 14),
+          const Text(
+            'TIPO DE DEFEITO (TOQUE PARA SELECIONAR)',
+            style: TextStyle(
+              color: AppleColors.textTertiary,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            key: ValueKey('issue_type_$selectedIssueType'),
-            initialValue: selectedIssueType,
-            decoration: const InputDecoration(
-              labelText: 'Tipo de Problema',
-              filled: true,
-              fillColor: Colors.black12,
-            ),
-            items: issueTypes.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-            onChanged: (val) => setState(() => selectedIssueType = val),
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            key: ValueKey('urgency_$selectedUrgency'),
-            initialValue: selectedUrgency,
-            decoration: const InputDecoration(
-              labelText: 'Urgência',
-              filled: true,
-              fillColor: Colors.black12,
-            ),
-            items: urgencyLevels.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-            onChanged: (val) => setState(() => selectedUrgency = val),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: issueTypes.map((type) {
+              final isSelected = selectedIssueType == type;
+              return ApplePressable(
+                pressedScale: 0.95,
+                onPressed: () => setState(() => selectedIssueType = type),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppleColors.accentBlue.withValues(alpha: 0.24)
+                        : AppleColors.surfaceElevated.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppleColors.accentBlue
+                          : AppleColors.glassBorder,
+                      width: isSelected ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Text(
+                    type,
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : AppleColors.textSecondary,
+                      fontSize: 12.5,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              const Text(
+                'URGÊNCIA:',
+                style: TextStyle(
+                  color: AppleColors.textTertiary,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Row(
+                  children: urgencyLevels.map((level) {
+                    final isSelected = selectedUrgency == level;
+                    final color = level == 'Alta'
+                        ? AppleColors.systemRed
+                        : level == 'Média'
+                            ? AppleColors.systemOrange
+                            : AppleColors.systemGreen;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ApplePressable(
+                          pressedScale: 0.96,
+                          onPressed: () =>
+                              setState(() => selectedUrgency = level),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            padding: const EdgeInsets.symmetric(vertical: 7),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? color.withValues(alpha: 0.2)
+                                  : AppleColors.surfaceElevated.withValues(
+                                      alpha: 0.6,
+                                    ),
+                              borderRadius: BorderRadius.circular(9),
+                              border: Border.all(
+                                color: isSelected
+                                    ? color
+                                    : AppleColors.glassBorder,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              level,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? color
+                                    : AppleColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _notesController,
-            maxLines: 2,
+            maxLines: 1,
+            style: const TextStyle(
+              color: AppleColors.textPrimary,
+              fontSize: 13.5,
+            ),
             decoration: const InputDecoration(
-              labelText: 'Observações',
-              filled: true,
-              fillColor: Colors.black12,
+              labelText: 'Observações adicionais (opcional)',
+              prefixIcon: Icon(
+                Icons.notes_rounded,
+                size: 18,
+                color: AppleColors.textSecondary,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: registerIssue,
-              icon: Icon(
-                Provider.of<AuthController>(context, listen: false)
-                            .currentUser
-                            ?.role
-                            .createsAsStaging ??
-                        false
-                    ? Icons.send
-                    : Icons.save_outlined,
+          const SizedBox(height: 14),
+          ApplePressable(
+            onPressed: registerIssue,
+            child: Container(
+              width: double.infinity,
+              height: 46,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: isOperacao
+                      ? [AppleColors.systemOrange, AppleColors.systemAmber]
+                      : [const Color(0xFF1E90FF), AppleColors.accentBlue],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isOperacao
+                            ? AppleColors.systemOrange
+                            : AppleColors.accentBlue)
+                        .withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              label: Text(
-                Provider.of<AuthController>(context, listen: false)
-                            .currentUser
-                            ?.role
-                            .createsAsStaging ??
-                        false
-                    ? 'Enviar para Triagem'
-                    : 'Registrar Problema',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isOperacao ? Icons.send_rounded : Icons.add_task_rounded,
+                    color: isOperacao ? Colors.black : Colors.white,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isOperacao
+                        ? 'Enviar Solicitação para Triagem'
+                        : 'Confirmar Demanda de Manutenção',
+                    style: TextStyle(
+                      color: isOperacao ? Colors.black : Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -687,73 +887,75 @@ class _MaintenancePageState extends State<MaintenancePage> {
     final selectRoom = widget.roomController.selectRoom ?? widget.room;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppleColors.background,
       appBar: AppBar(
         title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(selectRoom.nome),
             if (selectRoom.theaterName != null)
               Text(
                 selectRoom.theaterName!,
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppleColors.textSecondary,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.checklist_rtl_rounded),
+            onPressed: () => Navigator.pushNamed(context, '/defects'),
+            tooltip: 'Tarefas por Defeito',
+          ),
+          IconButton(
+            icon: const Icon(Icons.history_rounded),
             onPressed: () => Navigator.pushNamed(context, '/history'),
             tooltip: 'Histórico de manutenção',
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.center_focus_strong_rounded),
             onPressed: _resetZoom,
             tooltip: 'Resetar visualização',
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF2D3748), Color(0xFF4A5568)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildLegend(),
-              Expanded(
-                flex: 3,
-                child: Stack(
-                  children: [
-                    InteractiveViewer(
-                      transformationController: _transformationController,
-                      constrained: false,
-                      boundaryMargin: const EdgeInsets.all(100),
-                      minScale: _minZoom,
-                      maxScale: _maxZoom,
-                      onInteractionEnd: (_) {
-                        setState(() {
-                          _currentZoom = _transformationController.value.getMaxScaleOnAxis();
-                        });
-                      },
-                      child: _buildSeatLayout(selectRoom),
-                    ),
-                    _buildZoomControls(),
-                  ],
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildLegend(),
+            Expanded(
+              flex: 5,
+              child: Stack(
+                children: [
+                  InteractiveViewer(
+                    transformationController: _transformationController,
+                    constrained: false,
+                    boundaryMargin: const EdgeInsets.all(120),
+                    minScale: _minZoom,
+                    maxScale: _maxZoom,
+                    onInteractionEnd: (_) {
+                      setState(() {
+                        _currentZoom =
+                            _transformationController.value.getMaxScaleOnAxis();
+                      });
+                    },
+                    child: _buildSeatLayout(selectRoom),
+                  ),
+                  _buildZoomControls(),
+                ],
               ),
-              Expanded(
-                flex: 2,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: _buildMaintenanceForm(selectRoom),
-                ),
+            ),
+            Expanded(
+              flex: 4,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                child: _buildMaintenanceSheet(selectRoom),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

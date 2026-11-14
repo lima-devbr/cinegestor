@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/app_user.dart';
+import '../widgets/apple_surfaces.dart';
 
 class StagingPage extends StatelessWidget {
   const StagingPage({super.key});
@@ -24,20 +25,35 @@ class StagingPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.rule_folder_outlined,
-                    size: 64,
-                    color: Colors.amberAccent.withValues(alpha: 0.6),
+                  Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: AppleColors.systemAmber.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.rule_folder_outlined,
+                      size: 34,
+                      color: AppleColors.systemAmber,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Nenhuma solicitação na fila de triagem.',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    'Nenhuma solicitação na fila de triagem',
+                    style: TextStyle(
+                      color: AppleColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   const Text(
                     'As solicitações enviadas pela equipe de operação aparecerão aqui.',
-                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                    style: TextStyle(
+                      color: AppleColors.textSecondary,
+                      fontSize: 13,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -51,142 +67,206 @@ class StagingPage extends StatelessWidget {
                 final room = roomController.getRoomById(issue.roomId);
                 final roomName = room?.displayName ?? 'Sala ${issue.roomId}';
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
+                return AppleGlassCard(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  borderRadius: 18,
+                  borderColor: AppleColors.systemAmber.withValues(alpha: 0.35),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
                               children: [
-                                const Icon(
-                                  Icons.pending_actions,
-                                  color: Colors.amberAccent,
+                                Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: AppleColors.systemAmber.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.pending_actions_rounded,
+                                    color: AppleColors.systemAmber,
+                                    size: 18,
+                                  ),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$roomName - Assento ${issue.seatId}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    '$roomName • Poltrona ${issue.seatId}',
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
                                   ),
                                 ),
                               ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amberAccent.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.amberAccent.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              child: const Text(
-                                'Aguardando Aprovação',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.amberAccent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Problema informado: ${issue.problemType}',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                        ),
-                        if (issue.notes != null && issue.notes!.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Observações: ${issue.notes}',
-                            style: const TextStyle(fontSize: 13, color: Colors.white70),
+                          ),
+                          const AppleStatusPill(
+                            label: 'Aguardando Aprovação',
+                            color: AppleColors.systemAmber,
                           ),
                         ],
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Reportado por: ${issue.reportedBy ?? "Operação"} (${issue.reportedRole ?? "Operação"})',
-                              style: const TextStyle(color: Colors.white54, fontSize: 12),
-                            ),
-                            Text(
-                              DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime),
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
-                          ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Defeito relatado: ${issue.problemType}',
+                        style: const TextStyle(
+                          color: AppleColors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const Divider(height: 24, color: Colors.white12),
-                        if (currentUser?.role.canApproveStaging ?? false)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () {
-                                  roomController.rejectStagingIssue(
-                                    issue.id,
-                                    reason: 'Recusado na triagem',
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Solicitação recusada e arquivada.'),
+                      ),
+                      if (issue.notes != null && issue.notes!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Observações: ${issue.notes}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppleColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Reportado por ${issue.reportedBy ?? "Operação"} (${issue.reportedRole ?? "Operação"})',
+                            style: const TextStyle(
+                              color: AppleColors.textTertiary,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd/MM/yyyy HH:mm')
+                                .format(issue.dateTime),
+                            style: const TextStyle(
+                              color: AppleColors.textTertiary,
+                              fontSize: 12,
+                              fontFeatures: [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      if (currentUser?.role.canApproveStaging ?? false)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ApplePressable(
+                              pressedScale: 0.96,
+                              onPressed: () {
+                                roomController.rejectStagingIssue(
+                                  issue.id,
+                                  reason: 'Recusado na triagem',
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Solicitação recusada e arquivada.',
                                     ),
-                                  );
-                                },
-                                icon: const Icon(
-                                  Icons.close,
-                                  size: 18,
-                                  color: Colors.redAccent,
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
                                 ),
-                                label: const Text(
-                                  'Recusar',
-                                  style: TextStyle(color: Colors.redAccent),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  roomController.approveStagingIssue(
-                                    issue.id,
-                                    approvedBy: currentUser?.name,
-                                  );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Demanda aprovada! O assento ${issue.seatId} agora está em manutenção.',
-                                      ),
+                                decoration: BoxDecoration(
+                                  color: AppleColors.systemRed.withValues(
+                                    alpha: 0.14,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: AppleColors.systemRed.withValues(
+                                      alpha: 0.35,
                                     ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.deepPurple,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
                                   ),
                                 ),
-                                icon: const Icon(Icons.check, size: 18),
-                                label: const Text('Aprovar Demanda'),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.close_rounded,
+                                      size: 16,
+                                      color: AppleColors.systemRed,
+                                    ),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Recusar',
+                                      style: TextStyle(
+                                        color: AppleColors.systemRed,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          )
-                        else
-                          const Text(
-                            'Apenas Encarregados ou Gerentes podem aprovar solicitações.',
-                            style: TextStyle(color: Colors.white38, fontSize: 12),
+                            ),
+                            const SizedBox(width: 10),
+                            ApplePressable(
+                              pressedScale: 0.96,
+                              onPressed: () {
+                                roomController.approveStagingIssue(
+                                  issue.id,
+                                  approvedBy: currentUser?.name,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Demanda aprovada! A poltrona ${issue.seatId} agora está em manutenção.',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppleColors.accentBlue,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.check_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Aprovar Demanda',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        const Text(
+                          'Apenas Encarregados ou Gerentes podem aprovar solicitações.',
+                          style: TextStyle(
+                            color: AppleColors.textTertiary,
+                            fontSize: 12,
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 );
               },

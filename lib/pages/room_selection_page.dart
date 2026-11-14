@@ -5,6 +5,7 @@ import '../controllers/auth_controller.dart';
 import '../models/room.dart';
 import '../models/app_user.dart';
 import '../utils/responsive_utils.dart';
+import '../widgets/apple_surfaces.dart';
 import 'defect_summary_page.dart';
 
 class RoomSelectionPage extends StatefulWidget {
@@ -28,7 +29,8 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
 
   Future<void> _loadRooms() async {
     try {
-      final authController = Provider.of<AuthController>(context, listen: false);
+      final authController =
+          Provider.of<AuthController>(context, listen: false);
       final userCinemaId = authController.currentUser?.cinemaId;
       await widget.roomController.loadRooms(cinemaId: userCinemaId);
 
@@ -59,21 +61,23 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     );
   }
 
-  Widget _buildSummaryDashboard(List<Room> rooms, RoomController roomController) {
+  Widget _buildSummaryDashboard(
+    List<Room> rooms,
+    RoomController roomController,
+  ) {
     final totalSeats = rooms.fold<int>(0, (sum, r) => sum + r.totalSeats);
-    final activeIssues = roomController.issues.where((i) => i.isActive).toList();
+    final activeIssues =
+        roomController.issues.where((i) => i.isActive).toList();
     final stagingCount = roomController.getStagingIssues().length;
 
-    final defectiveSeatsCount = activeIssues
-        .map((i) => '${i.roomId}_${i.seatId}')
-        .toSet()
-        .length;
-    final operationalSeats = (totalSeats - defectiveSeatsCount).clamp(0, totalSeats);
+    final defectiveSeatsCount =
+        activeIssues.map((i) => '${i.roomId}_${i.seatId}').toSet().length;
+    final operationalSeats =
+        (totalSeats - defectiveSeatsCount).clamp(0, totalSeats);
     final operationalPercent = totalSeats > 0
         ? ((operationalSeats / totalSeats) * 100).toStringAsFixed(1)
         : '100.0';
 
-    // Contabiliza os problemas ativos por tipo padronizado
     final Map<String, int> defectCounts = {
       'Capa Rasgada': 0,
       'Bracinho Solto': 0,
@@ -85,7 +89,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -94,49 +98,45 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
             runSpacing: 12,
             children: [
               _buildStatCard(
-                icon: Icons.theaters,
-                label: 'Salas',
-                value: '${rooms.length}',
-                color: Colors.deepPurpleAccent,
+                icon: Icons.theaters_rounded,
+                label: 'SALAS MONITORADAS',
+                value: '${rooms.length} salas',
+                subtitle: '$totalSeats poltronas no total',
+                color: AppleColors.accentIndigo,
               ),
               _buildStatCard(
-                icon: Icons.event_seat,
-                label: 'Operacionais',
-                value: '$operationalSeats/$totalSeats ($operationalPercent%)',
-                color: Colors.greenAccent.shade700,
+                icon: Icons.check_circle_outline_rounded,
+                label: 'OPERACIONAIS',
+                value: '$operationalPercent%',
+                subtitle: '$operationalSeats de $totalSeats livres',
+                color: AppleColors.systemGreen,
               ),
-              InkWell(
+              _buildStatCard(
+                icon: Icons.build_circle_outlined,
+                label: 'MANUTENÇÃO ATIVA',
+                value: '${activeIssues.length} demandas',
+                subtitle: '$defectiveSeatsCount poltronas afetadas',
+                color: activeIssues.isNotEmpty
+                    ? AppleColors.systemRed
+                    : AppleColors.textTertiary,
                 onTap: () => Navigator.pushNamed(context, '/defects'),
-                borderRadius: BorderRadius.circular(12),
-                child: _buildStatCard(
-                  icon: Icons.build_circle_outlined,
-                  label: 'Manutenção Ativa (ver tarefas)',
-                  value: '${activeIssues.length} ($defectiveSeatsCount assentos)',
-                  color: activeIssues.isNotEmpty ? Colors.redAccent : Colors.grey,
-                ),
               ),
               if (stagingCount > 0)
-                InkWell(
+                _buildStatCard(
+                  icon: Icons.pending_actions_rounded,
+                  label: 'FILA DE TRIAGEM',
+                  value: '$stagingCount pendentes',
+                  subtitle: 'Toque para avaliar',
+                  color: AppleColors.systemAmber,
                   onTap: () => Navigator.pushNamed(context, '/staging'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: _buildStatCard(
-                    icon: Icons.pending_actions,
-                    label: 'Em Triagem',
-                    value: '$stagingCount solicitações',
-                    color: Colors.amberAccent,
-                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black26,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white10),
-            ),
+          const SizedBox(height: 12),
+          // Barra de Tarefas por Defeito estilo Apple Pill Bar
+          AppleGlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            borderRadius: 14,
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -145,61 +145,127 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.handyman_outlined, size: 15, color: Colors.white70),
+                    Icon(
+                      Icons.handyman_rounded,
+                      size: 15,
+                      color: AppleColors.textSecondary,
+                    ),
                     SizedBox(width: 6),
                     Text(
-                      'Por Defeito:',
+                      'TAREFAS POR DEFEITO:',
                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        color: AppleColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ],
                 ),
                 ...defectCounts.entries.map((entry) {
                   final hasItems = entry.value > 0;
-                  return InkWell(
-                    onTap: () => Navigator.pushNamed(
+                  final pillColor = hasItems
+                      ? AppleColors.systemOrange
+                      : AppleColors.textTertiary;
+
+                  return ApplePressable(
+                    pressedScale: 0.95,
+                    onPressed: () => Navigator.pushNamed(
                       context,
                       '/defects',
                       arguments: entry.key,
                     ),
-                    borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: hasItems
-                            ? Colors.orangeAccent.withValues(alpha: 0.15)
-                            : Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
+                            ? AppleColors.systemOrange.withValues(alpha: 0.14)
+                            : AppleColors.surfaceElevated.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(999),
                         border: Border.all(
                           color: hasItems
-                              ? Colors.orangeAccent.withValues(alpha: 0.5)
-                              : Colors.white12,
+                              ? AppleColors.systemOrange.withValues(alpha: 0.45)
+                              : AppleColors.glassBorder,
                         ),
                       ),
-                      child: Text(
-                        '${entry.key}: ${entry.value}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: hasItems ? FontWeight.bold : FontWeight.normal,
-                          color: hasItems ? Colors.orangeAccent : Colors.white54,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            entry.key,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight:
+                                  hasItems ? FontWeight.w600 : FontWeight.w500,
+                              color: hasItems
+                                  ? AppleColors.textPrimary
+                                  : AppleColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: pillColor.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '${entry.value}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: pillColor,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
                 }),
-                TextButton.icon(
+                ApplePressable(
+                  pressedScale: 0.95,
                   onPressed: () => Navigator.pushNamed(context, '/defects'),
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  ),
-                  icon: const Icon(Icons.checklist_rtl, size: 16),
-                  label: const Text(
-                    'Roteiro por Sala',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppleColors.accentBlue.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: AppleColors.accentBlue.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.checklist_rtl_rounded,
+                          size: 15,
+                          color: AppleColors.accentBlue,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          'Abrir Roteiro por Sala',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppleColors.accentBlue,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -214,35 +280,57 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     required IconData icon,
     required String label,
     required String value,
+    required String subtitle,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D2D2D),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
+    return AppleGlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 16,
+      borderColor: color.withValues(alpha: 0.28),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 10),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                style: const TextStyle(
+                  color: AppleColors.textTertiary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                  color: AppleColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  letterSpacing: -0.3,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: AppleColors.textSecondary,
+                  fontSize: 11.5,
                 ),
               ),
             ],
@@ -254,79 +342,22 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
 
   Widget _buildIssueBadge(int activeIssuesCount, int stagingCount) {
     if (activeIssuesCount > 0) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.redAccent.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.6)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.redAccent),
-            const SizedBox(width: 4),
-            Text(
-              '$activeIssuesCount em manutenção',
-              style: const TextStyle(
-                color: Colors.redAccent,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+      return AppleStatusPill(
+        label: '$activeIssuesCount em manutenção',
+        color: AppleColors.systemRed,
       );
     }
 
     if (stagingCount > 0) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.amberAccent.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.amberAccent.withValues(alpha: 0.6)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.pending_actions, size: 14, color: Colors.amberAccent),
-            const SizedBox(width: 4),
-            Text(
-              '$stagingCount em triagem',
-              style: const TextStyle(
-                color: Colors.amberAccent,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+      return AppleStatusPill(
+        label: '$stagingCount em triagem',
+        color: AppleColors.systemAmber,
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.greenAccent.shade700.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.greenAccent.shade700.withValues(alpha: 0.6)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_circle_outline, size: 14, color: Colors.greenAccent.shade700),
-          const SizedBox(width: 4),
-          Text(
-            '100% operacional',
-            style: TextStyle(
-              color: Colors.greenAccent.shade700,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+    return const AppleStatusPill(
+      label: '100% operacional',
+      color: AppleColors.systemGreen,
     );
   }
 
@@ -339,14 +370,15 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
           tablet: 2,
           desktop: 3,
         ).getValue(context),
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.55,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
       itemCount: rooms.length,
       itemBuilder: (context, index) {
         final room = rooms[index];
-        final activeIssuesCount = roomController.getIssuesByRoom(room.id, onlyActive: true).length;
+        final activeIssuesCount =
+            roomController.getIssuesByRoom(room.id, onlyActive: true).length;
         final stagingCount = roomController.issues
             .where((i) => i.roomId == room.id && i.isStaging)
             .length;
@@ -356,51 +388,89 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
   }
 
   Widget _buildRoomCard(Room room, int activeIssuesCount, int stagingCount) {
-    return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: () => _onRoomTap(room),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final total = room.totalSeats > 0 ? room.totalSeats : 1;
+    final healthRatio =
+        ((total - activeIssuesCount) / total).clamp(0.0, 1.0);
+    final statusColor = activeIssuesCount > 0
+        ? AppleColors.systemRed
+        : stagingCount > 0
+            ? AppleColors.systemAmber
+            : AppleColors.systemGreen;
+
+    return AppleGlassCard(
+      onTap: () => _onRoomTap(room),
+      borderRadius: 18,
+      padding: const EdgeInsets.all(18),
+      borderColor: activeIssuesCount > 0
+          ? AppleColors.systemRed.withValues(alpha: 0.32)
+          : AppleColors.glassBorder,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Expanded(
+                child: Text(
+                  room.displayName,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildIssueBadge(activeIssuesCount, stagingCount),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${room.totalSeats} lugares • ${room.rows.length} fileiras',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const Spacer(),
+          // Barra sutil de integridade operacional da sala
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: healthRatio,
+              minHeight: 5,
+              backgroundColor: AppleColors.surfaceElevated,
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${(healthRatio * 100).toStringAsFixed(0)}% disponível',
+                style: const TextStyle(
+                  color: AppleColors.textTertiary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: Text(
-                      room.displayName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    'Inspecionar mapa',
+                    style: TextStyle(
+                      color: AppleColors.accentBlue,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildIssueBadge(activeIssuesCount, stagingCount),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Capacidade: ${room.totalSeats} lugares • ${room.rows.length} fileiras',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () => _onRoomTap(room),
-                    icon: const Icon(Icons.event_seat, size: 18),
-                    label: const Text('Acessar Sala'),
+                  SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: AppleColors.accentBlue,
                   ),
                 ],
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -409,46 +479,93 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     if (user == null) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.black26,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: const BoxDecoration(
+        color: AppleColors.backgroundSecondary,
+        border: Border(
+          bottom: BorderSide(color: AppleColors.glassBorder, width: 1),
+        ),
+      ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.deepPurple,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppleColors.accentBlue, AppleColors.accentIndigo],
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
             child: Text(
               user.name.isNotEmpty ? user.name[0] : 'U',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   user.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppleColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                    letterSpacing: -0.2,
+                  ),
                 ),
                 Text(
                   '${user.role.displayName} • ${user.cinemaName}',
-                  style: const TextStyle(color: Colors.white60, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppleColors.textSecondary,
+                    fontSize: 11.5,
+                  ),
                 ),
               ],
             ),
           ),
           if (stagingCount > 0)
-            ElevatedButton.icon(
+            ApplePressable(
+              pressedScale: 0.95,
               onPressed: () => Navigator.pushNamed(context, '/staging'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber.shade800,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                visualDensity: VisualDensity.compact,
-              ),
-              icon: const Icon(Icons.pending_actions, size: 16),
-              label: Text(
-                'Triagem ($stagingCount)',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: AppleColors.systemAmber.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppleColors.systemAmber.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.pending_actions_rounded,
+                      size: 15,
+                      color: AppleColors.systemAmber,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Triagem ($stagingCount)',
+                      style: const TextStyle(
+                        color: AppleColors.systemAmber,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -465,14 +582,14 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
 
     if (_loading || roomController.isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Seleção de Sala')),
+        appBar: AppBar(title: const Text('Salas de Cinema')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Seleção de Sala')),
+        appBar: AppBar(title: const Text('Salas de Cinema')),
         body: Center(child: Text(_error!)),
       );
     }
@@ -481,7 +598,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Salas de Cinema'),
+        title: const Text('Visão Geral das Salas'),
         actions: [
           if (currentUser?.role.canApproveStaging ?? false)
             Stack(
@@ -497,17 +614,20 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                     top: 8,
                     right: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.amber,
-                        shape: BoxShape.circle,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppleColors.systemAmber,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
                         '$stagingCount',
                         style: const TextStyle(
                           color: Colors.black,
                           fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
@@ -515,17 +635,17 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               ],
             ),
           IconButton(
-            icon: const Icon(Icons.checklist_rtl),
+            icon: const Icon(Icons.checklist_rtl_rounded),
             tooltip: 'Tarefas por Tipo de Defeito',
             onPressed: () => Navigator.pushNamed(context, '/defects'),
           ),
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history_rounded),
             tooltip: 'Histórico de Manutenções',
             onPressed: () => Navigator.pushNamed(context, '/history'),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_horiz_rounded),
             onSelected: (value) {
               switch (value) {
                 case 'defects':
@@ -546,7 +666,10 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               const PopupMenuItem(
                 value: 'defects',
                 child: ListTile(
-                  leading: Icon(Icons.checklist_rtl, color: Colors.orangeAccent),
+                  leading: Icon(
+                    Icons.checklist_rtl_rounded,
+                    color: AppleColors.systemOrange,
+                  ),
                   title: Text('Tarefas por Defeito'),
                 ),
               ),
@@ -554,22 +677,28 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 PopupMenuItem(
                   value: 'staging',
                   child: ListTile(
-                    leading: const Icon(Icons.pending_actions, color: Colors.amberAccent),
+                    leading: const Icon(
+                      Icons.pending_actions_rounded,
+                      color: AppleColors.systemAmber,
+                    ),
                     title: Text('Triagem ($stagingCount)'),
                   ),
                 ),
               const PopupMenuItem(
                 value: 'history',
                 child: ListTile(
-                  leading: Icon(Icons.history),
+                  leading: Icon(Icons.history_rounded),
                   title: Text('Histórico'),
                 ),
               ),
               const PopupMenuItem(
                 value: 'logout',
                 child: ListTile(
-                  leading: Icon(Icons.logout),
-                  title: Text('Sair'),
+                  leading: Icon(
+                    Icons.logout_rounded,
+                    color: AppleColors.systemRed,
+                  ),
+                  title: Text('Encerrar Sessão'),
                 ),
               ),
             ],
@@ -588,43 +717,21 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 itemCount: rooms.length,
                 itemBuilder: (context, index) {
                   final room = rooms[index];
-                  final activeIssuesCount =
-                      roomController.getIssuesByRoom(room.id, onlyActive: true).length;
+                  final activeIssuesCount = roomController
+                      .getIssuesByRoom(room.id, onlyActive: true)
+                      .length;
                   final roomStagingCount = roomController.issues
                       .where((i) => i.roomId == room.id && i.isStaging)
                       .length;
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      leading: Icon(
-                        Icons.meeting_room,
-                        color: activeIssuesCount > 0
-                            ? Colors.redAccent
-                            : roomStagingCount > 0
-                                ? Colors.amberAccent
-                                : Theme.of(context).colorScheme.primary,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: SizedBox(
+                      height: 155,
+                      child: _buildRoomCard(
+                        room,
+                        activeIssuesCount,
+                        roomStagingCount,
                       ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              room.displayName,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildIssueBadge(activeIssuesCount, roomStagingCount),
-                        ],
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text('${room.totalSeats} assentos • ${room.rows.length} fileiras'),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => _onRoomTap(room),
                     ),
                   );
                 },

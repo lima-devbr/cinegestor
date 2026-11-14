@@ -6,6 +6,7 @@ import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/maintenance_issue.dart';
 import '../models/app_user.dart';
+import '../widgets/apple_surfaces.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -16,8 +17,8 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   String _selectedRoomFilter = 'all';
-  String _selectedStatusFilter = 'all'; // 'all', 'staging', 'active', 'resolved'
-  String _selectedUrgencyFilter = 'all'; // 'all', 'Alta', 'Média', 'Baixa'
+  String _selectedStatusFilter = 'all';
+  String _selectedUrgencyFilter = 'all';
 
   List<MaintenanceIssue> _filterIssues(List<MaintenanceIssue> issues) {
     final filtered = issues.where((issue) {
@@ -46,48 +47,64 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Widget _buildFilterBar(RoomController roomController) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      color: Colors.black26,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: const BoxDecoration(
+        color: AppleColors.backgroundSecondary,
+        border: Border(
+          bottom: BorderSide(color: AppleColors.glassBorder, width: 1),
+        ),
+      ),
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
         children: [
           SizedBox(
-            width: 160,
+            width: 170,
             child: DropdownButtonFormField<String>(
               key: ValueKey('room_$_selectedRoomFilter'),
               initialValue: _selectedRoomFilter,
               decoration: const InputDecoration(
                 labelText: 'Sala',
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: [
-                const DropdownMenuItem(value: 'all', child: Text('Todas as Salas')),
+                const DropdownMenuItem(
+                  value: 'all',
+                  child: Text('Todas as Salas'),
+                ),
                 ...roomController.rooms.map(
                   (r) => DropdownMenuItem(value: r.id, child: Text(r.nome)),
                 ),
               ],
-              onChanged: (val) => setState(() => _selectedRoomFilter = val ?? 'all'),
+              onChanged: (val) =>
+                  setState(() => _selectedRoomFilter = val ?? 'all'),
             ),
           ),
           SizedBox(
-            width: 160,
+            width: 170,
             child: DropdownButtonFormField<String>(
               key: ValueKey('status_$_selectedStatusFilter'),
               initialValue: _selectedStatusFilter,
               decoration: const InputDecoration(
                 labelText: 'Status',
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('Todos')),
                 DropdownMenuItem(value: 'staging', child: Text('Em Triagem')),
-                DropdownMenuItem(value: 'active', child: Text('Em Manutenção')),
+                DropdownMenuItem(
+                  value: 'active',
+                  child: Text('Em Manutenção'),
+                ),
                 DropdownMenuItem(value: 'resolved', child: Text('Resolvidos')),
               ],
-              onChanged: (val) => setState(() => _selectedStatusFilter = val ?? 'all'),
+              onChanged: (val) =>
+                  setState(() => _selectedStatusFilter = val ?? 'all'),
             ),
           ),
           SizedBox(
@@ -98,7 +115,8 @@ class _HistoryPageState extends State<HistoryPage> {
               decoration: const InputDecoration(
                 labelText: 'Urgência',
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('Todas')),
@@ -106,7 +124,8 @@ class _HistoryPageState extends State<HistoryPage> {
                 DropdownMenuItem(value: 'Média', child: Text('Média')),
                 DropdownMenuItem(value: 'Baixa', child: Text('Baixa')),
               ],
-              onChanged: (val) => setState(() => _selectedUrgencyFilter = val ?? 'all'),
+              onChanged: (val) =>
+                  setState(() => _selectedUrgencyFilter = val ?? 'all'),
             ),
           ),
         ],
@@ -127,17 +146,23 @@ class _HistoryPageState extends State<HistoryPage> {
     buffer.writeln('--------------------------------------------');
 
     for (final issue in filteredIssues) {
-      final roomName = roomController.getRoomById(issue.roomId)?.displayName ?? 'Sala ${issue.roomId}';
+      final roomName =
+          roomController.getRoomById(issue.roomId)?.displayName ??
+              'Sala ${issue.roomId}';
       final status = issue.resolved ? 'RESOLVIDO' : 'PENDENTE';
       final openedAt = DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime);
       buffer.writeln('[$status] $roomName - Assento ${issue.seatId}');
-      buffer.writeln('  Problema: ${issue.problemType} | Urgência: ${issue.urgency}');
+      buffer.writeln(
+        '  Problema: ${issue.problemType} | Urgência: ${issue.urgency}',
+      );
       if (issue.notes != null && issue.notes!.isNotEmpty) {
         buffer.writeln('  Obs: ${issue.notes}');
       }
       buffer.writeln('  Aberto em: $openedAt');
       if (issue.resolved && issue.resolvedAt != null) {
-        buffer.writeln('  Concluído em: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.resolvedAt!)}');
+        buffer.writeln(
+          '  Concluído em: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.resolvedAt!)}',
+        );
       }
       buffer.writeln('');
     }
@@ -169,12 +194,14 @@ class _HistoryPageState extends State<HistoryPage> {
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Relatório copiado para a área de transferência!'),
+                    content: Text(
+                      'Relatório copiado para a área de transferência!',
+                    ),
                   ),
                 );
               }
             },
-            icon: const Icon(Icons.copy, size: 18),
+            icon: const Icon(Icons.copy_rounded, size: 17),
             label: const Text('Copiar Relatório'),
           ),
         ],
@@ -189,13 +216,14 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Histórico de Manutenção'),
+        title: const Text('Histórico de Manutenções'),
         actions: [
           if (filteredIssues.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.ios_share),
+              icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'Exportar / Copiar Relatório',
-              onPressed: () => _showExportDialog(context, filteredIssues, roomController),
+              onPressed: () =>
+                  _showExportDialog(context, filteredIssues, roomController),
             ),
         ],
       ),
@@ -209,16 +237,16 @@ class _HistoryPageState extends State<HistoryPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          Icons.history,
-                          size: 64,
-                          color: Colors.grey,
+                          Icons.history_rounded,
+                          size: 58,
+                          color: AppleColors.textTertiary,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                         const Text(
                           'Nenhum registro de manutenção encontrado',
                           style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
+                            color: AppleColors.textSecondary,
+                            fontSize: 15,
                           ),
                         ),
                         if (_selectedRoomFilter != 'all' ||
@@ -246,213 +274,223 @@ class _HistoryPageState extends State<HistoryPage> {
                     itemBuilder: (context, index) {
                       final issue = filteredIssues[index];
                       final room = roomController.getRoomById(issue.roomId);
-                      final roomName = room?.displayName ?? 'Sala ${issue.roomId}';
+                      final roomName =
+                          room?.displayName ?? 'Sala ${issue.roomId}';
+                      final statusColor = issue.resolved
+                          ? AppleColors.systemGreen
+                          : issue.isStaging
+                              ? AppleColors.systemAmber
+                              : AppleColors.systemRed;
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
+                      return AppleGlassCard(
+                        margin: const EdgeInsets.only(bottom: 14),
+                        borderRadius: 18,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
                                     children: [
                                       Icon(
                                         issue.resolved
-                                            ? Icons.check_circle
+                                            ? Icons.check_circle_rounded
                                             : issue.isStaging
-                                                ? Icons.pending_actions
-                                                : Icons.warning,
-                                        color: issue.resolved
-                                            ? Colors.greenAccent
-                                            : issue.isStaging
-                                                ? Colors.amberAccent
-                                                : _getUrgencyColor(issue.urgency),
+                                                ? Icons.pending_actions_rounded
+                                                : Icons.warning_amber_rounded,
+                                        color: statusColor,
+                                        size: 20,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        '$roomName - Assento ${issue.seatId}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
+                                      Expanded(
+                                        child: Text(
+                                          '$roomName • Poltrona ${issue.seatId}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: (issue.resolved
-                                              ? Colors.greenAccent
-                                              : issue.isStaging
-                                                  ? Colors.amberAccent
-                                                  : Colors.redAccent)
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      issue.status.displayName,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: issue.resolved
-                                            ? Colors.greenAccent
-                                            : issue.isStaging
-                                                ? Colors.amberAccent
-                                                : Colors.redAccent,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Problema: ${issue.problemType}',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              if (issue.notes != null && issue.notes!.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Observações: ${issue.notes}',
-                                  style: const TextStyle(fontSize: 14, color: Colors.white70),
+                                ),
+                                AppleStatusPill(
+                                  label: issue.status.displayName,
+                                  color: statusColor,
                                 ),
                               ],
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Urgência: ${issue.urgency}',
-                                    style: TextStyle(
-                                      color: _getUrgencyColor(issue.urgency),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        'Aberto: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime)}',
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      if (issue.resolved && issue.resolvedAt != null)
-                                        Text(
-                                          'Concluído: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.resolvedAt!)}',
-                                          style: const TextStyle(
-                                            color: Colors.greenAccent,
-                                            fontSize: 11,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Defeito: ${issue.problemType}',
+                              style: const TextStyle(
+                                color: AppleColors.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const Divider(height: 20, color: Colors.white12),
-                              Consumer<AuthController>(
-                                builder: (context, auth, _) {
-                                  final user = auth.currentUser;
-                                  final canResolve = user?.role.canResolveIssue ?? false;
-                                  final canReopen = user?.role.canReopenIssue ?? false;
-                                  final canDelete = user?.role.canDeleteIssue ?? false;
-                                  final canApprove = user?.role.canApproveStaging ?? false;
-
-                                  return Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      if (canDelete)
-                                        TextButton.icon(
-                                          onPressed: () {
-                                            roomController.deleteIssue(issue.id);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Registro removido do histórico.'),
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                            size: 18,
-                                            color: Colors.redAccent,
-                                          ),
-                                          label: const Text(
-                                            'Excluir',
-                                            style: TextStyle(color: Colors.redAccent),
-                                          ),
-                                        ),
-                                      const SizedBox(width: 8),
-                                      if (issue.isStaging && canApprove)
-                                        ElevatedButton.icon(
-                                          onPressed: () {
-                                            roomController.approveStagingIssue(
-                                              issue.id,
-                                              approvedBy: user?.name,
-                                            );
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Solicitação do assento ${issue.seatId} aprovada!',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.amber.shade800,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 8,
-                                            ),
-                                          ),
-                                          icon: const Icon(Icons.check, size: 18),
-                                          label: const Text('Aprovar'),
-                                        )
-                                      else if (issue.isActive && canResolve)
-                                        ElevatedButton.icon(
-                                          onPressed: () {
-                                            roomController.resolveIssue(
-                                              issue.id,
-                                              resolvedBy: user?.name,
-                                            );
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Manutenção do assento ${issue.seatId} concluída!',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.green.shade700,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 8,
-                                            ),
-                                          ),
-                                          icon: const Icon(Icons.check, size: 18),
-                                          label: const Text('Marcar Resolvido'),
-                                        )
-                                      else if (issue.resolved && canReopen)
-                                        OutlinedButton.icon(
-                                          onPressed: () {
-                                            roomController.reopenIssue(issue.id);
-                                          },
-                                          icon: const Icon(Icons.replay, size: 18),
-                                          label: const Text('Reabrir'),
-                                        ),
-                                    ],
-                                  );
-                                },
+                            ),
+                            if (issue.notes != null &&
+                                issue.notes!.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Observações: ${issue.notes}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppleColors.textSecondary,
+                                ),
                               ),
                             ],
-                          ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                AppleStatusPill(
+                                  label: 'Urgência ${issue.urgency}',
+                                  color: _getUrgencyColor(issue.urgency),
+                                  showDot: false,
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'Aberto: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime)}',
+                                      style: const TextStyle(
+                                        color: AppleColors.textTertiary,
+                                        fontSize: 11.5,
+                                        fontFeatures: [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                    ),
+                                    if (issue.resolved &&
+                                        issue.resolvedAt != null)
+                                      Text(
+                                        'Concluído: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.resolvedAt!)}',
+                                        style: const TextStyle(
+                                          color: AppleColors.systemGreen,
+                                          fontSize: 11.5,
+                                          fontFeatures: [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 22),
+                            Consumer<AuthController>(
+                              builder: (context, auth, _) {
+                                final user = auth.currentUser;
+                                final canResolve =
+                                    user?.role.canResolveIssue ?? false;
+                                final canReopen =
+                                    user?.role.canReopenIssue ?? false;
+                                final canDelete =
+                                    user?.role.canDeleteIssue ?? false;
+                                final canApprove =
+                                    user?.role.canApproveStaging ?? false;
+
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (canDelete)
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          roomController.deleteIssue(issue.id);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Registro removido do histórico.',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 17,
+                                          color: AppleColors.systemRed,
+                                        ),
+                                        label: const Text(
+                                          'Excluir',
+                                          style: TextStyle(
+                                            color: AppleColors.systemRed,
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(width: 8),
+                                    if (issue.isStaging && canApprove)
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          roomController.approveStagingIssue(
+                                            issue.id,
+                                            approvedBy: user?.name,
+                                          );
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Solicitação do assento ${issue.seatId} aprovada!',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppleColors.systemOrange,
+                                          foregroundColor: Colors.black,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.check_rounded,
+                                          size: 17,
+                                        ),
+                                        label: const Text('Aprovar'),
+                                      )
+                                    else if (issue.isActive && canResolve)
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          roomController.resolveIssue(
+                                            issue.id,
+                                            resolvedBy: user?.name,
+                                          );
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Manutenção do assento ${issue.seatId} concluída!',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppleColors.systemGreen,
+                                          foregroundColor: Colors.black,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.check_rounded,
+                                          size: 17,
+                                        ),
+                                        label: const Text('Concluir'),
+                                      )
+                                    else if (issue.resolved && canReopen)
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          roomController.reopenIssue(issue.id);
+                                        },
+                                        icon: const Icon(
+                                          Icons.replay_rounded,
+                                          size: 17,
+                                        ),
+                                        label: const Text('Reabrir'),
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -466,13 +504,13 @@ class _HistoryPageState extends State<HistoryPage> {
   Color _getUrgencyColor(String urgency) {
     switch (urgency.toLowerCase()) {
       case 'alta':
-        return Colors.red;
+        return AppleColors.systemRed;
       case 'média':
-        return Colors.orange;
+        return AppleColors.systemOrange;
       case 'baixa':
-        return Colors.yellow;
+        return AppleColors.systemGreen;
       default:
-        return Colors.grey;
+        return AppleColors.textSecondary;
     }
   }
 }
