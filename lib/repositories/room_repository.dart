@@ -47,17 +47,6 @@ class RoomRepository {
         } catch (_) {}
       }
 
-      // 2. Fallback para salas.json caso alguma sala não esteja na pasta cinemas
-      if (roomsById.isEmpty) {
-        final String jsonString = await rootBundle.loadString('assets/salas.json');
-        final Map<String, dynamic> jsonMap = json.decode(jsonString);
-        final List<dynamic> roomsJson = jsonMap['salas'];
-        for (final e in roomsJson) {
-          final room = Room.fromJson(e as Map<String, dynamic>);
-          roomsById.putIfAbsent(room.id, () => room);
-        }
-      }
-
       final rooms = roomsById.values.toList();
       rooms.sort((a, b) {
         final aNum = int.tryParse(a.id) ?? 999;
