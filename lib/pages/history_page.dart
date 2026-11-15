@@ -192,12 +192,9 @@ class _HistoryPageState extends State<HistoryPage> {
               await Clipboard.setData(ClipboardData(text: reportText));
               if (ctx.mounted) {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Relatório copiado para a área de transferência!',
-                    ),
-                  ),
+                showTopNotice(
+                  context,
+                  'Relatório copiado para a área de transferência!',
                 );
               }
             },
@@ -399,13 +396,10 @@ class _HistoryPageState extends State<HistoryPage> {
                                       TextButton.icon(
                                         onPressed: () {
                                           roomController.deleteIssue(issue.id);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Registro removido do histórico.',
-                                              ),
-                                            ),
+                                          showTopNotice(
+                                            context,
+                                            'Registro removido do histórico.',
+                                            isWarning: true,
                                           );
                                         },
                                         icon: const Icon(
@@ -428,13 +422,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                             issue.id,
                                             approvedBy: user?.name,
                                           );
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Solicitação do assento ${issue.seatId} aprovada!',
-                                              ),
-                                            ),
+                                          showTopNotice(
+                                            context,
+                                            'Solicitação do assento ${issue.seatId} aprovada!',
                                           );
                                         },
                                         style: ElevatedButton.styleFrom(
@@ -455,13 +445,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                             issue.id,
                                             resolvedBy: user?.name,
                                           );
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Manutenção do assento ${issue.seatId} concluída!',
-                                              ),
-                                            ),
+                                          showTopNotice(
+                                            context,
+                                            'Manutenção do assento ${issue.seatId} concluída!',
                                           );
                                         },
                                         style: ElevatedButton.styleFrom(

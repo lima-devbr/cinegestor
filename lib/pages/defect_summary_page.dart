@@ -15,21 +15,8 @@ class DefectSummaryPage extends StatefulWidget {
   const DefectSummaryPage({super.key, this.initialProblemType});
 
   /// Padroniza nomes antigos para agrupar junto com as novas nomenclaturas
-  static String normalizeProblemType(String raw) {
-    final lower = raw.trim().toLowerCase();
-    if (lower == 'sem número' ||
-        lower == 'sem numero' ||
-        lower == 'poltrona sem número') {
-      return 'Poltrona sem Número';
-    }
-    if (lower == 'sem bracinho' || lower == 'bracinho solto') {
-      return 'Bracinho Solto';
-    }
-    if (lower == 'capa rasgada') {
-      return 'Capa Rasgada';
-    }
-    return raw.trim();
-  }
+  static String normalizeProblemType(String raw) =>
+      MaintenanceIssue.normalizeProblemType(raw);
 
   @override
   State<DefectSummaryPage> createState() => _DefectSummaryPageState();
@@ -54,31 +41,38 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
   IconData _getIconForProblem(String problemType) {
     final normalized = normalizeProblemType(problemType).toLowerCase();
     if (normalized.contains('capa')) return Icons.texture_rounded;
-    if (normalized.contains('bracinho') || normalized.contains('braço')) {
+    if (normalized.contains('pc-e') ||
+        normalized.contains('pc-d') ||
+        normalized.contains('arremate')) {
       return Icons.airline_seat_recline_normal_rounded;
     }
     if (normalized.contains('número') || normalized.contains('numero')) {
       return Icons.pin_outlined;
     }
-    if (normalized.contains('mola') || normalized.contains('reclina')) {
+    if (normalized.contains('mola')) {
       return Icons.settings_suggest_rounded;
     }
-    if (normalized.contains('encosto')) return Icons.event_seat_rounded;
-    if (normalized.contains('barulho')) return Icons.volume_up_outlined;
+    if (normalized.contains('encosto') || normalized.contains('assento solto')) {
+      return Icons.warning_amber_rounded;
+    }
     return Icons.build_circle_outlined;
   }
 
   Color _getColorForProblem(String problemType) {
+    if (MaintenanceIssue.isBlockingProblem(problemType)) {
+      return AppleColors.systemRed;
+    }
     final normalized = normalizeProblemType(problemType).toLowerCase();
     if (normalized.contains('capa')) return AppleColors.systemOrange;
-    if (normalized.contains('bracinho')) return AppleColors.systemCyan;
+    if (normalized.contains('pc-e') || normalized.contains('pc-d')) {
+      return AppleColors.systemCyan;
+    }
     if (normalized.contains('número') || normalized.contains('numero')) {
       return AppleColors.systemAmber;
     }
-    if (normalized.contains('mola') || normalized.contains('reclina')) {
-      return AppleColors.systemRed;
+    if (normalized.contains('mola') || normalized.contains('arremate')) {
+      return AppleColors.systemPurple;
     }
-    if (normalized.contains('encosto')) return AppleColors.systemPurple;
     return AppleColors.accentBlue;
   }
 
@@ -95,9 +89,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
     List<MaintenanceIssue> targetIssues,
   ) {
     final Map<String, int> counts = {
-      'Capa Rasgada': 0,
-      'Bracinho Solto': 0,
-      'Poltrona sem Número': 0,
+      for (final type in MaintenanceIssue.standardProblemTypes) type: 0,
     };
 
     for (final issue in targetIssues) {
@@ -192,12 +184,9 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
               await Clipboard.setData(ClipboardData(text: reportText));
               if (ctx.mounted) {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Roteiro copiado para enviar à equipe de manutenção!',
-                    ),
-                  ),
+                showTopNotice(
+                  context,
+                  'Roteiro copiado para enviar à equipe de manutenção!',
                 );
               }
             },
@@ -510,12 +499,9 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                               resolvedBy: currentUser?.name,
                             );
                             if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '${activeIds.length} poltrona(s) de "$problemType" concluída(s) na ${room.nome}!',
-                                  ),
-                                ),
+                              showTopNotice(
+                                context,
+                                '${activeIds.length} poltrona(s) de "$problemType" concluída(s) na ${room.nome}!',
                               );
                             }
                           },
@@ -639,12 +625,9 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                                     resolvedBy: currentUser?.name,
                                   );
                                   if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Assento ${issue.seatId} (${room.nome}) marcado como resolvido!',
-                                        ),
-                                      ),
+                                    showTopNotice(
+                                      context,
+                                      'Assento ${issue.seatId} (${room.nome}) marcado como resolvido!',
                                     );
                                   }
                                 },

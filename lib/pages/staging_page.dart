@@ -165,12 +165,10 @@ class StagingPage extends StatelessWidget {
                                   issue.id,
                                   reason: 'Recusado na triagem',
                                 );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Solicitação recusada e arquivada.',
-                                    ),
-                                  ),
+                                showTopNotice(
+                                  context,
+                                  'Solicitação recusada e arquivada.',
+                                  isWarning: true,
                                 );
                               },
                               child: Container(
@@ -218,12 +216,9 @@ class StagingPage extends StatelessWidget {
                                   issue.id,
                                   approvedBy: currentUser?.name,
                                 );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Demanda aprovada! A poltrona ${issue.seatId} agora está em manutenção.',
-                                    ),
-                                  ),
+                                showTopNotice(
+                                  context,
+                                  'Demanda aprovada! A poltrona ${issue.seatId} agora está em manutenção.',
                                 );
                               },
                               child: Container(

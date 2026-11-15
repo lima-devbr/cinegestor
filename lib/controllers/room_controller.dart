@@ -111,9 +111,14 @@ class RoomController extends ChangeNotifier {
 
   void _syncSeatsWithIssues() {
     for (final room in _rooms) {
-      final activeSeatIds = _issues
+      final roomActiveIssues = _issues
           .where((issue) => issue.roomId == room.id && issue.isActive)
-          .map((issue) => issue.seatId)
+          .toList();
+
+      final activeSeatIds = roomActiveIssues.map((i) => i.seatId).toSet();
+      final blockingSeatIds = roomActiveIssues
+          .where((i) => i.isBlockingSeat)
+          .map((i) => i.seatId)
           .toSet();
 
       final stagingSeatIds = _issues
@@ -123,6 +128,7 @@ class RoomController extends ChangeNotifier {
 
       for (final entry in room.seats.entries) {
         entry.value.hasDefect = activeSeatIds.contains(entry.key);
+        entry.value.hasBlockingDefect = blockingSeatIds.contains(entry.key);
         entry.value.hasStaging = stagingSeatIds.contains(entry.key);
       }
     }

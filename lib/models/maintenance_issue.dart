@@ -21,6 +21,69 @@ extension IssueStatusExtension on IssueStatus {
 }
 
 class MaintenanceIssue {
+  static const List<String> standardProblemTypes = [
+    'Capa Assento Rasg.',
+    'Capa Encosto Rasg.',
+    'Arremate Solto',
+    'PC-E',
+    'PC-D',
+    'Poltrona s/ Número',
+    'Encosto Solto',
+    'Assento Solto',
+    'S/Mola',
+    'Outros',
+  ];
+
+  /// Padroniza nomes antigos e atuais para a lista oficial de defeitos
+  static String normalizeProblemType(String raw) {
+    final lower = raw.trim().toLowerCase();
+    if (lower == 'trocar capa assento' ||
+        lower == 'capa assento rasg.' ||
+        lower == 'capa rasgada') {
+      return 'Capa Assento Rasg.';
+    }
+    if (lower == 'trocar capa encosto' || lower == 'capa encosto rasg.') {
+      return 'Capa Encosto Rasg.';
+    }
+    if (lower == 'sem número' ||
+        lower == 'sem numero' ||
+        lower == 'poltrona sem número' ||
+        lower == 'poltrona s/ número' ||
+        lower == 'poltrona s/ numero') {
+      return 'Poltrona s/ Número';
+    }
+    if (lower == 'trocar mola' || lower == 's/mola' || lower == 'sem mola') {
+      return 'S/Mola';
+    }
+    if (lower == 'encosto solto') {
+      return 'Encosto Solto';
+    }
+    if (lower == 'assento solto') {
+      return 'Assento Solto';
+    }
+    if (lower == 'arremate solto') {
+      return 'Arremate Solto';
+    }
+    if (lower == 'pc-e') {
+      return 'PC-E';
+    }
+    if (lower == 'pc-d') {
+      return 'PC-D';
+    }
+    if (lower == 'outro' || lower == 'outros') {
+      return 'Outros';
+    }
+    return raw.trim();
+  }
+
+  /// Retorna true apenas se o defeito inviabiliza/interdita a poltrona para o cliente
+  /// (Encosto Solto ou Assento Solto). Capas, números, PC-E/D, mola e arremate
+  /// mantêm a poltrona usual/operacional, mas em atenção.
+  static bool isBlockingProblem(String raw) {
+    final normalized = normalizeProblemType(raw);
+    return normalized == 'Encosto Solto' || normalized == 'Assento Solto';
+  }
+
   final String id;
   final String cinemaId;
   final String roomId;
@@ -58,6 +121,9 @@ class MaintenanceIssue {
   bool get isStaging => status == IssueStatus.staging;
   bool get isActive => status == IssueStatus.active;
   bool get isRejected => status == IssueStatus.rejected;
+
+  /// True quando a demanda ativa interdita o assento (Encosto Solto / Assento Solto)
+  bool get isBlockingSeat => isBlockingProblem(problemType);
 
   Map<String, dynamic> toJson() {
     return {

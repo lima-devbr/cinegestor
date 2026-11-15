@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -161,7 +162,8 @@ class _ApplePressableState extends State<ApplePressable>
 }
 
 /// Superfície translúcida estilo macOS/iOS (Materials & Depth - §12)
-/// com desfoque gaussiano, borda iluminada no topo e sombra contextual.
+/// Otimizada para GPU mobile: aplica BackdropFilter apenas em barras/modais
+/// flutuantes (`enableBlur: true`), mantendo 60/120fps em listas longas.
 class AppleGlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -172,6 +174,7 @@ class AppleGlassCard extends StatelessWidget {
   final double blurSigma;
   final VoidCallback? onTap;
   final bool elevated;
+  final bool enableBlur;
 
   const AppleGlassCard({
     super.key,
@@ -181,16 +184,35 @@ class AppleGlassCard extends StatelessWidget {
     this.borderRadius = 16,
     this.tintColor,
     this.borderColor,
-    this.blurSigma = 18,
+    this.blurSigma = 16,
     this.onTap,
     this.elevated = false,
+    this.enableBlur = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final bg = tintColor ??
-        (elevated ? AppleColors.glassElevatedFill : AppleColors.glassFill);
+        (elevated ? const Color(0xF0222226) : const Color(0xE81C1C1E));
     final border = borderColor ?? AppleColors.glassBorder;
+
+    final innerContainer = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: border, width: 1),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.055),
+            Colors.white.withValues(alpha: 0.01),
+          ],
+        ),
+      ),
+      child: child,
+    );
 
     Widget card = Container(
       margin: margin,
@@ -198,35 +220,21 @@ class AppleGlassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: elevated ? 0.42 : 0.26),
-            blurRadius: elevated ? 24 : 14,
-            offset: Offset(0, elevated ? 10 : 5),
+            color: Colors.black.withValues(alpha: elevated ? 0.36 : 0.20),
+            blurRadius: elevated ? 18 : 10,
+            offset: Offset(0, elevated ? 8 : 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              color: bg,
+      child: enableBlur
+          ? ClipRRect(
               borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(color: border, width: 1),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.06),
-                  Colors.white.withValues(alpha: 0.01),
-                ],
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+                child: innerContainer,
               ),
-            ),
-            child: child,
-          ),
-        ),
-      ),
+            )
+          : innerContainer,
     );
 
     if (onTap != null) {
@@ -299,4 +307,259 @@ class AppleStatusPill extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Termômetro visual da sala baseado em porcentagem de poltronas em atenção
+/// e presença de poltronas interditadas (Encosto Solto / Assento Solto):
+/// - Verde: 0% a 5% de pendências usuais (e 0 interditadas)
+/// - Amarelo: 5,1% a 12% de pendências usuais
+/// - Laranja: 12,1% a 20% de pendências usuais (ou 1-2 interditadas)
+/// - Vermelho: > 20% de pendências usuais (ou 3+ interditadas)
+class AppleThermometerBar extends StatelessWidget {
+  final int usualDefectSeats;
+  final int blockingSeats;
+  final int stagingCount;
+  final int totalSeats;
+
+  const AppleThermometerBar({
+    super.key,
+    required this.usualDefectSeats,
+    this.blockingSeats = 0,
+    this.stagingCount = 0,
+    required this.totalSeats,
+  });
+
+  static double calculateHeat({
+    required int usualDefectSeats,
+    required int blockingSeats,
+    required int stagingCount,
+    required int totalSeats,
+  }) {
+    final total = totalSeats > 0 ? totalSeats : 1;
+    final affectedSeats = usualDefectSeats + blockingSeats + (stagingCount * 0.5);
+    final pct = (affectedSeats / total) * 100.0;
+
+    double pctHeat;
+    if (pct <= 0.0) {
+      pctHeat = 0.0;
+    } else if (pct <= 5.0) {
+      // 0% a 5% -> faixa Verde (0.05 a 0.25)
+      pctHeat = 0.05 + (pct / 5.0) * 0.20;
+    } else if (pct <= 12.0) {
+      // 5.1% a 12% -> faixa Amarela (0.25 a 0.55)
+      pctHeat = 0.25 + ((pct - 5.0) / 7.0) * 0.30;
+    } else if (pct <= 20.0) {
+      // 12.1% a 20% -> faixa Laranja (0.55 a 0.85)
+      pctHeat = 0.55 + ((pct - 12.0) / 8.0) * 0.30;
+    } else {
+      // Acima de 20% -> faixa Vermelha (0.85 a 1.0)
+      pctHeat = (0.85 + ((pct - 20.0) / 10.0) * 0.15).clamp(0.85, 1.0);
+    }
+
+    // Se houver cadeiras interditadas (Encosto Solto / Assento Solto), puxa o termômetro:
+    // 1-2 interditadas = no mínimo Laranja (0.65 - 0.78)
+    // 3+ interditadas = Vermelho (0.90 - 1.0)
+    double blockingHeat = 0.0;
+    if (blockingSeats >= 3) {
+      blockingHeat = (0.90 + (blockingSeats - 3) * 0.03).clamp(0.90, 1.0);
+    } else if (blockingSeats == 2) {
+      blockingHeat = 0.78;
+    } else if (blockingSeats == 1) {
+      blockingHeat = 0.65;
+    }
+
+    return pctHeat > blockingHeat ? pctHeat : blockingHeat;
+  }
+
+  static Color colorForHeat(double heat) {
+    if (heat <= 0.25) return AppleColors.systemGreen;
+    if (heat <= 0.55) {
+      return Color.lerp(
+        AppleColors.systemGreen,
+        AppleColors.systemAmber,
+        (heat - 0.25) / 0.30,
+      )!;
+    }
+    if (heat <= 0.85) {
+      return Color.lerp(
+        AppleColors.systemAmber,
+        AppleColors.systemOrange,
+        (heat - 0.55) / 0.30,
+      )!;
+    }
+    return Color.lerp(
+      AppleColors.systemOrange,
+      AppleColors.systemRed,
+      ((heat - 0.85) / 0.15).clamp(0.0, 1.0),
+    )!;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final heat = calculateHeat(
+      usualDefectSeats: usualDefectSeats,
+      blockingSeats: blockingSeats,
+      stagingCount: stagingCount,
+      totalSeats: totalSeats,
+    );
+    final currentColor = colorForHeat(heat);
+    final fillFraction = heat == 0.0 ? 1.0 : heat.clamp(0.14, 1.0);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        height: 6,
+        width: double.infinity,
+        color: AppleColors.surfaceElevated,
+        alignment: Alignment.centerLeft,
+        child: FractionallySizedBox(
+          widthFactor: fillFraction,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              gradient: heat == 0.0
+                  ? LinearGradient(
+                      colors: [
+                        AppleColors.systemGreen.withValues(alpha: 0.7),
+                        AppleColors.systemGreen,
+                      ],
+                    )
+                  : LinearGradient(
+                      colors: [
+                        AppleColors.systemGreen,
+                        if (heat > 0.28) AppleColors.systemAmber,
+                        if (heat > 0.58) AppleColors.systemOrange,
+                        currentColor,
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+OverlayEntry? _activeTopNoticeEntry;
+Timer? _activeTopNoticeTimer;
+
+/// Exibe uma notificação flutuante no TOPO da tela (estilo iOS Dynamic Island / Banner)
+void showTopNotice(
+  BuildContext context,
+  String message, {
+  bool isError = false,
+  bool isWarning = false,
+}) {
+  _activeTopNoticeTimer?.cancel();
+  _activeTopNoticeEntry?.remove();
+  _activeTopNoticeEntry = null;
+
+  final overlay = Overlay.maybeOf(context);
+  if (overlay == null) return;
+
+  final Color accentColor = isError
+      ? AppleColors.systemRed
+      : isWarning
+          ? AppleColors.systemAmber
+          : AppleColors.systemGreen;
+
+  final IconData icon = isError
+      ? Icons.error_outline_rounded
+      : isWarning
+          ? Icons.pending_actions_rounded
+          : Icons.check_circle_rounded;
+
+  late OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (ctx) {
+      final topPadding = MediaQuery.of(ctx).padding.top + 10;
+      return Positioned(
+        top: topPadding,
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, -16 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
+                child: GestureDetector(
+                  onTap: () {
+                    _activeTopNoticeTimer?.cancel();
+                    entry.remove();
+                    if (_activeTopNoticeEntry == entry) {
+                      _activeTopNoticeEntry = null;
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xF5242428),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: accentColor.withValues(alpha: 0.55),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, color: accentColor, size: 20),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Text(
+                            message,
+                            style: const TextStyle(
+                              color: AppleColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  _activeTopNoticeEntry = entry;
+  overlay.insert(entry);
+
+  _activeTopNoticeTimer = Timer(const Duration(milliseconds: 2800), () {
+    if (_activeTopNoticeEntry == entry) {
+      entry.remove();
+      _activeTopNoticeEntry = null;
+    }
+  });
 }

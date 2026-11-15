@@ -4,8 +4,9 @@ class Seat {
   final int? line;
   final int? column;
   final String type; // 'Regular', 'Disability', 'Companion', 'Obese'
-  bool hasDefect; // indica se está com problema confirmado (ativo)
-  bool hasStaging; // indica se está em triagem/análise (solicitação pendente)
+  bool hasDefect; // indica se está com pendência usual (continua operacional, laranja)
+  bool hasBlockingDefect; // indica se está interditada/insegura (Encosto/Assento solto, vermelho)
+  bool hasStaging; // indica se está em triagem/análise (solicitação pendente, amarelo)
 
   Seat({
     required this.row,
@@ -14,6 +15,7 @@ class Seat {
     this.column,
     this.type = 'Regular',
     this.hasDefect = false,
+    this.hasBlockingDefect = false,
     this.hasStaging = false,
   });
 
