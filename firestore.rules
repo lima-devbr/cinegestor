@@ -11,10 +11,13 @@ rules_version = '2';
 // Fields:
 //   - id: string (required, 1..128 chars, immutable, must match userId)
 //   - name: string (required, 1..100 chars) - User display name
+//   - username: string or null (optional, 1..80 chars) - Short username/login handle
 //   - email: string (required, 1..150 chars, immutable for self-update) - User email
-//   - role: string (required, enum: ['operacao', 'assistente', 'encarregado', 'gerente'])
-//   - cinemaId: string (required, 1..50 chars, immutable) - Cinema unit ID (e.g. '2159')
+//   - role: string (required, enum: ['operacao', 'assistente', 'encarregado', 'gerente', 'supervisor', 'admin'])
+//   - cinemaId: string (required, 1..50 chars) - Cinema unit ID (e.g. '2159')
 //   - cinemaName: string (required, 1..120 chars) - Cinema unit display name
+//   - active: bool or null (optional) - Whether the user account is active
+//   - mustChangePassword: bool or null (optional) - Whether user must change temporary password
 //
 // Collection: maintenance_issues
 // Document ID: {issueId}
@@ -123,6 +126,13 @@ service cloud.firestore {
          data[field].size() <= maxLen);
     }
 
+    // Validate optional or nullable boolean field
+    function isValidNullableBool(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is bool;
+    }
+
     // Validate optional or nullable integer within bounds
     function isValidNullableInt(data, field, minVal, maxVal) {
       return !(field in data) ||
@@ -179,6 +189,11 @@ service cloud.firestore {
       return get(callerUserPath()).data;
     }
 
+    function isCallerActive() {
+      return hasCallerProfile() &&
+        (!('active' in callerProfile()) || callerProfile().active == true);
+    }
+
     function callerCinemaId() {
       return callerProfile().cinemaId;
     }
@@ -187,14 +202,21 @@ service cloud.firestore {
       return callerProfile().role;
     }
 
+    function isSupervisorOrAdmin() {
+      return isCallerActive() &&
+        callerRole() in ['supervisor', 'admin'];
+    }
+
     function belongsToCinema(cinemaId) {
-      return hasCallerProfile() &&
-        cinemaId is string &&
-        callerCinemaId() == cinemaId;
+      return isSupervisorOrAdmin() ||
+        (isCallerActive() &&
+         cinemaId is string &&
+         callerCinemaId() == cinemaId);
     }
 
     function isCinemaManager(cinemaId) {
-      return belongsToCinema(cinemaId) && callerRole() == 'gerente';
+      return isSupervisorOrAdmin() ||
+        (belongsToCinema(cinemaId) && callerRole() == 'gerente');
     }
 
     function isBootstrappedRoleAllowed(role) {
@@ -205,7 +227,9 @@ service cloud.firestore {
           (request.auth.token.email == 'operacao@cinegestor.com' && role == 'operacao') ||
           (request.auth.token.email == 'assistente@cinegestor.com' && role == 'assistente') ||
           (request.auth.token.email == 'encarregado@cinegestor.com' && role == 'encarregado') ||
-          (request.auth.token.email in ['gerente@cinegestor.com', 'admin@cinegestor.com'] && role == 'gerente')
+          (request.auth.token.email == 'gerente@cinegestor.com' && role == 'gerente') ||
+          (request.auth.token.email == 'supervisor@cinegestor.com' && role == 'supervisor') ||
+          (request.auth.token.email == 'admin@cinegestor.com' && role in ['admin', 'gerente'])
         );
     }
 
@@ -214,14 +238,20 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data, userId) {
-      return hasOnlyAllowedFields(['id', 'name', 'email', 'role', 'cinemaId', 'cinemaName']) &&
+      return hasOnlyAllowedFields([
+          'id', 'name', 'username', 'email', 'role',
+          'cinemaId', 'cinemaName', 'active', 'mustChangePassword'
+        ]) &&
         hasRequiredFields(['id', 'name', 'email', 'role', 'cinemaId', 'cinemaName']) &&
         data.id is string && data.id == userId && data.id.size() >= 1 && data.id.size() <= 128 &&
         validStringLength('name', 1, 100) &&
+        isValidNullableString(data, 'username', 1, 80) &&
         isValidEmail(data.email) &&
-        data.role in ['operacao', 'assistente', 'encarregado', 'gerente'] &&
+        data.role in ['operacao', 'assistente', 'encarregado', 'gerente', 'supervisor', 'admin'] &&
         validStringLength('cinemaId', 1, 50) &&
-        validStringLength('cinemaName', 1, 120);
+        validStringLength('cinemaName', 1, 120) &&
+        isValidNullableBool(data, 'active') &&
+        isValidNullableBool(data, 'mustChangePassword');
     }
 
     function isValidMaintenanceIssue(data, issueId) {
@@ -255,7 +285,8 @@ service cloud.firestore {
     function isValidIssueStatusOnCreate(data) {
       let role = callerRole();
       return (role == 'operacao' && data.status == 'staging') ||
-        (role in ['assistente', 'encarregado', 'gerente'] && data.status in ['staging', 'active']);
+        (role in ['assistente', 'encarregado', 'gerente', 'supervisor', 'admin'] &&
+          data.status in ['staging', 'active']);
     }
 
     function isValidIssueStatusTransition() {
@@ -264,13 +295,15 @@ service cloud.firestore {
       let newStatus = request.resource.data.status;
 
       return (
-        // Encarregado and Gerente can approve or reject staging issues, or resolve active issues
-        (role in ['encarregado', 'gerente'] && (
+        // Encarregado, Gerente, Supervisor, and Admin can approve or reject staging issues, or resolve active issues
+        (role in ['encarregado', 'gerente', 'supervisor', 'admin'] && (
           (oldStatus == 'staging' && newStatus in ['staging', 'active', 'rejected']) ||
           (oldStatus == 'active' && newStatus in ['active', 'resolved'])
         )) ||
-        // Only Gerente can reopen a resolved or rejected issue back to active
-        (role == 'gerente' && oldStatus in ['resolved', 'rejected'] && newStatus in ['active', 'resolved', 'rejected'])
+        // Only Gerente, Supervisor, or Admin can reopen a resolved or rejected issue back to active
+        (role in ['gerente', 'supervisor', 'admin'] &&
+          oldStatus in ['resolved', 'rejected'] &&
+          newStatus in ['active', 'resolved', 'rejected'])
       );
     }
 
@@ -306,12 +339,12 @@ service cloud.firestore {
     // Collection Rules: /users/{userId}
     // ===============================================================
     match /users/{userId} {
-      // Authenticated user can read their own profile or users in the same cinemaId
+      // Authenticated user can read their own profile or users in the same cinemaId (or all if supervisor/admin)
       allow get: if isOwner(userId) || belongsToCinema(resource.data.cinemaId);
       allow list: if belongsToCinema(resource.data.cinemaId);
 
-      // Self-registration restricts role to 'operacao' (or mapped initial role for the 5 bootstrapped accounts),
-      // or a manager ('gerente') from the same cinemaId can create user profiles.
+      // Self-registration restricts role to 'operacao' (or mapped initial role for the 6 bootstrapped accounts),
+      // Supervisor/Admin can create any valid user, and a cinema Gerente can create cinema-scoped roles.
       allow create: if isAuthenticated() &&
         isValidUser(request.resource.data, userId) &&
         (
@@ -319,28 +352,40 @@ service cloud.firestore {
             request.resource.data.role == 'operacao' ||
             isBootstrappedRoleAllowed(request.resource.data.role)
           )) ||
-          isCinemaManager(request.resource.data.cinemaId)
+          isSupervisorOrAdmin() ||
+          (isCinemaManager(request.resource.data.cinemaId) &&
+            request.resource.data.role in ['operacao', 'assistente', 'encarregado', 'gerente'])
         );
 
-      // Users can update their own name/cinemaName (cannot change id, email, role, or cinemaId).
-      // Managers ('gerente') from the same cinemaId can update users in their cinema (id & cinemaId remain immutable).
+      // - Users can update their own profile fields (name, username, cinemaName, mustChangePassword) while id, email, role, cinemaId, active remain immutable.
+      // - Supervisor/Admin can update any user (including switching cinemaId or updating roles/active status, with id immutable).
+      // - Cinema Gerente can update users in their cinema for cinema-scoped roles (id & cinemaId remain immutable).
       allow update: if isAuthenticated() &&
         isValidUser(request.resource.data, userId) &&
         uidNotModified() &&
         (
-          (isOwner(userId) && areImmutableFieldsUnchanged(['id', 'email', 'role', 'cinemaId'])) ||
-          (isCinemaManager(resource.data.cinemaId) && areImmutableFieldsUnchanged(['id', 'cinemaId']))
+          (isOwner(userId) && isCallerActive() &&
+            areImmutableFieldsUnchanged(['id', 'email', 'role', 'cinemaId', 'active'])) ||
+          (isSupervisorOrAdmin() &&
+            areImmutableFieldsUnchanged(['id']) &&
+            (callerRole() == 'admin' || request.resource.data.role != 'admin')) ||
+          (isCinemaManager(resource.data.cinemaId) &&
+            areImmutableFieldsUnchanged(['id', 'cinemaId']) &&
+            !(resource.data.role in ['supervisor', 'admin']) &&
+            request.resource.data.role in ['operacao', 'assistente', 'encarregado', 'gerente'])
         );
 
-      // Only a manager ('gerente') from the same cinemaId can delete a user document
-      allow delete: if isCinemaManager(resource.data.cinemaId);
+      // Supervisor/Admin or a manager ('gerente') from the same cinemaId can delete a user document
+      allow delete: if isSupervisorOrAdmin() ||
+        (isCinemaManager(resource.data.cinemaId) &&
+          !(resource.data.role in ['supervisor', 'admin']));
     }
 
     // ===============================================================
     // Collection Rules: /maintenance_issues/{issueId}
     // ===============================================================
     match /maintenance_issues/{issueId} {
-      // Any authenticated user belonging to the issue's cinemaId can read/list issues
+      // Any authenticated user belonging to the issue's cinemaId (or supervisor/admin) can read/list issues
       allow read: if belongsToCinema(resource.data.cinemaId);
 
       // Create requires membership in the issue's cinemaId, valid schema, and role-permitted initial status
@@ -356,7 +401,7 @@ service cloud.firestore {
         ]) &&
         isValidIssueStatusTransition();
 
-      // Only a manager ('gerente') from the same cinemaId can delete a maintenance issue
+      // Only a manager ('gerente') from the same cinemaId or supervisor/admin can delete a maintenance issue
       allow delete: if isCinemaManager(resource.data.cinemaId);
     }
 
@@ -364,10 +409,10 @@ service cloud.firestore {
     // Collection Rules: /rooms/{roomDocId}
     // ===============================================================
     match /rooms/{roomDocId} {
-      // Authenticated users belonging to the room's cinemaId can read/list rooms
+      // Authenticated users belonging to the room's cinemaId (or supervisor/admin) can read/list rooms
       allow read: if belongsToCinema(resource.data.cinemaId);
 
-      // Only a manager ('gerente') from the same cinemaId can create, update, or delete rooms
+      // Only a manager ('gerente') from the same cinemaId or supervisor/admin can create, update, or delete rooms
       allow create: if isCinemaManager(request.resource.data.cinemaId) &&
         isValidRoom(request.resource.data);
 

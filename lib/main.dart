@@ -11,6 +11,7 @@ import 'pages/maintenance_page.dart';
 import 'pages/history_page.dart';
 import 'pages/staging_page.dart';
 import 'pages/defect_summary_page.dart';
+import 'pages/user_management_page.dart';
 import 'theme/app_theme.dart';
 
 bool isFirebaseInitialized = false;
@@ -83,6 +84,10 @@ class GineGestorApp extends StatelessWidget {
             final initialType = settings.arguments as String?;
             return MaterialPageRoute(
               builder: (_) => DefectSummaryPage(initialProblemType: initialType),
+            );
+          case '/users':
+            return MaterialPageRoute(
+              builder: (_) => const UserManagementPage(),
             );
           default:
             return null;

@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage>
 
   void _fillQuickLogin(AppUser user) {
     setState(() {
-      _emailController.text = user.email;
+      _emailController.text = user.displayUsername;
       _passwordController.text = '123';
       _errorMessage = null;
     });
@@ -97,12 +97,17 @@ class _LoginPageState extends State<LoginPage>
         return AppleColors.systemGreen;
       case UserRole.gerente:
         return AppleColors.accentBlue;
+      case UserRole.supervisor:
+        return AppleColors.systemPurple;
+      case UserRole.admin:
+        return AppleColors.systemRed;
     }
   }
 
   Widget _buildQuickLoginChip(AppUser user) {
     final roleColor = _getRoleColor(user.role);
-    final isSelected = _emailController.text == user.email;
+    final isSelected = _emailController.text == user.displayUsername ||
+        _emailController.text == user.email;
 
     return ApplePressable(
       pressedScale: 0.95,
@@ -135,7 +140,7 @@ class _LoginPageState extends State<LoginPage>
             ),
             const SizedBox(width: 7),
             Text(
-              '${user.role.shortName} • ${user.name.split(" ")[0]}',
+              user.role.displayName,
               style: TextStyle(
                 color: isSelected
                     ? AppleColors.textPrimary
@@ -261,7 +266,6 @@ class _LoginPageState extends State<LoginPage>
                             const SizedBox(height: 28),
                             TextField(
                               controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               style: const TextStyle(
                                 color: AppleColors.textPrimary,
@@ -269,11 +273,11 @@ class _LoginPageState extends State<LoginPage>
                               ),
                               decoration: const InputDecoration(
                                 prefixIcon: Icon(
-                                  Icons.alternate_email_rounded,
+                                  Icons.person_outline_rounded,
                                   color: AppleColors.textSecondary,
                                   size: 19,
                                 ),
-                                labelText: 'E-mail corporativo',
+                                labelText: 'Usuário (ex: admin, supervisor)',
                               ),
                             ),
                             const SizedBox(height: 14),
@@ -395,7 +399,6 @@ class _LoginPageState extends State<LoginPage>
                               spacing: 8,
                               runSpacing: 8,
                               children: AuthController.mockUsers
-                                  .where((u) => u.id != 'admin')
                                   .map(_buildQuickLoginChip)
                                   .toList(),
                             ),

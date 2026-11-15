@@ -6,6 +6,8 @@ import '../models/room.dart';
 import '../models/app_user.dart';
 import '../models/maintenance_issue.dart';
 import '../widgets/apple_surfaces.dart';
+import '../services/app_update_service.dart';
+import 'user_management_page.dart';
 
 class RoomSelectionPage extends StatefulWidget {
   final RoomController roomController;
@@ -24,6 +26,80 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
   void initState() {
     super.initState();
     _loadRooms();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final auth = Provider.of<AuthController>(context, listen: false);
+      if (auth.currentUser?.mustChangePassword ?? false) {
+        showChangeOwnPasswordDialog(context, isMandatoryFirstAccess: true);
+      }
+
+      // Verifica silenciosamente se há nova versão cadastrada no Firebase
+      final updateInfo = await AppUpdateService.checkForUpdate();
+      if (updateInfo != null && mounted) {
+        AppUpdateService.showUpdateDialog(context, updateInfo);
+      }
+    });
+  }
+
+  void _showCinemaSwitcherDialog(
+    BuildContext context,
+    AuthController authController,
+  ) {
+    final currentCinemaId = authController.currentUser?.cinemaId ?? '2159';
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Selecionar Unidade da Rede'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: CinemaUnit.availableCinemas.map((unit) {
+                final isSelected = unit.id == currentCinemaId;
+                return ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  leading: Icon(
+                    Icons.theaters_rounded,
+                    color: isSelected
+                        ? AppleColors.accentBlue
+                        : AppleColors.textSecondary,
+                  ),
+                  title: Text(
+                    unit.name,
+                    style: TextStyle(
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? AppleColors.accentBlue
+                          : AppleColors.textPrimary,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(
+                          Icons.check_circle_rounded,
+                          color: AppleColors.accentBlue,
+                        )
+                      : null,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await authController.switchActiveCinema(unit.id, unit.name);
+                    await widget.roomController.loadRooms(cinemaId: unit.id);
+                    if (context.mounted) {
+                      showTopNotice(
+                        context,
+                        'Unidade alterada para ${unit.name}',
+                      );
+                    }
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _loadRooms() async {
@@ -465,27 +541,48 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              currentUser?.cinemaName ?? 'Salas de Cinema',
-              style: const TextStyle(
-                fontSize: 16.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
+        title: GestureDetector(
+          onTap: (currentUser?.role.canSwitchCinema ?? false)
+              ? () => _showCinemaSwitcherDialog(context, authController)
+              : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      currentUser?.cinemaName ?? 'Salas de Cinema',
+                      style: const TextStyle(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (currentUser?.role.canSwitchCinema ?? false) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: AppleColors.accentBlue,
+                    ),
+                  ],
+                ],
               ),
-            ),
-            if (currentUser != null)
-              Text(
-                '${currentUser.name} • ${currentUser.role.displayName}',
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: AppleColors.textSecondary,
-                  fontWeight: FontWeight.w400,
+              if (currentUser != null)
+                Text(
+                  '${currentUser.name} • ${currentUser.role.displayName}',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppleColors.textSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         actions: [
           if ((currentUser?.role.canApproveStaging ?? false) && stagingCount > 0)
@@ -521,6 +618,12 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 ),
               ],
             ),
+          if (currentUser?.role.canManageUsers ?? false)
+            IconButton(
+              icon: const Icon(Icons.manage_accounts_rounded),
+              tooltip: 'Gestão de Equipe & Acessos',
+              onPressed: () => Navigator.pushNamed(context, '/users'),
+            ),
           IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'Histórico de Manutenções',
@@ -530,6 +633,15 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
             icon: const Icon(Icons.more_horiz_rounded),
             onSelected: (value) {
               switch (value) {
+                case 'users':
+                  Navigator.pushNamed(context, '/users');
+                  break;
+                case 'switch_cinema':
+                  _showCinemaSwitcherDialog(context, authController);
+                  break;
+                case 'change_password':
+                  showChangeOwnPasswordDialog(context);
+                  break;
                 case 'defects':
                   Navigator.pushNamed(context, '/defects');
                   break;
@@ -545,6 +657,28 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               }
             },
             itemBuilder: (context) => [
+              if (currentUser?.role.canManageUsers ?? false)
+                const PopupMenuItem(
+                  value: 'users',
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.manage_accounts_rounded,
+                      color: AppleColors.accentBlue,
+                    ),
+                    title: Text('Gestão de Equipe'),
+                  ),
+                ),
+              if (currentUser?.role.canSwitchCinema ?? false)
+                const PopupMenuItem(
+                  value: 'switch_cinema',
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.theaters_rounded,
+                      color: AppleColors.systemPurple,
+                    ),
+                    title: Text('Trocar de Cinema'),
+                  ),
+                ),
               const PopupMenuItem(
                 value: 'defects',
                 child: ListTile(
@@ -571,6 +705,13 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 child: ListTile(
                   leading: Icon(Icons.history_rounded),
                   title: Text('Histórico'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'change_password',
+                child: ListTile(
+                  leading: Icon(Icons.key_rounded),
+                  title: Text('Alterar Minha Senha'),
                 ),
               ),
               const PopupMenuItem(
