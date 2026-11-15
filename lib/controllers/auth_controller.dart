@@ -24,69 +24,17 @@ class AuthController extends ChangeNotifier {
   bool _isLoadingTeam = false;
   bool get isLoadingTeam => _isLoadingTeam;
 
-  // Contas padrão pré-configuradas (incluindo seu login Admin e o Supervisor Regional)
-  static const List<AppUser> mockUsers = [
-    AppUser(
-      id: 'admin',
-      name: 'Administrador',
-      username: 'admin',
-      email: 'admin@cinegestor.com',
-      password: '123',
-      role: UserRole.admin,
-      cinemaId: '2159',
-      cinemaName: 'UCI Park Campo Grande',
-    ),
-    AppUser(
-      id: 'supervisor',
-      name: 'Supervisor Regional',
-      username: 'supervisor',
-      email: 'supervisor@cinegestor.com',
-      password: '123',
-      role: UserRole.supervisor,
-      cinemaId: '2159',
-      cinemaName: 'UCI Park Campo Grande',
-    ),
-    AppUser(
-      id: 'u4',
-      name: 'Alessandra Gerente',
-      username: 'gerente',
-      email: 'gerente@cinegestor.com',
-      password: '123',
-      role: UserRole.gerente,
-      cinemaId: '2159',
-      cinemaName: 'UCI Park Campo Grande',
-    ),
-    AppUser(
-      id: 'u3',
-      name: 'Marcos Encarregado',
-      username: 'encarregado',
-      email: 'encarregado@cinegestor.com',
-      password: '123',
-      role: UserRole.encarregado,
-      cinemaId: '2159',
-      cinemaName: 'UCI Park Campo Grande',
-    ),
-    AppUser(
-      id: 'u2',
-      name: 'Roberto Manutenção',
-      username: 'assistente',
-      email: 'assistente@cinegestor.com',
-      password: '123',
-      role: UserRole.assistente,
-      cinemaId: '2159',
-      cinemaName: 'UCI Park Campo Grande',
-    ),
-    AppUser(
-      id: 'u1',
-      name: 'Carlos Portaria',
-      username: 'operacao',
-      email: 'operacao@cinegestor.com',
-      password: '123',
-      role: UserRole.operacao,
-      cinemaId: '2159',
-      cinemaName: 'UCI Park Campo Grande',
-    ),
-  ];
+  // Conta mestre inicial de Administração (sincronizada direto com o Firebase)
+  static const AppUser bootstrapAdmin = AppUser(
+    id: 'admin',
+    name: 'Administrador',
+    username: 'admin',
+    email: 'admin@cinegestor.com',
+    password: '',
+    role: UserRole.admin,
+    cinemaId: '2159',
+    cinemaName: 'UCI Park Campo Grande',
+  );
 
   /// Converte um nome de usuário curto (ex: "joao" ou "admin") em e-mail válido
   /// caso não possua "@".
@@ -109,9 +57,7 @@ class AuthController extends ChangeNotifier {
   Future<List<AppUser>> _loadLocalUsers() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString('managed_users_cache');
-    final Map<String, AppUser> byEmail = {
-      for (final u in mockUsers) u.email.toLowerCase(): u,
-    };
+    final Map<String, AppUser> byEmail = {};
 
     if (raw != null) {
       try {
@@ -192,22 +138,25 @@ class AuthController extends ChangeNotifier {
     }
 
     final localUsers = await _loadLocalUsers();
+    final isBootstrapAdminLogin =
+        normalizedEmail == bootstrapAdmin.email && normalizedPass == 'admin123';
+
     final matchedLocal = localUsers.firstWhere(
       (u) =>
           u.email.toLowerCase() == normalizedEmail &&
-          (u.password.isEmpty ||
-              u.password == normalizedPass ||
-              (normalizedPass == 'admin123' && u.role == UserRole.admin) ||
-              normalizedPass == 'cine123'),
-      orElse: () => const AppUser(
-        id: '',
-        name: '',
-        email: '',
-        password: '',
-        role: UserRole.operacao,
-        cinemaId: '',
-        cinemaName: '',
-      ),
+          u.password.isNotEmpty &&
+          u.password == normalizedPass,
+      orElse: () => isBootstrapAdminLogin
+          ? bootstrapAdmin
+          : const AppUser(
+              id: '',
+              name: '',
+              email: '',
+              password: '',
+              role: UserRole.operacao,
+              cinemaId: '',
+              cinemaName: '',
+            ),
     );
 
     if (matchedLocal.id.isNotEmpty && !matchedLocal.active) {
@@ -227,10 +176,33 @@ class AuthController extends ChangeNotifier {
             password: firebasePass,
           );
         } on FirebaseAuthException catch (e) {
-          if (matchedLocal.id.isNotEmpty &&
-              (e.code == 'user-not-found' ||
-                  e.code == 'invalid-credential' ||
-                  e.code == 'invalid-login-credentials')) {
+          final isAuthNotFoundOrInvalid = e.code == 'user-not-found' ||
+              e.code == 'invalid-credential' ||
+              e.code == 'invalid-login-credentials' ||
+              e.code == 'wrong-password';
+
+          if (isBootstrapAdminLogin && isAuthNotFoundOrInvalid) {
+            try {
+              // Se ainda não existir no Firebase Auth, cria com admin123
+              credential =
+                  await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                email: normalizedEmail,
+                password: firebasePass,
+              );
+            } on FirebaseAuthException catch (createErr) {
+              if (createErr.code == 'email-already-in-use') {
+                // Migra automaticamente caso tenha sido criado antes com a senha antiga '123' ('cine123')
+                credential =
+                    await FirebaseAuth.instance.signInWithEmailAndPassword(
+                  email: normalizedEmail,
+                  password: 'cine123',
+                );
+                await credential.user?.updatePassword(firebasePass);
+              } else {
+                rethrow;
+              }
+            }
+          } else if (matchedLocal.id.isNotEmpty && isAuthNotFoundOrInvalid) {
             credential =
                 await FirebaseAuth.instance.createUserWithEmailAndPassword(
               email: normalizedEmail,
@@ -250,29 +222,36 @@ class AuthController extends ChangeNotifier {
         if (userSnapshot.exists && userSnapshot.data() != null) {
           resolvedUser = AppUser.fromJson(userSnapshot.data()!);
           // Garante que o login admin sempre tenha o papel admin atualizado
-          if (normalizedEmail == 'admin@cinegestor.com' &&
+          if (normalizedEmail == bootstrapAdmin.email &&
               resolvedUser.role != UserRole.admin) {
             resolvedUser = resolvedUser.copyWith(role: UserRole.admin);
             await userDocRef.set(resolvedUser.toJson());
           }
         } else {
+          final isAdminEmail = normalizedEmail == bootstrapAdmin.email;
           resolvedUser = AppUser(
             id: uid,
-            name: matchedLocal.id.isNotEmpty
-                ? matchedLocal.name
-                : normalizedEmail.split('@').first,
+            name: isAdminEmail
+                ? bootstrapAdmin.name
+                : (matchedLocal.id.isNotEmpty
+                    ? matchedLocal.name
+                    : normalizedEmail.split('@').first),
             username: normalizedEmail.split('@').first,
             email: normalizedEmail,
             password: '',
-            role: matchedLocal.id.isNotEmpty
-                ? matchedLocal.role
-                : UserRole.operacao,
-            cinemaId: matchedLocal.id.isNotEmpty
+            role: isAdminEmail
+                ? UserRole.admin
+                : (matchedLocal.id.isNotEmpty
+                    ? matchedLocal.role
+                    : UserRole.operacao),
+            cinemaId: matchedLocal.id.isNotEmpty &&
+                    matchedLocal.cinemaId.isNotEmpty
                 ? matchedLocal.cinemaId
-                : '2159',
-            cinemaName: matchedLocal.id.isNotEmpty
+                : bootstrapAdmin.cinemaId,
+            cinemaName: matchedLocal.id.isNotEmpty &&
+                    matchedLocal.cinemaName.isNotEmpty
                 ? matchedLocal.cinemaName
-                : 'UCI Park Campo Grande',
+                : bootstrapAdmin.cinemaName,
             active: true,
             mustChangePassword: matchedLocal.mustChangePassword,
           );

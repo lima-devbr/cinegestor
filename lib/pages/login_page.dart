@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../controllers/auth_controller.dart';
-import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 
 class LoginPage extends StatefulWidget {
@@ -55,14 +54,6 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
-  void _fillQuickLogin(AppUser user) {
-    setState(() {
-      _emailController.text = user.displayUsername;
-      _passwordController.text = '123';
-      _errorMessage = null;
-    });
-  }
-
   Future<void> _tryLogin() async {
     setState(() {
       _errorMessage = null;
@@ -85,75 +76,6 @@ class _LoginPageState extends State<LoginPage>
         Navigator.pushReplacementNamed(context, '/rooms');
       }
     });
-  }
-
-  Color _getRoleColor(UserRole role) {
-    switch (role) {
-      case UserRole.operacao:
-        return AppleColors.systemAmber;
-      case UserRole.assistente:
-        return AppleColors.systemCyan;
-      case UserRole.encarregado:
-        return AppleColors.systemGreen;
-      case UserRole.gerente:
-        return AppleColors.accentBlue;
-      case UserRole.supervisor:
-        return AppleColors.systemPurple;
-      case UserRole.admin:
-        return AppleColors.systemRed;
-    }
-  }
-
-  Widget _buildQuickLoginChip(AppUser user) {
-    final roleColor = _getRoleColor(user.role);
-    final isSelected = _emailController.text == user.displayUsername ||
-        _emailController.text == user.email;
-
-    return ApplePressable(
-      pressedScale: 0.95,
-      onPressed: () => _fillQuickLogin(user),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? roleColor.withValues(alpha: 0.22)
-              : AppleColors.surfaceElevated.withValues(alpha: 0.65),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? roleColor.withValues(alpha: 0.7)
-                : AppleColors.glassBorder,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: roleColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 7),
-            Text(
-              user.role.displayName,
-              style: TextStyle(
-                color: isSelected
-                    ? AppleColors.textPrimary
-                    : AppleColors.textSecondary,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -277,7 +199,7 @@ class _LoginPageState extends State<LoginPage>
                                   color: AppleColors.textSecondary,
                                   size: 19,
                                 ),
-                                labelText: 'Usuário (ex: admin, supervisor)',
+                                labelText: 'Usuário',
                               ),
                             ),
                             const SizedBox(height: 14),
@@ -381,26 +303,6 @@ class _LoginPageState extends State<LoginPage>
                                         ),
                                       ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            const Divider(height: 1),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'ACESSO RÁPIDO POR PERFIL (SENHA: 123)',
-                              style: TextStyle(
-                                color: AppleColors.textTertiary,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.6,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: AuthController.mockUsers
-                                  .map(_buildQuickLoginChip)
-                                  .toList(),
                             ),
                           ],
                         ),

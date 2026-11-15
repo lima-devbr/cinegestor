@@ -88,6 +88,239 @@ class AppUpdateService {
       builder: (ctx) => _UpdateDialog(info: info),
     );
   }
+
+  /// Painel exclusivo do Administrador para publicar uma nova versão direto pelo app
+  /// (grava em `/app_config/version` no Cloud Firestore sem precisar abrir o Console web)
+  static Future<void> showPublishUpdateDialog(BuildContext context) async {
+    String currentVer = '1.0.0';
+    int currentBuild = 1;
+    String currentUrl = '';
+    String currentNotes = 'Melhorias gerais e correções de estabilidade.';
+    bool currentMandatory = false;
+
+    try {
+      final pkg = await PackageInfo.fromPlatform();
+      currentVer = pkg.version;
+      currentBuild = (int.tryParse(pkg.buildNumber) ?? 1) + 1;
+    } catch (_) {}
+
+    if (isFirebaseInitialized) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('app_config')
+            .doc('version')
+            .get();
+        if (doc.exists && doc.data() != null) {
+          final existing = AppUpdateInfo.fromFirestore(doc.data()!);
+          currentVer = existing.latestVersion;
+          currentBuild = existing.latestBuildNumber;
+          currentUrl = existing.downloadUrl;
+          currentNotes = existing.releaseNotes;
+          currentMandatory = existing.isMandatory;
+        }
+      } catch (_) {}
+    }
+
+    if (!context.mounted) return;
+
+    final versionCtrl = TextEditingController(text: currentVer);
+    final buildCtrl = TextEditingController(text: '$currentBuild');
+    final urlCtrl = TextEditingController(text: currentUrl);
+    final notesCtrl = TextEditingController(text: currentNotes);
+    bool isMandatory = currentMandatory;
+    bool isSaving = false;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: AppleColors.surfaceElevated,
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.rocket_launch_rounded,
+                    color: AppleColors.accentBlue,
+                    size: 22,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Publicar Atualização do App',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Configure os dados da nova versão. Todos os celulares com build menor receberão o aviso de download automático ao abrir o CineGestor.',
+                        style: TextStyle(
+                          color: AppleColors.textSecondary,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              controller: versionCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Versão (ex: 1.1.0)',
+                                prefixIcon: Icon(Icons.tag_rounded, size: 18),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: buildCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Build (ex: 2)',
+                                prefixIcon:
+                                    Icon(Icons.numbers_rounded, size: 18),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: urlCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Link direto do APK (.apk)',
+                          hintText:
+                              'https://github.com/.../releases/download/v1.1.0/app-release.apk',
+                          prefixIcon: Icon(Icons.link_rounded, size: 18),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: notesCtrl,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Novidades da versão',
+                          prefixIcon: Icon(Icons.notes_rounded, size: 18),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: isMandatory,
+                        activeTrackColor: AppleColors.accentBlue,
+                        title: const Text(
+                          'Atualização Obrigatória',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Impede fechar o aviso sem atualizar',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppleColors.textSecondary,
+                          ),
+                        ),
+                        onChanged: (val) =>
+                            setDialogState(() => isMandatory = val),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: AppleColors.textSecondary),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final ver = versionCtrl.text.trim();
+                          final bld =
+                              int.tryParse(buildCtrl.text.trim()) ?? 1;
+                          final url = urlCtrl.text.trim();
+                          final notes = notesCtrl.text.trim();
+
+                          if (ver.isEmpty || url.isEmpty) {
+                            showTopNotice(
+                              context,
+                              'Informe a versão e o link direto do APK.',
+                              isWarning: true,
+                            );
+                            return;
+                          }
+
+                          setDialogState(() => isSaving = true);
+                          try {
+                            await FirebaseFirestore.instance
+                                .collection('app_config')
+                                .doc('version')
+                                .set({
+                              'latest_version': ver,
+                              'latest_build_number': bld,
+                              'download_url': url,
+                              'release_notes': notes.isEmpty
+                                  ? 'Melhorias gerais e correções.'
+                                  : notes,
+                              'is_mandatory': isMandatory,
+                              'updated_at': DateTime.now().toIso8601String(),
+                            });
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (context.mounted) {
+                              showTopNotice(
+                                context,
+                                'Versão $ver (Build $bld) publicada com sucesso!',
+                              );
+                            }
+                          } catch (e) {
+                            setDialogState(() => isSaving = false);
+                            if (context.mounted) {
+                              showTopNotice(
+                                context,
+                                'Erro ao publicar versão: $e',
+                                isWarning: true,
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppleColors.accentBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.cloud_upload_rounded, size: 18),
+                  label: Text(isSaving ? 'Publicando...' : 'Publicar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
 class _UpdateDialog extends StatefulWidget {

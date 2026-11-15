@@ -59,6 +59,17 @@ rules_version = '2';
 //   - aislesByRow: map or null (optional, max 100 keys)
 //   - excecoes: map or null (optional, max 500 keys)
 //
+// Collection: app_config
+// Document ID: {docId} (e.g. 'version')
+// Fields:
+//   - latest_version: string (required, 1..30 chars) - Semantic version string
+//   - latest_build_number: int (required, 1..100000) - Build number for update comparison
+//   - download_url: string (required, 0..1000 chars) - Download URL for update package
+//   - release_notes: string (required, 0..2000 chars) - Release notes description
+//   - is_mandatory: bool or null (optional) - Whether the update is mandatory
+//   - updated_at: string, timestamp, or null (optional) - Last update timestamp/ISO-8601
+//   - updated_by: string or null (optional, 1..150 chars) - User who published the update
+//
 // ===============================================================
 
 service cloud.firestore {
@@ -223,14 +234,8 @@ service cloud.firestore {
       return isAuthenticated() &&
         request.auth.token.email is string &&
         request.auth.token.email == request.resource.data.email &&
-        (
-          (request.auth.token.email == 'operacao@cinegestor.com' && role == 'operacao') ||
-          (request.auth.token.email == 'assistente@cinegestor.com' && role == 'assistente') ||
-          (request.auth.token.email == 'encarregado@cinegestor.com' && role == 'encarregado') ||
-          (request.auth.token.email == 'gerente@cinegestor.com' && role == 'gerente') ||
-          (request.auth.token.email == 'supervisor@cinegestor.com' && role == 'supervisor') ||
-          (request.auth.token.email == 'admin@cinegestor.com' && role in ['admin', 'gerente'])
-        );
+        request.auth.token.email == 'admin@cinegestor.com' &&
+        role == 'admin';
     }
 
     // ===============================================================
@@ -335,6 +340,27 @@ service cloud.firestore {
         isValidNullableMap(data, 'excecoes', 500);
     }
 
+    function isValidAppConfig(data) {
+      return hasOnlyAllowedFields([
+          'latest_version', 'latest_build_number', 'download_url',
+          'release_notes', 'is_mandatory', 'updated_at', 'updated_by'
+        ]) &&
+        hasRequiredFields([
+          'latest_version', 'latest_build_number', 'download_url', 'release_notes'
+        ]) &&
+        validStringLength('latest_version', 1, 30) &&
+        data.latest_build_number is int &&
+        data.latest_build_number >= 1 &&
+        data.latest_build_number <= 100000 &&
+        validStringLength('download_url', 0, 1000) &&
+        validStringLength('release_notes', 0, 2000) &&
+        isValidNullableBool(data, 'is_mandatory') &&
+        (!('updated_at' in data) ||
+          data.updated_at == null ||
+          isValidDateOrTimestamp(data.updated_at)) &&
+        isValidNullableString(data, 'updated_by', 1, 150);
+    }
+
     // ===============================================================
     // Collection Rules: /users/{userId}
     // ===============================================================
@@ -421,6 +447,20 @@ service cloud.firestore {
         areImmutableFieldsUnchanged(['id', 'cinemaId']);
 
       allow delete: if isCinemaManager(resource.data.cinemaId);
+    }
+
+    // ===============================================================
+    // Collection Rules: /app_config/{docId}
+    // ===============================================================
+    match /app_config/{docId} {
+      // Any authenticated user can read app version/update metadata
+      allow read: if isAuthenticated();
+
+      // Only supervisor or admin can create, update, or delete app configuration
+      allow create, update: if isSupervisorOrAdmin() &&
+        isValidAppConfig(request.resource.data);
+
+      allow delete: if isSupervisorOrAdmin();
     }
 
     // ===============================================================

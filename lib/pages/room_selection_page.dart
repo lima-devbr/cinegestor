@@ -636,6 +636,9 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 case 'users':
                   Navigator.pushNamed(context, '/users');
                   break;
+                case 'publish_update':
+                  AppUpdateService.showPublishUpdateDialog(context);
+                  break;
                 case 'switch_cinema':
                   _showCinemaSwitcherDialog(context, authController);
                   break;
@@ -666,6 +669,17 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                       color: AppleColors.accentBlue,
                     ),
                     title: Text('Gestão de Equipe'),
+                  ),
+                ),
+              if (currentUser?.role == UserRole.admin)
+                const PopupMenuItem(
+                  value: 'publish_update',
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.rocket_launch_rounded,
+                      color: AppleColors.systemGreen,
+                    ),
+                    title: Text('Publicar Atualização do App'),
                   ),
                 ),
               if (currentUser?.role.canSwitchCinema ?? false)
