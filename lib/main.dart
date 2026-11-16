@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/room_controller.dart';
+import 'controllers/theme_controller.dart';
 import 'pages/login_page.dart';
 import 'pages/room_selection_page.dart';
 import 'pages/maintenance_page.dart';
@@ -32,6 +33,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeController()..initTheme()),
         ChangeNotifierProvider(create: (_) => AuthController()..initSession()),
         ChangeNotifierProvider(create: (_) => RoomController()..loadRooms()),
       ],
@@ -47,10 +49,13 @@ class GineGestorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final authController = Provider.of<AuthController>(context);
     final roomController = Provider.of<RoomController>(context);
+    final themeController = Provider.of<ThemeController>(context);
 
     return MaterialApp(
       title: 'CineGestor',
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeController.themeMode,
       initialRoute: '/',
       debugShowCheckedModeBanner: false,
       onGenerateRoute: (settings) {

@@ -140,7 +140,7 @@ class AppUpdateService {
                 borderRadius: BorderRadius.circular(20),
               ),
               backgroundColor: AppleColors.surfaceElevated,
-              title: const Row(
+              title: Row(
                 children: [
                   Icon(
                     Icons.rocket_launch_rounded,
@@ -166,7 +166,7 @@ class AppUpdateService {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
+                      Text(
                         'Configure os dados da nova versão. Todos os celulares com build menor receberão o aviso de download automático ao abrir o CineGestor.',
                         style: TextStyle(
                           color: AppleColors.textSecondary,
@@ -231,7 +231,7 @@ class AppUpdateService {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Impede fechar o aviso sem atualizar',
                           style: TextStyle(
                             fontSize: 11.5,
@@ -248,7 +248,7 @@ class AppUpdateService {
               actions: [
                 TextButton(
                   onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                  child: const Text(
+                  child: Text(
                     'Cancelar',
                     style: TextStyle(color: AppleColors.textSecondary),
                   ),
@@ -437,7 +437,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
               color: AppleColors.accentBlue.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.system_update_rounded, color: AppleColors.accentBlue, size: 22),
+            child: Icon(Icons.system_update_rounded, color: AppleColors.accentBlue, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -454,14 +454,14 @@ class _UpdateDialogState extends State<_UpdateDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'O que há de novo:',
               style: TextStyle(color: AppleColors.textTertiary, fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             Text(
               widget.info.releaseNotes,
-              style: const TextStyle(color: AppleColors.textPrimary, fontSize: 13.5),
+              style: TextStyle(color: AppleColors.textPrimary, fontSize: 13.5),
             ),
             if (_isDownloading) ...[
               const SizedBox(height: 18),
@@ -470,14 +470,14 @@ class _UpdateDialogState extends State<_UpdateDialog> {
                 child: LinearProgressIndicator(
                   value: _progress > 0 ? _progress : null,
                   backgroundColor: AppleColors.surface,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppleColors.systemGreen),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppleColors.systemGreen),
                   minHeight: 6,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _statusMessage,
-                style: const TextStyle(color: AppleColors.textSecondary, fontSize: 11.5),
+                style: TextStyle(color: AppleColors.textSecondary, fontSize: 11.5),
               ),
             ],
           ],
@@ -487,7 +487,7 @@ class _UpdateDialogState extends State<_UpdateDialog> {
         if (!widget.info.isMandatory && !_isDownloading)
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Depois', style: TextStyle(color: AppleColors.textSecondary)),
+            child: Text('Depois', style: TextStyle(color: AppleColors.textSecondary)),
           ),
         if (!_isDownloading)
           ElevatedButton.icon(

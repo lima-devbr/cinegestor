@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/theme_controller.dart';
 import '../models/room.dart';
 import '../models/app_user.dart';
 import '../models/maintenance_issue.dart';
@@ -77,7 +78,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(
+                      ? Icon(
                           Icons.check_circle_rounded,
                           color: AppleColors.accentBlue,
                         )
@@ -227,7 +228,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppleColors.textTertiary,
             fontSize: 9.5,
             fontWeight: FontWeight.w700,
@@ -248,7 +249,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
         const SizedBox(height: 1),
         Text(
           sub,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppleColors.textSecondary,
             fontSize: 10.5,
           ),
@@ -294,7 +295,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 ),
               ),
               alignment: Alignment.center,
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
@@ -471,7 +472,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                     children: [
                       Text(
                         room.nome,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppleColors.textPrimary,
                           fontSize: 15.5,
                           fontWeight: FontWeight.w700,
@@ -489,7 +490,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                     blockingSeats > 0
                         ? '$operationalInRoom/${room.totalSeats} operacionais • $blockingSeats interditada(s)'
                         : '${room.totalSeats} poltronas (100% operacionais) • ${room.rows.length} fileiras',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppleColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -505,7 +506,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               ),
             ),
             const SizedBox(width: 10),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               color: AppleColors.textTertiary,
               size: 20,
@@ -520,6 +521,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
   Widget build(BuildContext context) {
     final roomController = Provider.of<RoomController>(context);
     final authController = Provider.of<AuthController>(context);
+    final themeController = Provider.of<ThemeController>(context);
     final currentUser = authController.currentUser;
     final stagingCount = roomController.getStagingIssues().length;
 
@@ -564,7 +566,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   ),
                   if (currentUser?.role.canSwitchCinema ?? false) ...[
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.keyboard_arrow_down_rounded,
                       size: 18,
                       color: AppleColors.accentBlue,
@@ -575,7 +577,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               if (currentUser != null)
                 Text(
                   '${currentUser.name} • ${currentUser.role.displayName}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
                     color: AppleColors.textSecondary,
                     fontWeight: FontWeight.w400,
@@ -625,6 +627,16 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               onPressed: () => Navigator.pushNamed(context, '/users'),
             ),
           IconButton(
+            icon: Icon(
+              themeController.isDarkMode
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+            ),
+            tooltip:
+                themeController.isDarkMode ? 'Modo Claro' : 'Modo Escuro',
+            onPressed: () => themeController.toggleTheme(),
+          ),
+          IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'Histórico de Manutenções',
             onPressed: () => Navigator.pushNamed(context, '/history'),
@@ -633,6 +645,9 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
             icon: const Icon(Icons.more_horiz_rounded),
             onSelected: (value) {
               switch (value) {
+                case 'toggle_theme':
+                  themeController.toggleTheme();
+                  break;
                 case 'users':
                   Navigator.pushNamed(context, '/users');
                   break;
@@ -661,7 +676,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
             },
             itemBuilder: (context) => [
               if (currentUser?.role.canManageUsers ?? false)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'users',
                   child: ListTile(
                     leading: Icon(
@@ -672,7 +687,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   ),
                 ),
               if (currentUser?.role == UserRole.admin)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'publish_update',
                   child: ListTile(
                     leading: Icon(
@@ -683,7 +698,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   ),
                 ),
               if (currentUser?.role.canSwitchCinema ?? false)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'switch_cinema',
                   child: ListTile(
                     leading: Icon(
@@ -693,7 +708,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                     title: Text('Trocar de Cinema'),
                   ),
                 ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'defects',
                 child: ListTile(
                   leading: Icon(
@@ -707,7 +722,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                 PopupMenuItem(
                   value: 'staging',
                   child: ListTile(
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.pending_actions_rounded,
                       color: AppleColors.systemAmber,
                     ),
@@ -721,6 +736,24 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   title: Text('Histórico'),
                 ),
               ),
+              PopupMenuItem(
+                value: 'toggle_theme',
+                child: ListTile(
+                  leading: Icon(
+                    themeController.isDarkMode
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                    color: themeController.isDarkMode
+                        ? AppleColors.systemAmber
+                        : AppleColors.accentIndigo,
+                  ),
+                  title: Text(
+                    themeController.isDarkMode
+                        ? 'Ativar Modo Claro'
+                        : 'Ativar Modo Escuro',
+                  ),
+                ),
+              ),
               const PopupMenuItem(
                 value: 'change_password',
                 child: ListTile(
@@ -728,7 +761,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   title: Text('Alterar Minha Senha'),
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'logout',
                 child: ListTile(
                   leading: Icon(
@@ -752,7 +785,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               const SizedBox(height: 12),
               _buildHorizontalDefectBar(roomController),
               const SizedBox(height: 18),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(left: 4, bottom: 10),
                 child: Text(
                   'SALAS DA UNIDADE • TERMÔMETRO DE MANUTENÇÃO',

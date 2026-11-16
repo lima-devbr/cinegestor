@@ -205,7 +205,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppleColors.backgroundSecondary,
         border: Border(
           bottom: BorderSide(color: AppleColors.glassBorder, width: 1),
@@ -217,7 +217,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'RESUMO DE MATERIAIS E TAREFAS (TOQUE PARA FILTRAR)',
                   style: TextStyle(
@@ -373,7 +373,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                         color: AppleColors.accentBlue.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.meeting_room_rounded,
                         color: AppleColors.accentBlue,
                         size: 18,
@@ -413,7 +413,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                       color: AppleColors.accentBlue.withValues(alpha: 0.4),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
@@ -561,7 +561,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.event_seat_rounded,
                               size: 14,
                               color: AppleColors.textSecondary,
@@ -569,7 +569,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                             const SizedBox(width: 6),
                             Text(
                               issue.seatId,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                                 color: AppleColors.textPrimary,
@@ -581,7 +581,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                               const SizedBox(width: 6),
                               Tooltip(
                                 message: issue.notes!,
-                                child: const Icon(
+                                child: Icon(
                                   Icons.info_outline_rounded,
                                   size: 15,
                                   color: AppleColors.textSecondary,
@@ -590,7 +590,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                             ],
                             if (issue.isStaging) ...[
                               const SizedBox(width: 6),
-                              const Text(
+                              Text(
                                 'Triagem',
                                 style: TextStyle(
                                   color: AppleColors.systemAmber,
@@ -606,7 +606,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                                     issue.id,
                                     approvedBy: currentUser?.name,
                                   ),
-                                  child: const Tooltip(
+                                  child: Tooltip(
                                     message: 'Aprovar solicitação',
                                     child: Icon(
                                       Icons.check_circle_outline_rounded,
@@ -631,7 +631,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                                     );
                                   }
                                 },
-                                child: const Tooltip(
+                                child: Tooltip(
                                   message: 'Marcar assento como resolvido',
                                   child: Icon(
                                     Icons.check_circle_outline_rounded,
@@ -700,7 +700,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.check_circle_outline_rounded,
                           size: 64,
                           color: AppleColors.systemGreen,
@@ -710,7 +710,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                           _selectedProblemType == 'all'
                               ? 'Nenhuma manutenção pendente nas salas!'
                               : 'Nenhuma poltrona pendente com "$_selectedProblemType".',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppleColors.textSecondary,
                             fontSize: 15,
                           ),

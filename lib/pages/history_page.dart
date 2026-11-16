@@ -49,7 +49,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppleColors.backgroundSecondary,
         border: Border(
           bottom: BorderSide(color: AppleColors.glassBorder, width: 1),
@@ -233,13 +233,13 @@ class _HistoryPageState extends State<HistoryPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.history_rounded,
                           size: 58,
                           color: AppleColors.textTertiary,
                         ),
                         const SizedBox(height: 14),
-                        const Text(
+                        Text(
                           'Nenhum registro de manutenção encontrado',
                           style: TextStyle(
                             color: AppleColors.textSecondary,
@@ -321,7 +321,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             const SizedBox(height: 10),
                             Text(
                               'Defeito: ${issue.problemType}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppleColors.textPrimary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -332,7 +332,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               const SizedBox(height: 4),
                               Text(
                                 'Observações: ${issue.notes}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   color: AppleColors.textSecondary,
                                 ),
@@ -352,7 +352,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                   children: [
                                     Text(
                                       'Aberto: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime)}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppleColors.textTertiary,
                                         fontSize: 11.5,
                                         fontFeatures: [
@@ -364,7 +364,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                         issue.resolvedAt != null)
                                       Text(
                                         'Concluído: ${DateFormat('dd/MM/yyyy HH:mm').format(issue.resolvedAt!)}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppleColors.systemGreen,
                                           fontSize: 11.5,
                                           fontFeatures: [
@@ -402,12 +402,12 @@ class _HistoryPageState extends State<HistoryPage> {
                                             isWarning: true,
                                           );
                                         },
-                                        icon: const Icon(
+                                        icon: Icon(
                                           Icons.delete_outline_rounded,
                                           size: 17,
                                           color: AppleColors.systemRed,
                                         ),
-                                        label: const Text(
+                                        label: Text(
                                           'Excluir',
                                           style: TextStyle(
                                             color: AppleColors.systemRed,

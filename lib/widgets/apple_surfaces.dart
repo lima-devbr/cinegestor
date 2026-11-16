@@ -4,35 +4,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 
-/// Paleta semântica inspirada no Apple Human Interface Guidelines (Dark Mode)
+/// Paleta semântica inspirada no Apple Human Interface Guidelines (Dark & Light Mode)
 class AppleColors {
+  static bool isDark = true;
+
   // Camadas de profundidade (Materials & Depth - §12)
-  static const Color background = Color(0xFF090A0F);
-  static const Color backgroundSecondary = Color(0xFF11131A);
-  static const Color surface = Color(0xFF1C1C1E);
-  static const Color surfaceElevated = Color(0xFF2C2C2E);
-  static const Color surfaceHighlight = Color(0xFF3A3A3C);
+  static Color get background =>
+      isDark ? const Color(0xFF090A0F) : const Color(0xFFF2F2F7);
+  static Color get backgroundSecondary =>
+      isDark ? const Color(0xFF11131A) : const Color(0xFFE5E5EA);
+  static Color get surface =>
+      isDark ? const Color(0xFF1C1C1E) : const Color(0xFFFFFFFF);
+  static Color get surfaceElevated =>
+      isDark ? const Color(0xFF2C2C2E) : const Color(0xFFFFFFFF);
+  static Color get surfaceHighlight =>
+      isDark ? const Color(0xFF3A3A3C) : const Color(0xFFE5E5EA);
 
   // Vidro translúcido e bordas especulares
-  static const Color glassFill = Color(0xB81C1C1E);
-  static const Color glassElevatedFill = Color(0xCC252529);
-  static const Color glassBorder = Color(0x1FFFFFFF);
-  static const Color glassTopHighlight = Color(0x33FFFFFF);
+  static Color get glassFill =>
+      isDark ? const Color(0xB81C1C1E) : const Color(0xD9FFFFFF);
+  static Color get glassElevatedFill =>
+      isDark ? const Color(0xCC252529) : const Color(0xF2FFFFFF);
+  static Color get glassBorder =>
+      isDark ? const Color(0x1FFFFFFF) : const Color(0x14000000);
+  static Color get glassTopHighlight =>
+      isDark ? const Color(0x33FFFFFF) : const Color(0xFFFFFFFF);
 
-  // Cores de sistema vibrantes (Vibrancy sobre superfícies escuras)
-  static const Color accentBlue = Color(0xFF0A84FF);
-  static const Color accentIndigo = Color(0xFF5E5CE6);
-  static const Color systemGreen = Color(0xFF30D158);
-  static const Color systemAmber = Color(0xFFFFD60A);
-  static const Color systemOrange = Color(0xFFFF9F0A);
-  static const Color systemRed = Color(0xFFFF453A);
-  static const Color systemCyan = Color(0xFF64D2FF);
-  static const Color systemPurple = Color(0xFFBF5AF2);
+  // Cores de sistema vibrantes (calibradas para contraste em Dark e Light)
+  static Color get accentBlue =>
+      isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+  static Color get accentIndigo =>
+      isDark ? const Color(0xFF5E5CE6) : const Color(0xFF5856D6);
+  static Color get systemGreen =>
+      isDark ? const Color(0xFF30D158) : const Color(0xFF248A3D);
+  static Color get systemAmber =>
+      isDark ? const Color(0xFFFFD60A) : const Color(0xFFD97706);
+  static Color get systemOrange =>
+      isDark ? const Color(0xFFFF9F0A) : const Color(0xFFE66A00);
+  static Color get systemRed =>
+      isDark ? const Color(0xFFFF453A) : const Color(0xFFFF3B30);
+  static Color get systemCyan =>
+      isDark ? const Color(0xFF64D2FF) : const Color(0xFF0082B3);
+  static Color get systemPurple =>
+      isDark ? const Color(0xFFBF5AF2) : const Color(0xFF8944AB);
 
   // Hierarquia tipográfica com contraste calibrado
-  static const Color textPrimary = Color(0xFFF5F5F7);
-  static const Color textSecondary = Color(0xFFA1A1A6);
-  static const Color textTertiary = Color(0xFF6E6E73);
+  static Color get textPrimary =>
+      isDark ? const Color(0xFFF5F5F7) : const Color(0xFF1C1C1E);
+  static Color get textSecondary =>
+      isDark ? const Color(0xFFA1A1A6) : const Color(0xFF636366);
+  static Color get textTertiary =>
+      isDark ? const Color(0xFF6E6E73) : const Color(0xFF8E8E93);
 }
 
 /// Componente interativo com resposta imediata no pointer-down (§1),
@@ -192,8 +214,11 @@ class AppleGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppleColors.isDark;
     final bg = tintColor ??
-        (elevated ? const Color(0xF0222226) : const Color(0xE81C1C1E));
+        (isDark
+            ? (elevated ? const Color(0xF0222226) : const Color(0xE81C1C1E))
+            : (elevated ? const Color(0xFAFFFFFF) : const Color(0xF2FFFFFF)));
     final border = borderColor ?? AppleColors.glassBorder;
 
     final innerContainer = Container(
@@ -205,10 +230,15 @@ class AppleGlassCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.055),
-            Colors.white.withValues(alpha: 0.01),
-          ],
+          colors: isDark
+              ? [
+                  Colors.white.withValues(alpha: 0.055),
+                  Colors.white.withValues(alpha: 0.01),
+                ]
+              : [
+                  Colors.white.withValues(alpha: 0.92),
+                  Colors.white.withValues(alpha: 0.70),
+                ],
         ),
       ),
       child: child,
@@ -220,7 +250,11 @@ class AppleGlassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: elevated ? 0.36 : 0.20),
+            color: Colors.black.withValues(
+              alpha: isDark
+                  ? (elevated ? 0.36 : 0.20)
+                  : (elevated ? 0.09 : 0.045),
+            ),
             blurRadius: elevated ? 18 : 10,
             offset: Offset(0, elevated ? 8 : 4),
           ),
@@ -511,7 +545,9 @@ void showTopNotice(
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xF5242428),
+                      color: AppleColors.isDark
+                          ? const Color(0xF5242428)
+                          : const Color(0xFAFFFFFF),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: accentColor.withValues(alpha: 0.55),
@@ -519,7 +555,9 @@ void showTopNotice(
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.45),
+                          color: Colors.black.withValues(
+                            alpha: AppleColors.isDark ? 0.45 : 0.14,
+                          ),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -533,7 +571,7 @@ void showTopNotice(
                         Flexible(
                           child: Text(
                             message,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppleColors.textPrimary,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

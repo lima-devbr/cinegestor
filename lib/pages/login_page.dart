@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/theme_controller.dart';
 import '../widgets/apple_surfaces.dart';
 
 class LoginPage extends StatefulWidget {
@@ -80,6 +82,9 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Provider.of<ThemeController>(context);
+    final isDark = themeController.isDarkMode;
+
     return Scaffold(
       backgroundColor: AppleColors.background,
       body: Stack(
@@ -95,7 +100,7 @@ class _LoginPageState extends State<LoginPage>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppleColors.accentIndigo.withValues(alpha: 0.24),
+                    AppleColors.accentIndigo.withValues(alpha: isDark ? 0.24 : 0.14),
                     Colors.transparent,
                   ],
                 ),
@@ -112,7 +117,7 @@ class _LoginPageState extends State<LoginPage>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppleColors.accentBlue.withValues(alpha: 0.18),
+                    AppleColors.accentBlue.withValues(alpha: isDark ? 0.18 : 0.12),
                     Colors.transparent,
                   ],
                 ),
@@ -120,8 +125,52 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 12,
+                  right: 16,
+                  child: ApplePressable(
+                    pressedScale: 0.94,
+                    onPressed: () => themeController.toggleTheme(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppleColors.surface.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: AppleColors.glassBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isDark
+                                ? Icons.light_mode_rounded
+                                : Icons.dark_mode_rounded,
+                            size: 16,
+                            color: isDark
+                                ? AppleColors.systemAmber
+                                : AppleColors.accentIndigo,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            isDark ? 'Modo Claro' : 'Modo Escuro',
+                            style: TextStyle(
+                              color: AppleColors.textPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 32,
@@ -148,7 +197,7 @@ class _LoginPageState extends State<LoginPage>
                                 height: 58,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
-                                  gradient: const LinearGradient(
+                                  gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
@@ -189,11 +238,11 @@ class _LoginPageState extends State<LoginPage>
                             TextField(
                               controller: _emailController,
                               textInputAction: TextInputAction.next,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppleColors.textPrimary,
                                 fontSize: 14.5,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 prefixIcon: Icon(
                                   Icons.person_outline_rounded,
                                   color: AppleColors.textSecondary,
@@ -207,11 +256,11 @@ class _LoginPageState extends State<LoginPage>
                               controller: _passwordController,
                               obscureText: true,
                               onSubmitted: (_) => _tryLogin(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppleColors.textPrimary,
                                 fontSize: 14.5,
                               ),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 prefixIcon: Icon(
                                   Icons.lock_outline_rounded,
                                   color: AppleColors.textSecondary,
@@ -241,7 +290,7 @@ class _LoginPageState extends State<LoginPage>
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.error_outline_rounded,
                                       color: AppleColors.systemRed,
                                       size: 19,
@@ -250,7 +299,7 @@ class _LoginPageState extends State<LoginPage>
                                     Expanded(
                                       child: Text(
                                         _errorMessage!,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppleColors.textPrimary,
                                           fontSize: 13,
                                         ),
@@ -265,7 +314,7 @@ class _LoginPageState extends State<LoginPage>
                                 height: 48,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
-                                  gradient: const LinearGradient(
+                                  gradient: LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
                                     colors: [
@@ -311,6 +360,8 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
               ),
+            ),
+              ],
             ),
           ),
         ],

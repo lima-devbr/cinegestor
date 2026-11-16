@@ -32,14 +32,14 @@ class StagingPage extends StatelessWidget {
                       color: AppleColors.systemAmber.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.rule_folder_outlined,
                       size: 34,
                       color: AppleColors.systemAmber,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Nenhuma solicitação na fila de triagem',
                     style: TextStyle(
                       color: AppleColors.textPrimary,
@@ -48,7 +48,7 @@ class StagingPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'As solicitações enviadas pela equipe de operação aparecerão aqui.',
                     style: TextStyle(
                       color: AppleColors.textSecondary,
@@ -89,7 +89,7 @@ class StagingPage extends StatelessWidget {
                                     ),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.pending_actions_rounded,
                                     color: AppleColors.systemAmber,
                                     size: 18,
@@ -106,7 +106,7 @@ class StagingPage extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const AppleStatusPill(
+                          AppleStatusPill(
                             label: 'Aguardando Aprovação',
                             color: AppleColors.systemAmber,
                           ),
@@ -115,7 +115,7 @@ class StagingPage extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         'Defeito relatado: ${issue.problemType}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppleColors.textPrimary,
                           fontSize: 14.5,
                           fontWeight: FontWeight.w600,
@@ -125,7 +125,7 @@ class StagingPage extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           'Observações: ${issue.notes}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppleColors.textSecondary,
                           ),
@@ -137,7 +137,7 @@ class StagingPage extends StatelessWidget {
                         children: [
                           Text(
                             'Reportado por ${issue.reportedBy ?? "Operação"} (${issue.reportedRole ?? "Operação"})',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppleColors.textTertiary,
                               fontSize: 12,
                             ),
@@ -145,7 +145,7 @@ class StagingPage extends StatelessWidget {
                           Text(
                             DateFormat('dd/MM/yyyy HH:mm')
                                 .format(issue.dateTime),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppleColors.textTertiary,
                               fontSize: 12,
                               fontFeatures: [FontFeature.tabularFigures()],
@@ -187,7 +187,7 @@ class StagingPage extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
@@ -254,7 +254,7 @@ class StagingPage extends StatelessWidget {
                           ],
                         )
                       else
-                        const Text(
+                        Text(
                           'Apenas Encarregados ou Gerentes podem aprovar solicitações.',
                           style: TextStyle(
                             color: AppleColors.textTertiary,

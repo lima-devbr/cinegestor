@@ -44,22 +44,18 @@ class SeatWidget extends StatelessWidget {
     return const Color(0xFF248A3D);
   }
 
-  Color _getTextColor() {
-    if (isSelected || seat.hasBlockingDefect) {
-      return Colors.white;
-    }
-    if (seat.hasDefect ||
-        seat.hasStaging ||
-        seat.type == 'Disability') {
-      return const Color(0xFF11131A);
-    }
-    return const Color(0xFFF5F5F7);
+  Color _getTextColor(Color baseColor) {
+    return ThemeData.estimateBrightnessForColor(baseColor) == Brightness.dark
+        ? Colors.white
+        : const Color(0xFF11131A);
   }
 
   @override
   Widget build(BuildContext context) {
     final baseColor = _getSeatBaseColor();
     final hasAlert = seat.hasBlockingDefect || seat.hasDefect || seat.hasStaging;
+    final selectedBorderColor =
+        AppleColors.isDark ? Colors.white : AppleColors.textPrimary;
 
     return Container(
       margin: const EdgeInsets.all(3.0),
@@ -75,7 +71,7 @@ class SeatWidget extends StatelessWidget {
         ),
         border: Border.all(
           color: isSelected
-              ? Colors.white
+              ? selectedBorderColor
               : hasAlert
                   ? Colors.white.withValues(alpha: 0.78)
                   : Colors.white.withValues(alpha: 0.16),
@@ -106,7 +102,7 @@ class SeatWidget extends StatelessWidget {
           Text(
             '${seat.row}${seat.number}',
             style: TextStyle(
-              color: _getTextColor(),
+              color: _getTextColor(baseColor),
               fontWeight: FontWeight.w700,
               fontSize: 9.5,
               height: 1.0,

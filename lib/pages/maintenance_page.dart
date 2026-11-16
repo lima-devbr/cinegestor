@@ -237,7 +237,7 @@ class _MaintenancePageState extends State<MaintenancePage>
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppleColors.textSecondary,
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -251,7 +251,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppleColors.backgroundSecondary,
         border: Border(
           bottom: BorderSide(color: AppleColors.glassBorder, width: 1),
@@ -298,7 +298,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Text(
                     '${(zoom * 100).round()}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppleColors.textSecondary,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
@@ -337,7 +337,7 @@ class _MaintenancePageState extends State<MaintenancePage>
             height: 6,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
                   AppleColors.accentBlue,
@@ -349,7 +349,7 @@ class _MaintenancePageState extends State<MaintenancePage>
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'T E L A   D E   P R O J E Ç Ã O',
             style: TextStyle(
               color: AppleColors.textSecondary,
@@ -408,7 +408,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                     child: Center(
                       child: Text(
                         labelByCoord[coordKey]!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppleColors.textTertiary,
                           fontWeight: FontWeight.w700,
                           fontSize: 12,
@@ -470,7 +470,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                         child: Center(
                           child: Text(
                             rowLabel,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppleColors.textTertiary,
                               fontWeight: FontWeight.w700,
                             ),
@@ -566,7 +566,7 @@ class _MaintenancePageState extends State<MaintenancePage>
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.build_circle_rounded,
                 color: AppleColors.systemRed,
                 size: 18,
@@ -574,7 +574,7 @@ class _MaintenancePageState extends State<MaintenancePage>
               const SizedBox(width: 6),
               Text(
                 'Demandas na poltrona $seatId (${activeIssues.length})',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppleColors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
@@ -597,7 +597,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                             Flexible(
                               child: Text(
                                 '${issue.problemType} • ${issue.urgency}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppleColors.textPrimary,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12.5,
@@ -606,7 +606,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                             ),
                             const SizedBox(width: 6),
                             if (issue.isStaging)
-                              const AppleStatusPill(
+                              AppleStatusPill(
                                 label: 'Triagem',
                                 color: AppleColors.systemAmber,
                               ),
@@ -615,14 +615,14 @@ class _MaintenancePageState extends State<MaintenancePage>
                         if (issue.notes != null && issue.notes!.isNotEmpty)
                           Text(
                             issue.notes!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppleColors.textSecondary,
                               fontSize: 11.5,
                             ),
                           ),
                         Text(
                           'Por ${issue.reportedBy ?? "Operação"} • ${DateFormat('dd/MM HH:mm').format(issue.dateTime)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppleColors.textTertiary,
                             fontSize: 11,
                           ),
@@ -646,12 +646,12 @@ class _MaintenancePageState extends State<MaintenancePage>
                           );
                         }
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.check_rounded,
                         color: AppleColors.systemAmber,
                         size: 16,
                       ),
-                      label: const Text(
+                      label: Text(
                         'Aprovar',
                         style: TextStyle(
                           color: AppleColors.systemAmber,
@@ -675,12 +675,12 @@ class _MaintenancePageState extends State<MaintenancePage>
                           );
                         }
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.check_circle_outline_rounded,
                         color: AppleColors.systemGreen,
                         size: 16,
                       ),
-                      label: const Text(
+                      label: Text(
                         'Concluir',
                         style: TextStyle(
                           color: AppleColors.systemGreen,
@@ -712,7 +712,7 @@ class _MaintenancePageState extends State<MaintenancePage>
             enableBlur: true,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             borderRadius: 999,
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
@@ -797,7 +797,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                 ),
                 const SizedBox(height: 6),
                 _buildActiveIssuesForSeat(room),
-                const Text(
+                Text(
                   'SELECIONE O DEFEITO:',
                   style: TextStyle(
                     color: AppleColors.textTertiary,
@@ -852,7 +852,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'URGÊNCIA:',
                       style: TextStyle(
                         color: AppleColors.textTertiary,
@@ -924,7 +924,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                         height: 42,
                         child: TextFormField(
                           controller: _notesController,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppleColors.textPrimary,
                             fontSize: 13,
                           ),
@@ -1005,7 +1005,7 @@ class _MaintenancePageState extends State<MaintenancePage>
             if (selectRoom.theaterName != null)
               Text(
                 selectRoom.theaterName!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
                   color: AppleColors.textSecondary,
                   fontWeight: FontWeight.w400,

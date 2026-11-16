@@ -37,7 +37,7 @@ Future<void> showChangeOwnPasswordDialog(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isMandatoryFirstAccess)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(bottom: 14),
                       child: Text(
                         'Este é o seu primeiro acesso (ou sua senha foi redefinida). Escolha uma nova senha pessoal para continuar.',
@@ -77,7 +77,7 @@ Future<void> showChangeOwnPasswordDialog(
                     const SizedBox(height: 12),
                     Text(
                       localError!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppleColors.systemRed,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
@@ -321,7 +321,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                           'Exigir troca de senha no 1º acesso',
                           style: TextStyle(fontSize: 13),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Pede para o colaborador criar uma senha pessoal ao entrar',
                           style: TextStyle(
                             fontSize: 11.5,
@@ -337,7 +337,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         const SizedBox(height: 8),
                         Text(
                           localError!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppleColors.systemRed,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
@@ -637,7 +637,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
               // Barra de filtros por Cargo e Cinema
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppleColors.backgroundSecondary,
                   border: Border(
                     bottom: BorderSide(color: AppleColors.glassBorder),
@@ -715,7 +715,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                 child: authController.isLoadingTeam
                     ? const Center(child: CircularProgressIndicator())
                     : filteredMembers.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'Nenhum colaborador encontrado para este filtro.',
                               style: TextStyle(color: AppleColors.textSecondary),
@@ -799,7 +799,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                                 ),
                                                 const SizedBox(width: 8),
                                                 if (!member.active)
-                                                  const AppleStatusPill(
+                                                  AppleStatusPill(
                                                     label: 'Bloqueado',
                                                     color: AppleColors.systemRed,
                                                   ),
@@ -808,7 +808,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                             const SizedBox(height: 3),
                                             Text(
                                               'Usuário: ${member.displayUsername} • ${member.cinemaName}',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color:
                                                     AppleColors.textSecondary,
                                                 fontSize: 12,
@@ -826,7 +826,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                       if (member.id != currentUser?.id &&
                                           member.role != UserRole.admin)
                                         IconButton(
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.delete_outline_rounded,
                                             color: AppleColors.systemRed,
                                             size: 19,
