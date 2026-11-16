@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -55,9 +56,9 @@ class AppUpdateService {
     return false;
   }
 
-  /// Verifica se há atualização no Firestore
+  /// Verifica se há atualização no Firestore (apenas mobile, não se aplica à Web)
   static Future<AppUpdateInfo?> checkForUpdate() async {
-    if (!isFirebaseInitialized) return null;
+    if (kIsWeb || !isFirebaseInitialized) return null;
 
     try {
       final doc = await FirebaseFirestore.instance.collection('app_config').doc('version').get();

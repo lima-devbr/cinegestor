@@ -1,11 +1,11 @@
 {
-    "name": "cinegestor",
-    "short_name": "cinegestor",
+    "name": "CineGestor",
+    "short_name": "CineGestor",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#090A0F",
+    "theme_color": "#0A84FF",
+    "description": "Gestão Inteligente de Salas & Manutenção",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
