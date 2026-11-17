@@ -212,12 +212,19 @@ class RoomController extends ChangeNotifier {
     }
   }
 
-  Future<void> resolveIssue(String issueId, {String? resolvedBy}) async {
+  Future<void> resolveIssue(
+    String issueId, {
+    String? resolvedBy,
+    String? afterPhotoBase64,
+  }) async {
     final index = _issues.indexWhere((i) => i.id == issueId);
     if (index != -1) {
       _issues[index].status = IssueStatus.resolved;
       _issues[index].resolvedAt = DateTime.now();
       _issues[index].resolvedBy = resolvedBy;
+      if (afterPhotoBase64 != null && afterPhotoBase64.isNotEmpty) {
+        _issues[index].afterPhotoBase64 = afterPhotoBase64;
+      }
       _syncSeatsWithIssues();
       notifyListeners();
       await _saveIssuesLocally();
@@ -337,6 +344,22 @@ class RoomController extends ChangeNotifier {
             i.seatId == seatId &&
             (!onlyActive || i.isActive || i.isStaging))
         .toList();
+  }
+
+  /// Total de ocorrências não rejeitadas já registradas nessa poltrona (para reincidência)
+  int getSeatRecurrenceCount(String roomId, String seatId) {
+    return _issues
+        .where((i) => i.roomId == roomId && i.seatId == seatId && !i.isRejected)
+        .length;
+  }
+
+  /// Lista de manutenções já concluídas no passado para esta poltrona
+  List<MaintenanceIssue> getSeatPastIssues(String roomId, String seatId) {
+    final past = _issues
+        .where((i) => i.roomId == roomId && i.seatId == seatId && i.resolved)
+        .toList();
+    past.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    return past;
   }
 
   Seat? getSeat(String row, int number) {

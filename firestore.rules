@@ -36,6 +36,8 @@ rules_version = '2';
 //   - resolvedAt: string, timestamp, or null (optional) - Resolution timestamp/ISO-8601
 //   - resolvedBy: string or null (optional, 1..150 chars) - Resolver name/email
 //   - rejectionReason: string or null (optional, 0..500 chars) - Triage rejection reason
+//   - beforePhotoBase64: string or null (optional, 0..450000 chars, immutable) - Compressed Base64 photo before fix
+//   - afterPhotoBase64: string or null (optional, 0..450000 chars) - Compressed Base64 photo after fix
 //
 // Collection: rooms
 // Document ID: {roomDocId}
@@ -263,7 +265,8 @@ service cloud.firestore {
       return hasOnlyAllowedFields([
           'id', 'cinemaId', 'roomId', 'seatId', 'problemType', 'urgency',
           'notes', 'dateTime', 'reportedBy', 'reportedRole', 'status',
-          'resolvedAt', 'resolvedBy', 'rejectionReason'
+          'resolvedAt', 'resolvedBy', 'rejectionReason',
+          'beforePhotoBase64', 'afterPhotoBase64'
         ]) &&
         hasRequiredFields([
           'id', 'cinemaId', 'roomId', 'seatId', 'problemType', 'urgency',
@@ -284,7 +287,16 @@ service cloud.firestore {
           data.resolvedAt == null ||
           isValidDateOrTimestamp(data.resolvedAt)) &&
         isValidNullableString(data, 'resolvedBy', 1, 150) &&
-        isValidNullableString(data, 'rejectionReason', 0, 500);
+        isValidNullableString(data, 'rejectionReason', 0, 500) &&
+        isValidNullableString(data, 'beforePhotoBase64', 0, 450000) &&
+        isValidNullableString(data, 'afterPhotoBase64', 0, 450000);
+    }
+
+    function isBeforePhotoUnchanged() {
+      return (!('beforePhotoBase64' in resource.data) || resource.data.beforePhotoBase64 == null)
+        ? (!('beforePhotoBase64' in request.resource.data) || request.resource.data.beforePhotoBase64 == null)
+        : ('beforePhotoBase64' in request.resource.data &&
+           request.resource.data.beforePhotoBase64 == resource.data.beforePhotoBase64);
     }
 
     function isValidIssueStatusOnCreate(data) {
@@ -425,6 +437,7 @@ service cloud.firestore {
         areImmutableFieldsUnchanged([
           'id', 'cinemaId', 'roomId', 'seatId', 'dateTime', 'reportedBy', 'reportedRole'
         ]) &&
+        isBeforePhotoUnchanged() &&
         isValidIssueStatusTransition();
 
       // Only a manager ('gerente') from the same cinemaId or supervisor/admin can delete a maintenance issue

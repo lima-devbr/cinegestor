@@ -9,7 +9,9 @@ import 'package:cinegestor/models/maintenance_issue.dart';
 import 'package:cinegestor/models/app_user.dart';
 import 'package:cinegestor/widgets/seat_widget.dart';
 import 'package:cinegestor/widgets/apple_surfaces.dart';
+import 'package:cinegestor/widgets/photo_evidence_widgets.dart';
 import 'package:cinegestor/models/room.dart';
+import 'history_page.dart';
 
 class MaintenancePage extends StatefulWidget {
   final String roomId;
@@ -32,6 +34,7 @@ class _MaintenancePageState extends State<MaintenancePage>
   String? selectedIssueType;
   String selectedUrgency = 'Média';
   Seat? selectedSeat;
+  String? _beforePhotoBase64;
   final TextEditingController _notesController = TextEditingController();
   final TransformationController _transformationController =
       TransformationController();
@@ -169,6 +172,7 @@ class _MaintenancePageState extends State<MaintenancePage>
   void _selectSeat(Seat seat) {
     HapticFeedback.selectionClick();
     setState(() {
+      _beforePhotoBase64 = null;
       if (selectedSeat?.id == seat.id) {
         selectedSeat = null;
       } else {
@@ -202,6 +206,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       dateTime: DateTime.now(),
       reportedBy: currentUser?.name ?? 'Usuário',
       reportedRole: currentUser?.role.shortName ?? 'Operação',
+      beforePhotoBase64: _beforePhotoBase64,
       status: isOperacao ? IssueStatus.staging : IssueStatus.active,
     );
 
@@ -210,6 +215,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     setState(() {
       selectedIssueType = null;
       selectedUrgency = 'Média';
+      _beforePhotoBase64 = null;
       _notesController.clear();
       // Fecha o sheet após registrar para devolver a visão livre do mapa
       selectedSeat = null;
@@ -535,6 +541,71 @@ class _MaintenancePageState extends State<MaintenancePage>
     );
   }
 
+  Future<void> _showResolveWithPhotoDialog(
+    MaintenanceIssue issue,
+    String? resolvedBy,
+  ) async {
+    String? afterPhoto;
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Concluir Poltrona ${issue.seatId}'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '${issue.problemType} • ${issue.urgency}',
+                  style: TextStyle(
+                    color: AppleColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                PhotoEvidencePickerTile(
+                  photoBase64: afterPhoto,
+                  label: 'Foto do reparo concluído (opcional)',
+                  onChanged: (val) => setDialogState(() => afterPhoto = val),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await widget.roomController.resolveIssue(
+                  issue.id,
+                  resolvedBy: resolvedBy,
+                  afterPhotoBase64: afterPhoto,
+                );
+                if (mounted) {
+                  setState(() {});
+                  showTopNotice(
+                    context,
+                    'Manutenção do assento ${issue.seatId} concluída!',
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppleColors.systemGreen,
+              ),
+              icon: const Icon(Icons.check_rounded, size: 18),
+              label: const Text('Concluir Reparo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildActiveIssuesForSeat(Room room) {
     if (selectedSeat == null) return const SizedBox.shrink();
 
@@ -544,157 +615,226 @@ class _MaintenancePageState extends State<MaintenancePage>
       seatId,
       onlyActive: true,
     );
+    final pastIssues = widget.roomController.getSeatPastIssues(room.id, seatId);
 
-    if (activeIssues.isEmpty) return const SizedBox.shrink();
+    if (activeIssues.isEmpty && pastIssues.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final authController = Provider.of<AuthController>(context, listen: false);
     final currentUser = authController.currentUser;
     final canResolve = currentUser?.role.canResolveIssue ?? false;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppleColors.systemRed.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppleColors.systemRed.withValues(alpha: 0.38),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.build_circle_rounded,
-                color: AppleColors.systemRed,
-                size: 18,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (pastIssues.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppleColors.systemAmber.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppleColors.systemAmber.withValues(alpha: 0.38),
               ),
-              const SizedBox(width: 6),
-              Text(
-                'Demandas na poltrona $seatId (${activeIssues.length})',
-                style: TextStyle(
-                  color: AppleColors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.history_rounded,
+                  color: AppleColors.systemAmber,
+                  size: 17,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ...activeIssues.map((issue) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                '${issue.problemType} • ${issue.urgency}',
-                                style: TextStyle(
-                                  color: AppleColors.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            if (issue.isStaging)
-                              AppleStatusPill(
-                                label: 'Triagem',
-                                color: AppleColors.systemAmber,
-                              ),
-                          ],
-                        ),
-                        if (issue.notes != null && issue.notes!.isNotEmpty)
-                          Text(
-                            issue.notes!,
-                            style: TextStyle(
-                              color: AppleColors.textSecondary,
-                              fontSize: 11.5,
-                            ),
-                          ),
-                        Text(
-                          'Por ${issue.reportedBy ?? "Operação"} • ${DateFormat('dd/MM HH:mm').format(issue.dateTime)}',
-                          style: TextStyle(
-                            color: AppleColors.textTertiary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Reincidente: ${pastIssues.length} manutenção(ões) anterior(es)',
+                    style: TextStyle(
+                      color: AppleColors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (issue.isStaging &&
-                      (currentUser?.role.canApproveStaging ?? false))
-                    TextButton.icon(
-                      onPressed: () async {
-                        await widget.roomController.approveStagingIssue(
-                          issue.id,
-                          approvedBy: currentUser?.name,
-                        );
-                        if (mounted) {
-                          setState(() {});
-                          showTopNotice(
-                            context,
-                            'Demanda do assento $seatId aprovada!',
-                          );
-                        }
-                      },
-                      icon: Icon(
-                        Icons.check_rounded,
-                        color: AppleColors.systemAmber,
-                        size: 16,
-                      ),
-                      label: Text(
-                        'Aprovar',
-                        style: TextStyle(
-                          color: AppleColors.systemAmber,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 28),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HistoryPage(
+                          initialRoomId: room.id,
+                          initialSeatId: seatId,
                         ),
                       ),
-                    )
-                  else if (issue.isActive && canResolve)
-                    TextButton.icon(
-                      onPressed: () async {
-                        await widget.roomController.resolveIssue(
-                          issue.id,
-                          resolvedBy: currentUser?.name,
-                        );
-                        if (mounted) {
-                          setState(() {});
-                          showTopNotice(
-                            context,
-                            'Manutenção do assento $seatId concluída!',
-                          );
-                        }
-                      },
-                      icon: Icon(
-                        Icons.check_circle_outline_rounded,
-                        color: AppleColors.systemGreen,
-                        size: 16,
-                      ),
-                      label: Text(
-                        'Concluir',
-                        style: TextStyle(
-                          color: AppleColors.systemGreen,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
+                    );
+                  },
+                  child: Text(
+                    'Ver histórico',
+                    style: TextStyle(
+                      color: AppleColors.accentBlue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (activeIssues.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppleColors.systemRed.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppleColors.systemRed.withValues(alpha: 0.38),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.build_circle_rounded,
+                      color: AppleColors.systemRed,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Demandas na poltrona $seatId (${activeIssues.length})',
+                      style: TextStyle(
+                        color: AppleColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
                       ),
                     ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ...activeIssues.map((issue) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (issue.beforePhotoBase64 != null &&
+                            issue.beforePhotoBase64!.isNotEmpty) ...[
+                          PhotoEvidenceThumb(
+                            photoBase64: issue.beforePhotoBase64!,
+                            tagLabel: 'Antes',
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      '${issue.problemType} • ${issue.urgency}',
+                                      style: TextStyle(
+                                        color: AppleColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  if (issue.isStaging)
+                                    AppleStatusPill(
+                                      label: 'Triagem',
+                                      color: AppleColors.systemAmber,
+                                    ),
+                                ],
+                              ),
+                              if (issue.notes != null &&
+                                  issue.notes!.isNotEmpty)
+                                Text(
+                                  issue.notes!,
+                                  style: TextStyle(
+                                    color: AppleColors.textSecondary,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              Text(
+                                'Por ${issue.reportedBy ?? "Operação"} • ${DateFormat('dd/MM HH:mm').format(issue.dateTime)}',
+                                style: TextStyle(
+                                  color: AppleColors.textTertiary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (issue.isStaging &&
+                            (currentUser?.role.canApproveStaging ?? false))
+                          TextButton.icon(
+                            onPressed: () async {
+                              await widget.roomController.approveStagingIssue(
+                                issue.id,
+                                approvedBy: currentUser?.name,
+                              );
+                              if (mounted) {
+                                setState(() {});
+                                showTopNotice(
+                                  context,
+                                  'Demanda do assento $seatId aprovada!',
+                                );
+                              }
+                            },
+                            icon: Icon(
+                              Icons.check_rounded,
+                              color: AppleColors.systemAmber,
+                              size: 16,
+                            ),
+                            label: Text(
+                              'Aprovar',
+                              style: TextStyle(
+                                color: AppleColors.systemAmber,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          )
+                        else if (issue.isActive && canResolve)
+                          TextButton.icon(
+                            onPressed: () => _showResolveWithPhotoDialog(
+                              issue,
+                              currentUser?.name,
+                            ),
+                            icon: Icon(
+                              Icons.check_circle_outline_rounded,
+                              color: AppleColors.systemGreen,
+                              size: 16,
+                            ),
+                            label: Text(
+                              'Concluir',
+                              style: TextStyle(
+                                color: AppleColors.systemGreen,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -982,6 +1122,13 @@ class _MaintenancePageState extends State<MaintenancePage>
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                PhotoEvidencePickerTile(
+                  photoBase64: _beforePhotoBase64,
+                  label: 'Foto do defeito (opcional)',
+                  onChanged: (val) =>
+                      setState(() => _beforePhotoBase64 = val),
                 ),
               ],
             ),

@@ -94,9 +94,11 @@ class MaintenanceIssue {
   final DateTime dateTime;
   final String? reportedBy; // Nome ou email de quem criou
   final String? reportedRole; // Papel de quem criou
+  final String? beforePhotoBase64; // Foto de evidência na abertura
   IssueStatus status;
   DateTime? resolvedAt;
   String? resolvedBy;
+  String? afterPhotoBase64; // Foto de evidência na conclusão
   String? rejectionReason;
 
   MaintenanceIssue({
@@ -110,9 +112,11 @@ class MaintenanceIssue {
     DateTime? dateTime,
     this.reportedBy,
     this.reportedRole,
+    this.beforePhotoBase64,
     this.status = IssueStatus.active,
     this.resolvedAt,
     this.resolvedBy,
+    this.afterPhotoBase64,
     this.rejectionReason,
   })  : id = id ?? '${cinemaId}_${roomId}_${seatId}_${(dateTime ?? DateTime.now()).microsecondsSinceEpoch}',
         dateTime = dateTime ?? DateTime.now();
@@ -137,9 +141,11 @@ class MaintenanceIssue {
       'dateTime': dateTime.toIso8601String(),
       'reportedBy': reportedBy,
       'reportedRole': reportedRole,
+      'beforePhotoBase64': beforePhotoBase64,
       'status': status.name,
       'resolvedAt': resolvedAt?.toIso8601String(),
       'resolvedBy': resolvedBy,
+      'afterPhotoBase64': afterPhotoBase64,
       'rejectionReason': rejectionReason,
     };
   }
@@ -170,9 +176,11 @@ class MaintenanceIssue {
       dateTime: parsedDate,
       reportedBy: json['reportedBy'],
       reportedRole: json['reportedRole'],
+      beforePhotoBase64: json['beforePhotoBase64'],
       status: parsedStatus,
       resolvedAt: json['resolvedAt'] != null ? DateTime.tryParse(json['resolvedAt']) : null,
       resolvedBy: json['resolvedBy'],
+      afterPhotoBase64: json['afterPhotoBase64'],
       rejectionReason: json['rejectionReason'],
     );
   }

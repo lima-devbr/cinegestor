@@ -7,22 +7,50 @@ import '../controllers/auth_controller.dart';
 import '../models/maintenance_issue.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
+import '../widgets/photo_evidence_widgets.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  final String? initialRoomId;
+  final String? initialSeatId;
+
+  const HistoryPage({
+    super.key,
+    this.initialRoomId,
+    this.initialSeatId,
+  });
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  String _selectedRoomFilter = 'all';
+  late String _selectedRoomFilter;
   String _selectedStatusFilter = 'all';
   String _selectedUrgencyFilter = 'all';
+  late final TextEditingController _seatFilterController;
+  String _seatFilter = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRoomFilter = widget.initialRoomId ?? 'all';
+    _seatFilter = (widget.initialSeatId ?? '').trim().toUpperCase();
+    _seatFilterController = TextEditingController(text: _seatFilter);
+  }
+
+  @override
+  void dispose() {
+    _seatFilterController.dispose();
+    super.dispose();
+  }
 
   List<MaintenanceIssue> _filterIssues(List<MaintenanceIssue> issues) {
     final filtered = issues.where((issue) {
       if (_selectedRoomFilter != 'all' && issue.roomId != _selectedRoomFilter) {
+        return false;
+      }
+      if (_seatFilter.isNotEmpty &&
+          !issue.seatId.toUpperCase().contains(_seatFilter)) {
         return false;
       }
       if (_selectedStatusFilter == 'staging' && !issue.isStaging) {
@@ -126,6 +154,32 @@ class _HistoryPageState extends State<HistoryPage> {
               ],
               onChanged: (val) =>
                   setState(() => _selectedUrgencyFilter = val ?? 'all'),
+            ),
+          ),
+          SizedBox(
+            width: 150,
+            child: TextField(
+              controller: _seatFilterController,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                labelText: 'Poltrona (ex: G12)',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                suffixIcon: _seatFilter.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 16),
+                        onPressed: () {
+                          _seatFilterController.clear();
+                          setState(() => _seatFilter = '');
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: (val) =>
+                  setState(() => _seatFilter = val.trim().toUpperCase()),
             ),
           ),
         ],
@@ -318,6 +372,19 @@ class _HistoryPageState extends State<HistoryPage> {
                                 ),
                               ],
                             ),
+                            if (roomController.getSeatRecurrenceCount(
+                                  issue.roomId,
+                                  issue.seatId,
+                                ) >=
+                                2) ...[
+                              const SizedBox(height: 8),
+                              AppleStatusPill(
+                                icon: Icons.repeat_rounded,
+                                label:
+                                    'Reincidente (${roomController.getSeatRecurrenceCount(issue.roomId, issue.seatId)}x)',
+                                color: AppleColors.systemAmber,
+                              ),
+                            ],
                             const SizedBox(height: 10),
                             Text(
                               'Defeito: ${issue.problemType}',
@@ -336,6 +403,30 @@ class _HistoryPageState extends State<HistoryPage> {
                                   fontSize: 13,
                                   color: AppleColors.textSecondary,
                                 ),
+                              ),
+                            ],
+                            if ((issue.beforePhotoBase64 != null &&
+                                    issue.beforePhotoBase64!.isNotEmpty) ||
+                                (issue.afterPhotoBase64 != null &&
+                                    issue.afterPhotoBase64!.isNotEmpty)) ...[
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 8,
+                                children: [
+                                  if (issue.beforePhotoBase64 != null &&
+                                      issue.beforePhotoBase64!.isNotEmpty)
+                                    PhotoEvidenceThumb(
+                                      photoBase64: issue.beforePhotoBase64!,
+                                      tagLabel: 'Antes',
+                                    ),
+                                  if (issue.afterPhotoBase64 != null &&
+                                      issue.afterPhotoBase64!.isNotEmpty)
+                                    PhotoEvidenceThumb(
+                                      photoBase64: issue.afterPhotoBase64!,
+                                      tagLabel: 'Depois',
+                                    ),
+                                ],
                               ),
                             ],
                             const SizedBox(height: 10),

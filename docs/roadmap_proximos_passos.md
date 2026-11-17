@@ -70,9 +70,9 @@ Painel administrativo dentro do próprio aplicativo (acessível pelo perfil **Ge
   - Inclusão dos mapas JSON de novas unidades da rede (ex.: *UCI New York City Center*, *UCI Kinoplex NorteShopping*), mantendo isolamento por `cinemaId`.
 
 ### Fase 3 — Fotos, Evidências e Melhorias de Campo
-- [ ] **Anexo de Foto na Abertura e na Conclusão:**
+- [x] **Anexo de Foto na Abertura e na Conclusão:**
   - Permitir que a Operação/Assistente tire uma foto rápida da poltrona quebrada ao abrir o chamado e que o Encarregado anexe foto do reparo concluído.
-- [ ] **Histórico Filtrado por Assento / Identificação de Reincidência:**
+- [x] **Histórico Filtrado por Assento / Identificação de Reincidência:**
   - Ao clicar no histórico dentro de uma sala específica, exibir quantas vezes uma mesma poltrona já apresentou defeito no passado.
 
 ### Fase 4 — Notificações e Relatórios Gerenciais Avançados

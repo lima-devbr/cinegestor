@@ -5,6 +5,7 @@ import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
+import '../widgets/photo_evidence_widgets.dart';
 
 class StagingPage extends StatelessWidget {
   const StagingPage({super.key});
@@ -129,6 +130,14 @@ class StagingPage extends StatelessWidget {
                             fontSize: 13,
                             color: AppleColors.textSecondary,
                           ),
+                        ),
+                      ],
+                      if (issue.beforePhotoBase64 != null &&
+                          issue.beforePhotoBase64!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        PhotoEvidenceThumb(
+                          photoBase64: issue.beforePhotoBase64!,
+                          tagLabel: 'Evidência',
                         ),
                       ],
                       const SizedBox(height: 10),
