@@ -4,18 +4,30 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'apple_surfaces.dart';
+import 'web_photo_picker_stub.dart'
+    if (dart.library.js_interop) 'web_photo_picker.dart';
 
 class PhotoEvidenceService {
   static final ImagePicker _picker = ImagePicker();
 
   /// Seleciona/captura uma foto comprimida (max 720px, 55% JPEG) e devolve em Base64
   static Future<String?> pickPhotoBase64(BuildContext context) async {
-    ImageSource? source;
-
     if (kIsWeb) {
-      source = ImageSource.gallery;
-    } else {
-      source = await showModalBottomSheet<ImageSource>(
+      try {
+        return await pickWebImageBase64();
+      } catch (e) {
+        if (context.mounted) {
+          showTopNotice(
+            context,
+            'Não foi possível selecionar a foto no navegador: $e',
+            isError: true,
+          );
+        }
+        return null;
+      }
+    }
+
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
         context: context,
         backgroundColor: AppleColors.surfaceElevated,
         shape: const RoundedRectangleBorder(
@@ -72,7 +84,6 @@ class PhotoEvidenceService {
           ),
         ),
       );
-    }
 
     if (source == null) return null;
 
