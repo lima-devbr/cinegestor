@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/maintenance_issue.dart';
+import '../models/cinema_sector.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/photo_evidence_widgets.dart';
@@ -111,10 +112,16 @@ class _HistoryPageState extends State<HistoryPage> {
               items: [
                 const DropdownMenuItem(
                   value: 'all',
-                  child: Text('Todas as Salas'),
+                  child: Text('Todas as Salas e Áreas'),
                 ),
                 ...roomController.rooms.map(
                   (r) => DropdownMenuItem(value: r.id, child: Text(r.nome)),
+                ),
+                ...CinemaSector.commonSectors.map(
+                  (s) => DropdownMenuItem(
+                    value: s.id,
+                    child: Text('🏢 ${s.name}'),
+                  ),
                 ),
               ],
               onChanged: (val) =>
@@ -210,12 +217,17 @@ class _HistoryPageState extends State<HistoryPage> {
     buffer.writeln('--------------------------------------------');
 
     for (final issue in filteredIssues) {
-      final roomName =
-          roomController.getRoomById(issue.roomId)?.displayName ??
-              'Sala ${issue.roomId}';
+      String locationName;
+      if (issue.isCommonSector) {
+        final sector = CinemaSector.findById(issue.roomId);
+        locationName = 'Área: ${sector?.name ?? issue.roomId}';
+      } else {
+        locationName = roomController.getRoomById(issue.roomId)?.displayName ??
+            'Sala ${issue.roomId}';
+      }
       final status = issue.resolved ? 'RESOLVIDO' : 'PENDENTE';
       final openedAt = DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime);
-      buffer.writeln('[$status] $roomName - Assento ${issue.seatId}');
+      buffer.writeln('[$status] $locationName - ${issue.targetDisplayLabel}');
       buffer.writeln(
         '  Problema: ${issue.problemType} | Urgência: ${issue.urgency}',
       );
@@ -377,9 +389,27 @@ class _HistoryPageState extends State<HistoryPage> {
                         );
                       }
                       final issue = filteredIssues[index];
-                      final room = roomController.getRoomById(issue.roomId);
-                      final roomName =
-                          room?.displayName ?? 'Sala ${issue.roomId}';
+                      String itemTitle;
+
+                      if (issue.isCommonSector) {
+                        final sector = CinemaSector.findById(issue.roomId);
+                        final sectorName = sector?.name ?? 'Área Comum';
+                        itemTitle = '$sectorName • ${issue.targetDisplayLabel}';
+                      } else {
+                        final room = roomController.getRoomById(issue.roomId);
+                        final roomName =
+                            room?.displayName ?? 'Sala ${issue.roomId}';
+                        if (issue.isGeneralIssue) {
+                          itemTitle =
+                              '$roomName • Infraestrutura (${issue.targetDisplayLabel})';
+                        } else if (issue.isLightingIssue) {
+                          itemTitle =
+                              '$roomName • Iluminação (${issue.seatId})';
+                        } else {
+                          itemTitle = '$roomName • Poltrona ${issue.seatId}';
+                        }
+                      }
+
                       final statusColor = issue.resolved
                           ? AppleColors.systemGreen
                           : issue.isStaging
@@ -410,7 +440,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          '$roomName • Poltrona ${issue.seatId}',
+                                          itemTitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,

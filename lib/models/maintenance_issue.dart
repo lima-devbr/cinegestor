@@ -38,6 +38,12 @@ class MaintenanceIssue {
 
   /// Padroniza nomes antigos e atuais para a lista oficial de defeitos
   static String normalizeProblemType(String raw) {
+    if (raw.contains(':')) {
+      final prefix = raw.split(':').first.trim();
+      if (prefix.isNotEmpty && prefix.length <= 40) {
+        return prefix;
+      }
+    }
     final lower = raw.trim().toLowerCase();
     if (lower == 'trocar capa assento' ||
         lower == 'capa assento rasg.' ||

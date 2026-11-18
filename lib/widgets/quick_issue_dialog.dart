@@ -193,6 +193,15 @@ class _QuickIssueSheetState extends State<_QuickIssueSheet> {
       return;
     }
 
+    if (_photoBase64 != null && _photoBase64!.length > 450000) {
+      showTopNotice(
+        context,
+        'A foto selecionada é muito grande. Escolha outra foto ou tente capturar novamente.',
+        isError: true,
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -207,15 +216,25 @@ class _QuickIssueSheetState extends State<_QuickIssueSheet> {
           : (user?.cinemaId ?? '2159');
       final locationName = isRoom ? _selectedRoom!.nome : _selectedSector.name;
 
+      // Garante rigorosamente que o problemType nunca exceda os 100 chars exigidos pelo firestore.rules
+      final cleanTitle = title.length > 55 ? title.substring(0, 55).trim() : title;
+      final combinedType = '${_selectedCategory.label}: $cleanTitle';
+      final safeProblemType = combinedType.length > 100
+          ? combinedType.substring(0, 100)
+          : combinedType;
+
+      final cleanNotes = _notesController.text.trim();
+      final safeNotes = cleanNotes.isEmpty
+          ? null
+          : (cleanNotes.length > 500 ? cleanNotes.substring(0, 500) : cleanNotes);
+
       final issue = MaintenanceIssue(
         cinemaId: cinemaId,
         roomId: roomId,
         seatId: _selectedCategory.key,
-        problemType: '${_selectedCategory.label}: $title',
+        problemType: safeProblemType,
         urgency: _selectedUrgency,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
+        notes: safeNotes,
         reportedBy: user?.name ?? user?.email ?? 'Equipe',
         reportedRole: user?.role.name,
         beforePhotoBase64: _photoBase64,
@@ -552,6 +571,12 @@ class _QuickIssueSheetState extends State<_QuickIssueSheet> {
             const SizedBox(height: 8),
             TextField(
               controller: _titleController,
+              maxLength: 55,
+              buildCounter: (context,
+                      {required currentLength,
+                      required isFocused,
+                      maxLength}) =>
+                  null,
               decoration: InputDecoration(
                 hintText: _placeholderText,
                 filled: true,
@@ -566,6 +591,12 @@ class _QuickIssueSheetState extends State<_QuickIssueSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _notesController,
+              maxLength: 500,
+              buildCounter: (context,
+                      {required currentLength,
+                      required isFocused,
+                      maxLength}) =>
+                  null,
               decoration: InputDecoration(
                 hintText:
                     'Observações adicionais ou detalhes específicos do local (opcional)',

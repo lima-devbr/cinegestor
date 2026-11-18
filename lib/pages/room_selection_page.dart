@@ -151,19 +151,26 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
         roomController.issues.where((i) => i.isActive).toList();
     final stagingCount = roomController.getStagingIssues().length;
 
-    final blockingSeatsCount = activeIssues
+    final seatIssues = activeIssues.where((i) => i.isSeatIssue).toList();
+    final nonSeatIssuesCount = activeIssues.length - seatIssues.length;
+
+    final blockingSeatsCount = seatIssues
         .where((i) => i.isBlockingSeat)
         .map((i) => '${i.roomId}_${i.seatId}')
         .toSet()
         .length;
     final affectedSeatsCount =
-        activeIssues.map((i) => '${i.roomId}_${i.seatId}').toSet().length;
+        seatIssues.map((i) => '${i.roomId}_${i.seatId}').toSet().length;
 
     final operationalSeats =
         (totalSeats - blockingSeatsCount).clamp(0, totalSeats);
     final operationalPercent = totalSeats > 0
         ? ((operationalSeats / totalSeats) * 100).toStringAsFixed(1)
         : '100.0';
+
+    final String pendenciasSub = nonSeatIssuesCount > 0
+        ? '$affectedSeatsCount poltrona(s) • $nonSeatIssuesCount geral'
+        : '$affectedSeatsCount poltrona(s)';
 
     return AppleGlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -190,7 +197,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               child: _buildCompactMetricItem(
                 label: 'PENDÊNCIAS',
                 value: '${activeIssues.length}',
-                sub: '$affectedSeatsCount poltrona(s)',
+                sub: pendenciasSub,
                 color: activeIssues.isNotEmpty
                     ? (blockingSeatsCount > 0
                         ? AppleColors.systemRed
@@ -925,11 +932,14 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               ...rooms.map((room) {
                 final roomActiveIssues =
                     roomController.getIssuesByRoom(room.id, onlyActive: true);
-                final blockingSeatIds = roomActiveIssues
+                final roomActiveSeatIssues =
+                    roomActiveIssues.where((i) => i.isSeatIssue).toList();
+
+                final blockingSeatIds = roomActiveSeatIssues
                     .where((i) => i.isBlockingSeat)
                     .map((i) => i.seatId)
                     .toSet();
-                final usualSeatIds = roomActiveIssues
+                final usualSeatIds = roomActiveSeatIssues
                     .where((i) => !i.isBlockingSeat)
                     .map((i) => i.seatId)
                     .where((seatId) => !blockingSeatIds.contains(seatId))
