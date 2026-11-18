@@ -1,3 +1,5 @@
+import 'cinema_sector.dart';
+
 enum IssueStatus {
   staging, // Pendente de aprovação pela operação
   rejected, // Rejeitada na triagem
@@ -129,6 +131,9 @@ class MaintenanceIssue {
   /// True quando a demanda ativa interdita o assento (Encosto Solto / Assento Solto)
   bool get isBlockingSeat => isBlockingProblem(problemType);
 
+  /// True se o chamado for aberto para uma área comum do cinema (fora das salas)
+  bool get isCommonSector => roomId.startsWith('setor_');
+
   bool get isLightingIssue =>
       seatId.startsWith('LED-') ||
       seatId.startsWith('ARAN-') ||
@@ -139,15 +144,28 @@ class MaintenanceIssue {
       seatId == 'SALA' ||
       seatId.startsWith('INFRA-');
 
-  bool get isSeatIssue => !isLightingIssue && !isGeneralIssue;
+  bool get isSeatIssue => !isLightingIssue && !isGeneralIssue && !isCommonSector;
 
   String get targetCategoryLabel {
+    if (isCommonSector) {
+      final sector = CinemaSector.findById(roomId);
+      return sector?.name ?? 'Área Comum / Geral';
+    }
     if (isGeneralIssue) return 'Infraestrutura da Sala';
     if (isLightingIssue) return 'Iluminação Técnica';
     return 'Poltrona';
   }
 
   String get targetDisplayLabel {
+    if (isCommonSector) {
+      final sector = CinemaSector.findById(roomId);
+      final sectorName = sector?.name ?? roomId.replaceFirst('setor_', '').toUpperCase();
+      if (isGeneralIssue) {
+        final clean = seatId.replaceFirst('GERAL-', '').replaceAll('_', ' ');
+        return '$sectorName • $clean';
+      }
+      return sectorName;
+    }
     if (isGeneralIssue) {
       final clean = seatId.replaceFirst('GERAL-', '').replaceAll('_', ' ');
       return clean.isNotEmpty ? clean : 'Geral da Sala';

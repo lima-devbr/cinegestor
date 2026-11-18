@@ -1751,7 +1751,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       ),
       floatingActionButton: selectedSeat != null
           ? null
-          : FloatingActionButton.extended(
+          : FloatingActionButton(
               onPressed: () {
                 QuickIssueDialog.show(
                   context: context,
@@ -1761,11 +1761,8 @@ class _MaintenancePageState extends State<MaintenancePage>
               },
               backgroundColor: AppleColors.accentBlue,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_rounded, size: 22),
-              label: const Text(
-                'Novo Chamado',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
+              tooltip: 'Novo Chamado',
+              child: const Icon(Icons.add_rounded, size: 28),
             ),
       body: SafeArea(
         child: Column(
