@@ -273,6 +273,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       DropdownButtonFormField<UserRole>(
                         key: ValueKey('create_role_$selectedRole'),
                         initialValue: selectedRole,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Cargo',
                           prefixIcon: Icon(Icons.badge_outlined, size: 18),
@@ -281,7 +282,10 @@ class _UserManagementPageState extends State<UserManagementPage> {
                             .map(
                               (r) => DropdownMenuItem(
                                 value: r,
-                                child: Text(r.displayName),
+                                child: Text(
+                                  r.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             )
                             .toList(),
@@ -296,6 +300,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         DropdownButtonFormField<String>(
                           key: ValueKey('create_cinema_$selectedCinemaId'),
                           initialValue: selectedCinemaId,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Unidade / Cinema',
                             prefixIcon: Icon(Icons.theaters_rounded, size: 18),
@@ -304,7 +309,10 @@ class _UserManagementPageState extends State<UserManagementPage> {
                               .map(
                                 (c) => DropdownMenuItem(
                                   value: c.id,
-                                  child: Text(c.name),
+                                  child: Text(
+                                    c.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -440,6 +448,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       DropdownButtonFormField<UserRole>(
                         key: ValueKey('edit_role_$selectedRole'),
                         initialValue: selectedRole,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Cargo / Permissão',
                           prefixIcon: Icon(Icons.badge_outlined, size: 18),
@@ -448,7 +457,10 @@ class _UserManagementPageState extends State<UserManagementPage> {
                             .map(
                               (r) => DropdownMenuItem(
                                 value: r,
-                                child: Text(r.displayName),
+                                child: Text(
+                                  r.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             )
                             .toList(),
@@ -463,6 +475,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         DropdownButtonFormField<String>(
                           key: ValueKey('edit_cinema_$selectedCinemaId'),
                           initialValue: selectedCinemaId,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Transferir de Cinema',
                             prefixIcon: Icon(Icons.theaters_rounded, size: 18),
@@ -471,7 +484,10 @@ class _UserManagementPageState extends State<UserManagementPage> {
                               .map(
                                 (c) => DropdownMenuItem(
                                   value: c.id,
-                                  child: Text(c.name),
+                                  child: Text(
+                                    c.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -648,10 +664,11 @@ class _UserManagementPageState extends State<UserManagementPage> {
                   runSpacing: 10,
                   children: [
                     SizedBox(
-                      width: 210,
+                      width: 220,
                       child: DropdownButtonFormField<String>(
                         key: ValueKey('role_filter_$_selectedRoleFilter'),
                         initialValue: _selectedRoleFilter,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Filtrar por Cargo',
                           isDense: true,
@@ -663,12 +680,18 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         items: [
                           const DropdownMenuItem(
                             value: 'all',
-                            child: Text('Todos os Cargos'),
+                            child: Text(
+                              'Todos os Cargos',
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           ...UserRole.values.map(
                             (r) => DropdownMenuItem(
                               value: r.name,
-                              child: Text(r.displayName),
+                              child: Text(
+                                r.displayName,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ],
@@ -679,10 +702,11 @@ class _UserManagementPageState extends State<UserManagementPage> {
                     ),
                     if (canSwitchCinema)
                       SizedBox(
-                        width: 240,
+                        width: 260,
                         child: DropdownButtonFormField<String>(
                           key: ValueKey('cinema_filter_$_selectedCinemaFilter'),
                           initialValue: _selectedCinemaFilter,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Filtrar por Cinema',
                             isDense: true,
@@ -694,12 +718,18 @@ class _UserManagementPageState extends State<UserManagementPage> {
                           items: [
                             const DropdownMenuItem(
                               value: 'all',
-                              child: Text('Todas as Unidades'),
+                              child: Text(
+                                'Todas as Unidades',
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             ...CinemaUnit.availableCinemas.map(
                               (c) => DropdownMenuItem(
                                 value: c.id,
-                                child: Text(c.name),
+                                child: Text(
+                                  c.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ],
