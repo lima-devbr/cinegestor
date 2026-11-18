@@ -12,71 +12,77 @@ Este documento consolida o estado atual do **CineGestor** e organiza as próxima
 - [x] Renderização em matriz (`bounds.lines` × `bounds.columns`) respeitando automaticamente corredores verticais, corredores horizontais, recuos laterais e posição da tela (`stage`).
 - [x] Diferenciação visual por tipo de assento: **Normal**, **Cadeirante**, **Acompanhante** e **Obeso**.
 - [x] Controles de zoom (`+`, `-`, `Reset`) e legenda fixa no topo do mapa.
+- [x] Distinção de impacto operacional: identificação visual de poltronas com **Defeito Bloqueante** (interdita venda de assento, ex: encosto ou assento solto) vs **Defeito Usual** (atenção estética/operacional).
 
 ### 2. Perfis de Acesso (RBAC) e Fluxo de Triagem (*Staging*)
 - [x] Modelo de usuário (`AppUser`) com vínculo de unidade (`cinemaId` / `cinemaName`).
-- [x] **4 perfis implementados:**
+- [x] **6 perfis implementados:**
   - **Operação (Limpeza/Portaria):** Abre solicitações rápidas que entram como *Em Triagem* (`staging`).
   - **Assistente de Manutenção:** Abre chamados diretamente como manutenção ativa (`active`).
   - **Encarregado:** Aprova ou recusa solicitações da Triagem e conclui manutenções (`resolved`).
-  - **Gerente:** Acesso total (aprova, conclui, reabre chamados e exclui registros).
+  - **Gerente:** Acesso total à unidade (aprova, conclui, reabre chamados, exclui e gerencia equipe local).
+  - **Supervisor Regional:** Gestão e acompanhamento global em múltiplas unidades de cinema da rede.
+  - **Administrador:** Controle irrestrito do sistema, infraestrutura e publicações de versões.
 - [x] Tela exclusiva de **Triagem de Solicitações (`StagingPage`)** com contador de pendências no Lobby.
-- [x] Indicação visual no mapa diferenciando assento **Em Triagem** (amarelo/âmbar) de assento **Com Defeito Confirmado** (vermelho).
+- [x] Indicação visual no mapa diferenciando assento **Em Triagem** (âmbar) de assento **Com Defeito Confirmado** (vermelho).
 
 ### 3. Banco de Dados em Nuvem e Segurança Real (Firebase)
 - [x] **Projeto Firebase Provisionado (`cinegestor-manutencao`):**
   - Instância **Cloud Firestore** implantada na região `southamerica-east1` (São Paulo, Brasil).
-  - Índices compostos implantados (`firestore.indexes.json`) para consultas por `cinemaId`, `status`, `roomId` e `reportedAt`.
+  - Índices compostos implantados (`firestore.indexes.json`) para consultas por `cinemaId`, `status`, `roomId` e `dateTime`.
 - [x] **Firebase Authentication:**
-  - Autenticação por E-mail/Senha integrada ao `AuthController` com sincronização de perfis na coleção `/users/{uid}`.
+  - Autenticação por E-mail/Senha integrada ao `AuthController` com persistência segura de token.
+  - Sincronização de perfis na coleção `/users/{uid}`.
 - [x] **Regras de Segurança no Servidor (`firestore.rules`):**
-  - Isolamento estrito por unidade (`cinemaId == userCinemaId()`), impedindo que funcionários de outro cinema leiam ou modifiquem dados de outra unidade.
-  - Validação no servidor das transições de status por cargo (`operacao`, `assistente`, `encarregado` e `gerente`).
-- [x] **Sincronização Híbrida (Nuvem em Tempo Real + Fallback Local):**
-  - Stream em tempo real (`snapshots()`) no `RoomController` com cache offline do Firestore e espelhamento em `SharedPreferences`.
+  - Isolamento estrito por unidade (`belongsToCinema(resource.data.cinemaId)`), impedindo vazamento de dados entre cinemas.
+  - Validação no servidor das transições de status e campos imutáveis por perfil.
+- [x] **Persistência de Login (`AuthGate`):**
+  - O usuário permanece conectado mesmo ao fechar e reabrir o app ou navegador. O redirecionamento leva diretamente para as salas sem pedir senha novamente.
 
-### 4. Roteiro de Manutenção por Tipo de Defeito (Tarefas em Lote por Sala)
+### 4. Otimização de Performance e Redução de Custos Diários
+- [x] **Stream em Tempo Real Filtrado:** O listener contínuo escuta exclusivamente chamados ativos/triagem (`status in ['staging', 'active']`), economizando até 90% das leituras diárias.
+- [x] **Fim de Leituras Duplicadas:** Removido `.get()` redundante na inicialização; o snapshot do Firestore já inicializa o estado de forma atômica.
+- [x] **Cache Persistente Local:** Configurado `persistenceEnabled: true` e `CACHE_SIZE_UNLIMITED` para reaproveitar dados em disco (SQLite no Android, IndexedDB na Web).
+- [x] **Paginação sob Demanda (`limit: 25`):** Chamados finalizados no histórico são carregados em blocos de 25 registros apenas quando solicitados.
+- [x] **Cache em Memória de Configurações:** Verificações de versão têm intervalo de 30 minutos para evitar consultas excessivas em `app_config`.
+
+### 5. Roteiro de Manutenção por Tipo de Defeito (Tarefas em Lote por Sala)
 - [x] **Contadores Rápidos por Tipo de Problema no Lobby:**
-  - Exibição direta da quantidade de poltronas com **Capa Rasgada**, **Bracinho Solto**, **Poltrona sem Número**, entre outros defeitos ativos.
+  - Exibição direta da quantidade de poltronas com **Capa Rasgada**, **PC-E**, **PC-D**, **Poltrona sem Número**, entre outros defeitos ativos.
 - [x] **Tela de Tarefas por Tipo de Defeito (`DefectSummaryPage`):**
-  - Filtro rápido por tipo de defeito para que o técnico separe o material necessário (capas, plaquinhas de número, parafusos/braços) de uma só vez.
+  - Filtro por tipo de defeito para que o técnico separe o material necessário de uma só vez.
   - Agrupamento por **Sala** listando exatamente quais assentos possuem cada defeito.
   - Botão de **Conclusão em Lote (`Concluir todos`)** por tarefa dentro da sala, além de conclusão individual por assento.
-  - Exportação de **Roteiro de Serviço por Sala** formatado para envio via WhatsApp.
+  - Exportação de **Roteiro de Serviço por Sala** formatado para WhatsApp ou prancheta.
+
+### 6. Gestão de Equipe e Logins no Próprio App (`UserManagementPage`)
+- [x] **Criação de Usuários sem Deslogar o Gerente:** Uso de instância secundária `FirebaseApp.initializeApp(name: 'UserManagementSecondary')` para criar novos acessos no Firebase Auth sem perder a sessão atual.
+- [x] **Gestão de Cargos e Unidades:** Promoção/rebaixamento de cargo e transferência de unidade com sincronização instantânea no Firestore.
+- [x] **Bloqueio e Desativação (`active: false`):** Revogação imediata de acesso de funcionários desligados.
+- [x] **Primeiro Acesso Obrigatório (`mustChangePassword`):** Força o colaborador a definir uma senha pessoal segura no primeiro login.
+
+### 7. Fotos, Evidências e Reincidência
+- [x] **Evidência Fotográfica na Abertura e Conclusão:** Captura de fotos de antes e depois com compressão nativa (JPEG 720px / 55%, ~50 a 80 KB).
+- [x] **Compatibilidade Multiplataforma:** Suporte a Câmera/Galeria no Android e seletor nativo HTML5 Canvas na Web.
+- [x] **Detecção de Reincidência:** Selo e alerta no histórico informando quantas vezes a mesma poltrona já apresentou problemas anteriores.
+
+### 8. Design System e Distribuição
+- [x] **Apple Design System:** Tema Claro (*Light*) e Tema Escuro (*Dark*) refinados, com cantos arredondados contínuos e superfícies translúcidas.
+- [x] **Ícone Personalizado:** Logotipo com poltrona estilizada e gradiente grafite sem faixas de cor.
+- [x] **Distribuição Web (PWA):** Publicado no Firebase Hosting (`https://cinegestor-manutencao.web.app`).
+- [x] **Distribuição Android (In-App Update):** Verificador e instalador silencioso de atualizações APK via Firestore.
 
 ---
 
 ## 🚧 Parte 2: O Que Ainda Vamos Implementar (Próximas Etapas)
 
-### Fase 1 — Gestão de Logins, Permissões e Transferência de Cinemas (`UserManagementPage`)
-Painel administrativo dentro do próprio aplicativo (acessível pelo perfil **Gerente** e/ou **Supervisor Regional / Admin**) para gerenciar toda a equipe sem precisar abrir o console do Firebase:
-- [ ] **Criação de Novos Funcionários (Logins) pelo App:**
-  - Formulário para cadastrar **Nome, E-mail, Senha inicial, Cargo (`operacao`, `assistente`, `encarregado`, `gerente`) e Cinema (`cinemaId`)**.
-  - Uso de uma **instância secundária do `FirebaseApp`** no momento do `createUserWithEmailAndPassword` para criar a credencial no Firebase Auth e gravar o documento `/users/{uid}` sem deslogar o Gerente atual.
-- [ ] **Alteração de Permissões (Promoção / Troca de Cargo em Tempo Real):**
-  - Edição rápida do campo `role` do colaborador na coleção `/users/{uid}` (ex.: promover de *Operação* para *Assistente*, ou de *Assistente* para *Encarregado*).
-  - Efeito imediato nas regras de segurança (`firestore.rules`), sem necessidade de o funcionário relogar.
-- [ ] **Troca de Acesso de Cinemas (Transferência de Unidade e Visão Multi-Cinema):**
-  - Atualização dos campos `cinemaId` e `cinemaName` em `/users/{uid}` para transferir um funcionário de uma unidade para outra.
-  - Criação de permissão/seletor de unidade para **Gerente / Supervisor Regional**, permitindo alternar entre cinemas da rede e transferir colaboradores entre unidades.
-- [ ] **Exclusão e Bloqueio Imediato de Acesso (Desligamento):**
-  - Opção para **Desativar (`active: false`)** ou **Excluir** o perfil `/users/{uid}` do colaborador desligado.
-  - Bloqueio instantâneo de leitura e escrita pelo `firestore.rules` e bloqueio de login no `AuthController`.
-- [ ] **Redefinição de Senha:**
-  - Disparo de e-mail de redefinição de senha (`sendPasswordResetEmail`) com 1 toque pelo painel do Gerente ou na tela de login.
+### Fase 1 — Expansão de Novas Unidades da Rede
+- [ ] **Mapeamento de Novos Complexos:** Inclusão dos mapas JSON de novos cinemas da rede (ex.: UCI New York City Center, NorteShopping, etc.).
+- [ ] **Visão Consolidada Multi-Cinema:** Dashboard comparativo de indicadores entre cinemas para Supervisores e Administradores.
 
-### Fase 2 — Expansão Multi-Cinema (Novas Unidades)
-- [ ] **Cadastro de Novas Unidades (Múltiplos Cinemas):**
-  - Inclusão dos mapas JSON de novas unidades da rede (ex.: *UCI New York City Center*, *UCI Kinoplex NorteShopping*), mantendo isolamento por `cinemaId`.
+### Fase 2 — Notificações em Tempo Real
+- [ ] **Notificações Push (Firebase Cloud Messaging):** Avisar o Encarregado quando um novo chamado urgente for aberto ou quando a Triagem acumular pendências.
 
-### Fase 3 — Fotos, Evidências e Melhorias de Campo
-- [x] **Anexo de Foto na Abertura e na Conclusão:**
-  - Permitir que a Operação/Assistente tire uma foto rápida da poltrona quebrada ao abrir o chamado e que o Encarregado anexe foto do reparo concluído.
-- [x] **Histórico Filtrado por Assento / Identificação de Reincidência:**
-  - Ao clicar no histórico dentro de uma sala específica, exibir quantas vezes uma mesma poltrona já apresentou defeito no passado.
-
-### Fase 4 — Notificações e Relatórios Gerenciais Avançados
-- [ ] **Notificações Push (Firebase Cloud Messaging):**
-  - Avisar o Encarregado quando uma nova solicitação entrar na Triagem ou quando um chamado de **Urgência Alta** for aberto.
-- [ ] **Dashboard Gerencial e Exportação PDF / Excel (CSV):**
-  - Gráficos de tipos de problemas mais frequentes, tempo médio de resolução (SLA) e exportação em PDF/planilha.
+### Fase 3 — Relatórios Executivos e Exportação
+- [ ] **Exportação em PDF e Excel (CSV):** Geração de relatórios com tempo médio de atendimento (SLA), histórico de custos e peças substituídas.
+- [ ] **Gráficos de Tendência:** Relatórios de durabilidade por lote de poltronas ou marcas de revestimento.
