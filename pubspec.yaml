@@ -29,6 +29,7 @@ flutter:
   assets:
     - assets/cinemas/uci_park_campo_grande/
     - assets/cinemas/uci_new_york_city_center/
+    - assets/cinemas/uci_norte_shopping/
   
 dev_dependencies:
   flutter_test:
