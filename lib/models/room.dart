@@ -20,6 +20,45 @@ class GridLabel {
   }
 }
 
+class RoomLightingItem {
+  final String id;
+  final String name;
+  final String category; // 'step_led', 'wall_sconce', 'cleaning_floodlight'
+  final int line;
+  final int column;
+  final String? circuit;
+  final bool dimmable;
+  final int? powerWatts;
+
+  const RoomLightingItem({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.line,
+    required this.column,
+    this.circuit,
+    this.dimmable = false,
+    this.powerWatts,
+  });
+
+  factory RoomLightingItem.fromJson(Map<String, dynamic> json) {
+    return RoomLightingItem(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      category: json['category']?.toString() ?? 'step_led',
+      line: (json['line'] as int?) ?? 0,
+      column: (json['column'] as int?) ?? 0,
+      circuit: json['circuit']?.toString(),
+      dimmable: json['dimmable'] == true,
+      powerWatts: json['powerWatts'] as int?,
+    );
+  }
+
+  bool get isStepLed => category == 'step_led';
+  bool get isWallSconce => category == 'wall_sconce';
+  bool get isCleaningFloodlight => category == 'cleaning_floodlight';
+}
+
 class Room {
   final String id;
   final String nome;
@@ -37,6 +76,11 @@ class Room {
   final int boundsColumns;
   final List<GridLabel> gridLabels;
   final int? stageLine;
+  final List<RoomLightingItem> lightingItems;
+
+  Map<String, RoomLightingItem> get lightingByCoord => {
+        for (final item in lightingItems) '${item.line}_${item.column}': item
+      };
 
   bool get isGridLayout => boundsLines > 0 && boundsColumns > 0;
 
@@ -78,6 +122,7 @@ class Room {
     this.boundsColumns = 0,
     this.gridLabels = const [],
     this.stageLine,
+    this.lightingItems = const [],
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
@@ -155,6 +200,11 @@ class Room {
       }
     }
 
+    final lightingJson = json['lighting'] as Map<String, dynamic>?;
+    final lightingList = (lightingJson?['items'] as List<dynamic>? ?? [])
+        .map((e) => RoomLightingItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+
     final room = Room(
       id: extractedId,
       nome: locationName,
@@ -170,6 +220,7 @@ class Room {
       boundsColumns: (bounds['columns'] as int?) ?? 0,
       gridLabels: labelsList,
       stageLine: stageUpperLeft?['line'] as int?,
+      lightingItems: lightingList,
     );
     room.seats = parsedSeats;
     return room;

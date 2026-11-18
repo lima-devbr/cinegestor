@@ -11,6 +11,7 @@ class RoomRepository {
     'assets/cinemas/uci_park_campo_grande/sala_5.json',
     'assets/cinemas/uci_park_campo_grande/sala_6.json',
     'assets/cinemas/uci_park_campo_grande/sala_7.json',
+    'assets/cinemas/uci_new_york_city_center/sala_1.json',
   ];
 
   static Future<List<Room>> loadRoomsFromJson() async {
@@ -43,7 +44,7 @@ class RoomRepository {
           final roomJsonStr = await rootBundle.loadString(assetPath);
           final Map<String, dynamic> roomMap = json.decode(roomJsonStr);
           final room = Room.fromJson(roomMap);
-          roomsById[room.id] = room;
+          roomsById['${room.theaterId ?? ""}_${room.id}'] = room;
         } catch (_) {}
       }
 

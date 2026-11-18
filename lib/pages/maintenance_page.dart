@@ -11,6 +11,7 @@ import 'package:cinegestor/widgets/seat_widget.dart';
 import 'package:cinegestor/widgets/apple_surfaces.dart';
 import 'package:cinegestor/widgets/photo_evidence_widgets.dart';
 import 'package:cinegestor/models/room.dart';
+import 'package:cinegestor/widgets/lighting_element_dialogs.dart';
 import 'history_page.dart';
 
 class MaintenancePage extends StatefulWidget {
@@ -276,6 +277,8 @@ class _MaintenancePageState extends State<MaintenancePage>
           _buildLegendItem(AppleColors.systemOrange, 'Atenção (Usual)'),
           _buildLegendItem(AppleColors.systemRed, 'Interditada'),
           _buildLegendItem(AppleColors.accentBlue, 'Selecionado'),
+          if (widget.room.lightingItems.isNotEmpty)
+            _buildLegendItem(const Color(0xFFFFD60A), 'Iluminação / LED'),
         ],
       ),
     );
@@ -438,10 +441,108 @@ class _MaintenancePageState extends State<MaintenancePage>
                   );
                 }
 
+                // Elemento de Iluminação Técnica (LEDs de degrau, arandelas, refletores)
+                final lightItem = room.lightingByCoord[coordKey];
+                if (lightItem != null) {
+                  return _buildLightingWidget(room, lightItem);
+                }
+
                 return const SizedBox(width: 38, height: 38);
               }),
             );
           }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLightingWidget(Room room, RoomLightingItem item) {
+    final issues = widget.roomController.issues
+        .where((i) => i.roomId == room.id && i.seatId == item.id)
+        .toList();
+
+    MaintenanceIssue? activeIssue;
+    MaintenanceIssue? stagingIssue;
+
+    for (final i in issues) {
+      if (i.isActive && activeIssue == null) activeIssue = i;
+      if (i.isStaging && stagingIssue == null) stagingIssue = i;
+    }
+
+    final bool hasDefect = activeIssue != null;
+    final bool hasStaging = stagingIssue != null;
+
+    Color itemColor;
+    IconData itemIcon;
+
+    if (hasDefect) {
+      itemColor = AppleColors.systemRed;
+      itemIcon = Icons.warning_amber_rounded;
+    } else if (hasStaging) {
+      itemColor = AppleColors.systemAmber;
+      itemIcon = Icons.pending_actions_rounded;
+    } else if (item.isStepLed) {
+      itemColor = const Color(0xFFFFD60A);
+      itemIcon = Icons.stairs_rounded;
+    } else if (item.isWallSconce) {
+      itemColor = AppleColors.systemOrange;
+      itemIcon = Icons.lightbulb_rounded;
+    } else {
+      itemColor = AppleColors.accentBlue;
+      itemIcon = Icons.highlight_rounded;
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        LightingElementDialogs.showInspectionSheet(
+          context: context,
+          item: item,
+          room: room,
+          roomController: widget.roomController,
+          authController: Provider.of<AuthController>(context, listen: false),
+        );
+      },
+      child: Tooltip(
+        message: item.name,
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: item.isStepLed ? 34 : 28,
+              height: item.isStepLed ? 20 : 28,
+              decoration: BoxDecoration(
+                color: itemColor.withValues(
+                  alpha: hasDefect || hasStaging ? 0.32 : 0.16,
+                ),
+                borderRadius: BorderRadius.circular(item.isStepLed ? 6 : 999),
+                border: Border.all(
+                  color: itemColor.withValues(
+                    alpha: hasDefect || hasStaging ? 1.0 : 0.7,
+                  ),
+                  width: hasDefect ? 2.0 : 1.2,
+                ),
+                boxShadow: (hasDefect || hasStaging)
+                    ? [
+                        BoxShadow(
+                          color: itemColor.withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        )
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Icon(
+                  itemIcon,
+                  size: item.isStepLed ? 13 : 16,
+                  color: itemColor,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

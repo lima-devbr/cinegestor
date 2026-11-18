@@ -1,0 +1,324 @@
+{
+  "id": "1",
+  "theaterBoxOfficeId": "2159",
+  "theaterName": "UCI Park Campo Grande",
+  "theaterLocationName": "Sala 1",
+  "totalSeats": 350,
+  "bounds": {
+    "lines": 21,
+    "columns": 33
+  },
+  "stage": {
+    "upperLeft": { "line": 20, "column": 2 },
+    "lowerRight": { "line": 20, "column": 31 }
+  },
+  "notes": "Exemplo arquitetural de integração de iluminação técnica no mapa da sala.",
+  "lighting": {
+    "description": "Elementos de iluminação de segurança, balizamento e limpeza mapeados na matriz da sala",
+    "categories": [
+      {
+        "key": "step_led",
+        "label": "LEDs de Degrau / Balizadores",
+        "icon": "stairs_rounded",
+        "color": "#FFD60A",
+        "problemTypes": [
+          "Fita LED Apagada",
+          "Trecho com Falha / Piscando",
+          "Perfil de Alumínio Danificado",
+          "Fonte Queimada",
+          "Fiação Exposta"
+        ]
+      },
+      {
+        "key": "wall_sconce",
+        "label": "Arandelas Laterais Dimerizáveis",
+        "icon": "lightbulb_rounded",
+        "color": "#FF9F0A",
+        "problemTypes": [
+          "Lâmpada Queimada",
+          "Flickering / Oscilando no Dimer",
+          "Arandela Quebrada / Frouxa",
+          "Não Dimeriza / Sempre no Máximo"
+        ]
+      },
+      {
+        "key": "cleaning_floodlight",
+        "label": "Refletores de Limpeza (Luz Geral)",
+        "icon": "highlight_rounded",
+        "color": "#0A84FF",
+        "problemTypes": [
+          "Refletor Queimado",
+          "Reator com Falha",
+          "Foco Desalinhado / Apontando Errado",
+          "Interruptor / Contator sem Resposta"
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "LED-DEG-P-CENTRAL",
+        "name": "LED Degrau Fileira P (Centro)",
+        "category": "step_led",
+        "line": 2,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-O-CENTRAL",
+        "name": "LED Degrau Fileira O (Centro)",
+        "category": "step_led",
+        "line": 3,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-N-CENTRAL",
+        "name": "LED Degrau Fileira N (Centro)",
+        "category": "step_led",
+        "line": 4,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-M-CENTRAL",
+        "name": "LED Degrau Fileira M (Centro)",
+        "category": "step_led",
+        "line": 5,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-L-CENTRAL",
+        "name": "LED Degrau Fileira L (Centro)",
+        "category": "step_led",
+        "line": 6,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-K-CENTRAL",
+        "name": "LED Degrau Fileira K (Centro)",
+        "category": "step_led",
+        "line": 7,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-J-CENTRAL",
+        "name": "LED Degrau Fileira J (Centro)",
+        "category": "step_led",
+        "line": 8,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-I-CENTRAL",
+        "name": "LED Degrau Fileira I (Centro)",
+        "category": "step_led",
+        "line": 9,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-H-CENTRAL",
+        "name": "LED Degrau Fileira H (Centro)",
+        "category": "step_led",
+        "line": 10,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-G-CENTRAL",
+        "name": "LED Degrau Fileira G (Centro)",
+        "category": "step_led",
+        "line": 11,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-F-CENTRAL",
+        "name": "LED Degrau Fileira F (Centro)",
+        "category": "step_led",
+        "line": 12,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-E-CENTRAL",
+        "name": "LED Degrau Fileira E (Centro)",
+        "category": "step_led",
+        "line": 13,
+        "column": 17,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-D-CENTRAL",
+        "name": "LED Degrau Fileira D (Centro)",
+        "category": "step_led",
+        "line": 14,
+        "column": 17,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-C-CENTRAL",
+        "name": "LED Degrau Fileira C (Centro)",
+        "category": "step_led",
+        "line": 16,
+        "column": 17,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-B-CENTRAL",
+        "name": "LED Degrau Fileira B (Centro)",
+        "category": "step_led",
+        "line": 17,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+      {
+        "id": "LED-DEG-A-CENTRAL",
+        "name": "LED Degrau Fileira A (Centro)",
+        "category": "step_led",
+        "line": 18,
+        "column": 16,
+        "circuit": "CIRC-LED-ESCADA-01",
+        "isEmergencyPathway": true
+      },
+
+      {
+        "id": "ARAN-ESQ-01",
+        "name": "Arandela Parede Esquerda 1 (Fundo)",
+        "category": "wall_sconce",
+        "line": 3,
+        "column": 1,
+        "circuit": "CIRC-DIMMER-ESQ",
+        "dimmable": true
+      },
+      {
+        "id": "ARAN-ESQ-02",
+        "name": "Arandela Parede Esquerda 2",
+        "category": "wall_sconce",
+        "line": 7,
+        "column": 1,
+        "circuit": "CIRC-DIMMER-ESQ",
+        "dimmable": true
+      },
+      {
+        "id": "ARAN-ESQ-03",
+        "name": "Arandela Parede Esquerda 3",
+        "category": "wall_sconce",
+        "line": 11,
+        "column": 1,
+        "circuit": "CIRC-DIMMER-ESQ",
+        "dimmable": true
+      },
+      {
+        "id": "ARAN-ESQ-04",
+        "name": "Arandela Parede Esquerda 4 (Frente)",
+        "category": "wall_sconce",
+        "line": 16,
+        "column": 1,
+        "circuit": "CIRC-DIMMER-ESQ",
+        "dimmable": true
+      },
+
+      {
+        "id": "ARAN-DIR-01",
+        "name": "Arandela Parede Direita 1 (Fundo)",
+        "category": "wall_sconce",
+        "line": 3,
+        "column": 32,
+        "circuit": "CIRC-DIMMER-DIR",
+        "dimmable": true
+      },
+      {
+        "id": "ARAN-DIR-02",
+        "name": "Arandela Parede Direita 2",
+        "category": "wall_sconce",
+        "line": 7,
+        "column": 32,
+        "circuit": "CIRC-DIMMER-DIR",
+        "dimmable": true
+      },
+      {
+        "id": "ARAN-DIR-03",
+        "name": "Arandela Parede Direita 3",
+        "category": "wall_sconce",
+        "line": 11,
+        "column": 32,
+        "circuit": "CIRC-DIMMER-DIR",
+        "dimmable": true
+      },
+      {
+        "id": "ARAN-DIR-04",
+        "name": "Arandela Parede Direita 4 (Frente)",
+        "category": "wall_sconce",
+        "line": 16,
+        "column": 32,
+        "circuit": "CIRC-DIMMER-DIR",
+        "dimmable": true
+      },
+
+      {
+        "id": "REF-LIMPEZA-TETO-01",
+        "name": "Refletor Limpeza Teto - Fundo Esquerda",
+        "category": "cleaning_floodlight",
+        "line": 1,
+        "column": 6,
+        "circuit": "CIRC-LUZ-GERAL-01",
+        "powerWatts": 150
+      },
+      {
+        "id": "REF-LIMPEZA-TETO-02",
+        "name": "Refletor Limpeza Teto - Fundo Direita",
+        "category": "cleaning_floodlight",
+        "line": 1,
+        "column": 27,
+        "circuit": "CIRC-LUZ-GERAL-01",
+        "powerWatts": 150
+      },
+      {
+        "id": "REF-LIMPEZA-TETO-03",
+        "name": "Refletor Limpeza Teto - Meio Esquerda",
+        "category": "cleaning_floodlight",
+        "line": 9,
+        "column": 8,
+        "circuit": "CIRC-LUZ-GERAL-02",
+        "powerWatts": 200
+      },
+      {
+        "id": "REF-LIMPEZA-TETO-04",
+        "name": "Refletor Limpeza Teto - Meio Direita",
+        "category": "cleaning_floodlight",
+        "line": 9,
+        "column": 25,
+        "circuit": "CIRC-LUZ-GERAL-02",
+        "powerWatts": 200
+      },
+      {
+        "id": "REF-LIMPEZA-TELA-01",
+        "name": "Refletor Limpeza Frente / Tela",
+        "category": "cleaning_floodlight",
+        "line": 19,
+        "column": 16,
+        "circuit": "CIRC-LUZ-GERAL-03",
+        "powerWatts": 250
+      }
+    ]
+  }
+}

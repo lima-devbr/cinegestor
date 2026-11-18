@@ -28,6 +28,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/cinemas/uci_park_campo_grande/
+    - assets/cinemas/uci_new_york_city_center/
   
 dev_dependencies:
   flutter_test:
