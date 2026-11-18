@@ -36,6 +36,16 @@ class _HistoryPageState extends State<HistoryPage> {
     _selectedRoomFilter = widget.initialRoomId ?? 'all';
     _seatFilter = (widget.initialSeatId ?? '').trim().toUpperCase();
     _seatFilterController = TextEditingController(text: _seatFilter);
+
+    // Passo 4: Carrega sob demanda a primeira página de histórico (limit 25)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final roomController =
+          Provider.of<RoomController>(context, listen: false);
+      if (roomController.historicalIssues.isEmpty &&
+          roomController.hasMoreHistory) {
+        roomController.loadHistoricalIssues();
+      }
+    });
   }
 
   @override
@@ -316,13 +326,56 @@ class _HistoryPageState extends State<HistoryPage> {
                               child: const Text('Limpar filtros'),
                             ),
                           ),
+                        if (roomController.hasMoreHistory &&
+                            (_selectedStatusFilter == 'all' ||
+                                _selectedStatusFilter == 'resolved'))
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: ElevatedButton.icon(
+                              onPressed: roomController.isLoadingHistory
+                                  ? null
+                                  : () => roomController.loadHistoricalIssues(),
+                              icon: roomController.isLoadingHistory
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.history_rounded, size: 18),
+                              label: const Text('Buscar no Histórico (+25)'),
+                            ),
+                          ),
                       ],
                     ),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    itemCount: filteredIssues.length,
+                    itemCount: filteredIssues.length +
+                        ((roomController.hasMoreHistory &&
+                                (_selectedStatusFilter == 'all' ||
+                                    _selectedStatusFilter == 'resolved'))
+                            ? 1
+                            : 0),
                     itemBuilder: (context, index) {
+                      if (index == filteredIssues.length) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: roomController.isLoadingHistory
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                                  )
+                                : OutlinedButton.icon(
+                                    onPressed: () =>
+                                        roomController.loadHistoricalIssues(),
+                                    icon: const Icon(Icons.download_rounded, size: 18),
+                                    label: const Text('Carregar Mais do Histórico (+25)'),
+                                  ),
+                          ),
+                        );
+                      }
                       final issue = filteredIssues[index];
                       final room = roomController.getRoomById(issue.roomId);
                       final roomName =

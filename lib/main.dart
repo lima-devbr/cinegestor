@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
 import 'controllers/auth_controller.dart';
@@ -13,6 +14,7 @@ import 'pages/history_page.dart';
 import 'pages/staging_page.dart';
 import 'pages/defect_summary_page.dart';
 import 'pages/user_management_page.dart';
+import 'widgets/auth_gate.dart';
 import 'theme/app_theme.dart';
 
 bool isFirebaseInitialized = false;
@@ -25,6 +27,12 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     isFirebaseInitialized = true;
+
+    // Passo 3: Ativa persistência em cache local ilimitado para reduzir custos e requisições
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
   } catch (e) {
     debugPrint('Firebase init fallback (modo local ativo): $e');
     isFirebaseInitialized = false;
@@ -61,6 +69,10 @@ class GineGestorApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
+            return MaterialPageRoute(
+              builder: (_) => const AuthGate(),
+            );
+          case '/login':
             return MaterialPageRoute(
               builder: (_) => LoginPage(authController: authController),
             );

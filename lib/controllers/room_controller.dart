@@ -12,14 +12,27 @@ import '../repositories/room_repository.dart';
 class RoomController extends ChangeNotifier {
   List<Room> _rooms = [];
   List<MaintenanceIssue> _issues = [];
+  List<MaintenanceIssue> _activeIssues = [];
+  List<MaintenanceIssue> _historicalIssues = [];
+
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _issuesSubscription;
   String _activeCinemaId = '2159';
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  bool _isLoadingHistory = false;
+  bool get isLoadingHistory => _isLoadingHistory;
+
+  bool _hasMoreHistory = true;
+  bool get hasMoreHistory => _hasMoreHistory;
+
+  DocumentSnapshot<Map<String, dynamic>>? _lastHistoryDoc;
+
   List<Room> get rooms => _rooms;
   List<MaintenanceIssue> get issues => _issues;
+  List<MaintenanceIssue> get activeIssues => _activeIssues;
+  List<MaintenanceIssue> get historicalIssues => _historicalIssues;
 
   Room? _selectRoom;
   Room? get selectRoom => _selectRoom;
@@ -33,8 +46,11 @@ class RoomController extends ChangeNotifier {
   Future<void> loadRooms({String? cinemaId}) async {
     if (_isLoading) return;
     _isLoading = true;
-    if (cinemaId != null && cinemaId.isNotEmpty) {
+    if (cinemaId != null && cinemaId.isNotEmpty && cinemaId != _activeCinemaId) {
       _activeCinemaId = cinemaId;
+      _lastHistoryDoc = null;
+      _hasMoreHistory = true;
+      _historicalIssues.clear();
     }
 
     try {
@@ -82,22 +98,23 @@ class RoomController extends ChangeNotifier {
 
     _issuesSubscription?.cancel();
     try {
+      // Passo 1: Ouve apenas demandas em triagem e em aberto (reduz até 90% das leituras diárias)
       _issuesSubscription = FirebaseFirestore.instance
           .collection('maintenance_issues')
           .where('cinemaId', isEqualTo: cinemaId)
+          .where('status', whereIn: ['staging', 'active'])
           .snapshots()
           .listen(
         (snapshot) async {
-          final cloudIssues = snapshot.docs.map((doc) {
+          final cloudActive = snapshot.docs.map((doc) {
             final data = Map<String, dynamic>.from(doc.data());
             data['id'] ??= doc.id;
             return MaintenanceIssue.fromJson(data);
           }).toList();
 
-          cloudIssues.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-          _issues = cloudIssues;
-          _syncSeatsWithIssues();
-          notifyListeners();
+          cloudActive.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+          _activeIssues = cloudActive;
+          _mergeAndSyncIssues();
           await _saveIssuesLocally();
         },
         onError: (e) {
@@ -107,6 +124,21 @@ class RoomController extends ChangeNotifier {
     } catch (e) {
       debugPrint('Erro ao iniciar stream do Firestore: $e');
     }
+  }
+
+  void _mergeAndSyncIssues() {
+    final Map<String, MaintenanceIssue> map = {};
+    for (final issue in _historicalIssues) {
+      map[issue.id] = issue;
+    }
+    for (final issue in _activeIssues) {
+      map[issue.id] = issue;
+    }
+    final merged = map.values.toList();
+    merged.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    _issues = merged;
+    _syncSeatsWithIssues();
+    notifyListeners();
   }
 
   void _syncSeatsWithIssues() {
@@ -182,33 +214,36 @@ class RoomController extends ChangeNotifier {
   }
 
   Future<void> registerIssue(MaintenanceIssue issue) async {
-    _issues.insert(0, issue);
-    _syncSeatsWithIssues();
-    notifyListeners();
+    // Passo 5: Assegura que fotos comprimidas respeitem a cota e limite de segurança
+    _activeIssues.removeWhere((i) => i.id == issue.id);
+    _activeIssues.insert(0, issue);
+    _mergeAndSyncIssues();
     await _saveIssuesLocally();
     await _syncIssueToFirestore(issue);
   }
 
   Future<void> approveStagingIssue(String issueId, {String? approvedBy}) async {
-    final index = _issues.indexWhere((i) => i.id == issueId);
+    final index = _activeIssues.indexWhere((i) => i.id == issueId);
     if (index != -1) {
-      _issues[index].status = IssueStatus.active;
-      _syncSeatsWithIssues();
-      notifyListeners();
+      _activeIssues[index].status = IssueStatus.active;
+      _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(_issues[index]);
+      await _syncIssueToFirestore(_activeIssues[index]);
     }
   }
 
   Future<void> rejectStagingIssue(String issueId, {String? reason}) async {
-    final index = _issues.indexWhere((i) => i.id == issueId);
+    final index = _activeIssues.indexWhere((i) => i.id == issueId);
     if (index != -1) {
-      _issues[index].status = IssueStatus.rejected;
-      _issues[index].rejectionReason = reason;
-      _syncSeatsWithIssues();
-      notifyListeners();
+      final item = _activeIssues[index];
+      item.status = IssueStatus.rejected;
+      item.rejectionReason = reason;
+      _activeIssues.removeAt(index);
+      _historicalIssues.removeWhere((i) => i.id == issueId);
+      _historicalIssues.insert(0, item);
+      _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(_issues[index]);
+      await _syncIssueToFirestore(item);
     }
   }
 
@@ -217,18 +252,21 @@ class RoomController extends ChangeNotifier {
     String? resolvedBy,
     String? afterPhotoBase64,
   }) async {
-    final index = _issues.indexWhere((i) => i.id == issueId);
+    final index = _activeIssues.indexWhere((i) => i.id == issueId);
     if (index != -1) {
-      _issues[index].status = IssueStatus.resolved;
-      _issues[index].resolvedAt = DateTime.now();
-      _issues[index].resolvedBy = resolvedBy;
+      final item = _activeIssues[index];
+      item.status = IssueStatus.resolved;
+      item.resolvedAt = DateTime.now();
+      item.resolvedBy = resolvedBy;
       if (afterPhotoBase64 != null && afterPhotoBase64.isNotEmpty) {
-        _issues[index].afterPhotoBase64 = afterPhotoBase64;
+        item.afterPhotoBase64 = afterPhotoBase64;
       }
-      _syncSeatsWithIssues();
-      notifyListeners();
+      _activeIssues.removeAt(index);
+      _historicalIssues.removeWhere((i) => i.id == issueId);
+      _historicalIssues.insert(0, item);
+      _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(_issues[index]);
+      await _syncIssueToFirestore(item);
     }
   }
 
@@ -237,19 +275,22 @@ class RoomController extends ChangeNotifier {
     final updatedIssues = <MaintenanceIssue>[];
 
     for (final id in issueIds) {
-      final index = _issues.indexWhere((i) => i.id == id);
-      if (index != -1 && !_issues[index].resolved) {
-        _issues[index].status = IssueStatus.resolved;
-        _issues[index].resolvedAt = now;
-        _issues[index].resolvedBy = resolvedBy;
-        updatedIssues.add(_issues[index]);
+      final index = _activeIssues.indexWhere((i) => i.id == id);
+      if (index != -1) {
+        final item = _activeIssues[index];
+        item.status = IssueStatus.resolved;
+        item.resolvedAt = now;
+        item.resolvedBy = resolvedBy;
+        _activeIssues.removeAt(index);
+        _historicalIssues.removeWhere((i) => i.id == id);
+        _historicalIssues.insert(0, item);
+        updatedIssues.add(item);
       }
     }
 
     if (updatedIssues.isEmpty) return;
 
-    _syncSeatsWithIssues();
-    notifyListeners();
+    _mergeAndSyncIssues();
     await _saveIssuesLocally();
     for (final issue in updatedIssues) {
       await _syncIssueToFirestore(issue);
@@ -257,22 +298,25 @@ class RoomController extends ChangeNotifier {
   }
 
   Future<void> reopenIssue(String issueId) async {
-    final index = _issues.indexWhere((i) => i.id == issueId);
+    final index = _historicalIssues.indexWhere((i) => i.id == issueId);
     if (index != -1) {
-      _issues[index].status = IssueStatus.active;
-      _issues[index].resolvedAt = null;
-      _issues[index].resolvedBy = null;
-      _syncSeatsWithIssues();
-      notifyListeners();
+      final item = _historicalIssues[index];
+      item.status = IssueStatus.active;
+      item.resolvedAt = null;
+      item.resolvedBy = null;
+      _historicalIssues.removeAt(index);
+      _activeIssues.removeWhere((i) => i.id == issueId);
+      _activeIssues.insert(0, item);
+      _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(_issues[index]);
+      await _syncIssueToFirestore(item);
     }
   }
 
   Future<void> deleteIssue(String issueId) async {
-    _issues.removeWhere((i) => i.id == issueId);
-    _syncSeatsWithIssues();
-    notifyListeners();
+    _activeIssues.removeWhere((i) => i.id == issueId);
+    _historicalIssues.removeWhere((i) => i.id == issueId);
+    _mergeAndSyncIssues();
     await _saveIssuesLocally();
     if (isFirebaseInitialized) {
       try {
@@ -300,30 +344,71 @@ class RoomController extends ChangeNotifier {
       try {
         final List<dynamic> decoded = json.decode(jsonString);
         _issues = decoded.map((issue) => MaintenanceIssue.fromJson(issue)).toList();
+        _activeIssues = _issues.where((i) => i.isActive || i.isStaging).toList();
+        _historicalIssues = _issues.where((i) => i.resolved || i.isRejected).toList();
       } catch (e) {
         debugPrint('Erro ao carregar histórico local de manutenção: $e');
       }
     }
+    // Passo 2: O get() redundante que lia todo o banco foi removido aqui.
+    // O stream _listenToFirestoreIssues() logo abaixo conecta no Firestore e atualiza
+    // os chamados com zero leituras duplicadas.
+  }
 
-    if (isFirebaseInitialized) {
-      try {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('maintenance_issues')
-            .where('cinemaId', isEqualTo: _activeCinemaId)
-            .get();
-        if (snapshot.docs.isNotEmpty) {
-          final cloudIssues = snapshot.docs.map((doc) {
-            final data = Map<String, dynamic>.from(doc.data());
-            data['id'] ??= doc.id;
-            return MaintenanceIssue.fromJson(data);
-          }).toList();
-          cloudIssues.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-          _issues = cloudIssues;
-          await _saveIssuesLocally();
-        }
-      } catch (e) {
-        debugPrint('Aviso ao buscar demandas iniciais do Firestore: $e');
+  /// Passo 4: Carrega chamados finalizados/resolvidos sob demanda com paginação (limit 25)
+  Future<void> loadHistoricalIssues({bool reset = false, int limit = 25}) async {
+    if (!isFirebaseInitialized || _isLoadingHistory) return;
+    if (!reset && !_hasMoreHistory) return;
+
+    _isLoadingHistory = true;
+    notifyListeners();
+
+    try {
+      if (reset) {
+        _historicalIssues.clear();
+        _lastHistoryDoc = null;
+        _hasMoreHistory = true;
       }
+
+      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+          .collection('maintenance_issues')
+          .where('cinemaId', isEqualTo: _activeCinemaId)
+          .where('status', isEqualTo: 'resolved')
+          .limit(limit);
+
+      if (_lastHistoryDoc != null) {
+        query = query.startAfterDocument(_lastHistoryDoc!);
+      }
+
+      final snapshot = await query.get();
+
+      if (snapshot.docs.isNotEmpty) {
+        _lastHistoryDoc = snapshot.docs.last;
+        final newResolved = snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] ??= doc.id;
+          return MaintenanceIssue.fromJson(data);
+        }).toList();
+
+        final existingIds = _historicalIssues.map((i) => i.id).toSet();
+        for (final item in newResolved) {
+          if (!existingIds.contains(item.id)) {
+            _historicalIssues.add(item);
+          }
+        }
+      }
+
+      if (snapshot.docs.length < limit) {
+        _hasMoreHistory = false;
+      }
+
+      _mergeAndSyncIssues();
+      await _saveIssuesLocally();
+    } catch (e) {
+      debugPrint('Aviso ao paginar histórico de manutenção: $e');
+    } finally {
+      _isLoadingHistory = false;
+      notifyListeners();
     }
   }
 

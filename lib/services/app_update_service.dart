@@ -56,13 +56,29 @@ class AppUpdateService {
     return false;
   }
 
-  /// Verifica se há atualização no Firestore (apenas mobile, não se aplica à Web)
+  static DateTime? _lastCheckTime;
+  static AppUpdateInfo? _cachedUpdateInfo;
+
+  /// Verifica se há atualização no Firestore (apenas mobile, com cache de 30 min)
   static Future<AppUpdateInfo?> checkForUpdate() async {
     if (kIsWeb || !isFirebaseInitialized) return null;
 
+    final now = DateTime.now();
+    if (_lastCheckTime != null &&
+        now.difference(_lastCheckTime!).inMinutes < 30) {
+      return _cachedUpdateInfo;
+    }
+
     try {
-      final doc = await FirebaseFirestore.instance.collection('app_config').doc('version').get();
-      if (!doc.exists || doc.data() == null) return null;
+      final doc = await FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('version')
+          .get();
+      _lastCheckTime = now;
+      if (!doc.exists || doc.data() == null) {
+        _cachedUpdateInfo = null;
+        return null;
+      }
 
       final updateInfo = AppUpdateInfo.fromFirestore(doc.data()!);
       final packageInfo = await PackageInfo.fromPlatform();
@@ -72,9 +88,11 @@ class AppUpdateService {
 
       if (_isNewer(updateInfo.latestVersion, updateInfo.latestBuildNumber, currentVersion, currentBuild)) {
         if (updateInfo.downloadUrl.isNotEmpty) {
+          _cachedUpdateInfo = updateInfo;
           return updateInfo;
         }
       }
+      _cachedUpdateInfo = null;
     } catch (e) {
       debugPrint('Aviso ao verificar atualizações: $e');
     }

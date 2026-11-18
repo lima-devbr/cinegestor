@@ -24,6 +24,9 @@ class AuthController extends ChangeNotifier {
   bool _isLoadingTeam = false;
   bool get isLoadingTeam => _isLoadingTeam;
 
+  bool _isSessionInitialized = false;
+  bool get isSessionInitialized => _isSessionInitialized;
+
   // Conta mestre inicial de Administração (sincronizada direto com o Firebase)
   static const AppUser bootstrapAdmin = AppUser(
     id: 'admin',
@@ -101,10 +104,24 @@ class AuthController extends ChangeNotifier {
       try {
         final fbUser = FirebaseAuth.instance.currentUser;
         if (fbUser != null) {
-          final doc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(fbUser.uid)
-              .get();
+          // Otimização: Tenta ler primeiro do cache persistente local para economizar cota diária
+          DocumentSnapshot<Map<String, dynamic>>? doc;
+          try {
+            doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(fbUser.uid)
+                .get(const GetOptions(source: Source.cache));
+          } catch (_) {
+            doc = null;
+          }
+
+          if (doc == null || !doc.exists || doc.data() == null) {
+            doc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(fbUser.uid)
+                .get();
+          }
+
           if (doc.exists && doc.data() != null) {
             final cloudUser = AppUser.fromJson(doc.data()!);
             if (!cloudUser.active) {
@@ -125,6 +142,9 @@ class AuthController extends ChangeNotifier {
         debugPrint('Aviso ao sincronizar sessão Firebase: $e');
       }
     }
+
+    _isSessionInitialized = true;
+    notifyListeners();
   }
 
   Future<bool> login(String usernameOrEmail, String password) async {
