@@ -1,9 +1,14 @@
-# Miscellaneous
+# ===============================================================
+# 1. Arquivos de Sistema e Temporários Gerais
+# ===============================================================
 *.class
 *.log
 *.pyc
 *.swp
+*~
 .DS_Store
+.directory
+Thumbs.db
 .atom/
 .build/
 .buildlog/
@@ -12,34 +17,59 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# ===============================================================
+# 2. Configurações de IDEs (VS Code e IntelliJ)
+# ===============================================================
 *.iml
 *.ipr
 *.iws
 .idea/
+.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# ===============================================================
+# 3. Flutter & Dart (Compilação e Pacotes)
+# ===============================================================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+coverage/
 
-# Symbolication related
-app.*.symbols
+# ===============================================================
+# 4. Firebase CLI & Emuladores
+# ===============================================================
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
 
-# Obfuscation related
-app.*.map.json
+# ===============================================================
+# 5. Segurança, Chaves de Assinatura e Variáveis Locais
+# ===============================================================
+*.keystore
+*.jks
+key.properties
+*.env
+*.env.*
 
-# Android Studio will place build artifacts here
+# ===============================================================
+# 6. Android & Binários de Distribuição
+# ===============================================================
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/local.properties
+/android/.gradle/
+*.apk
+*.aab
+*.ipa
+
+# ===============================================================
+# 7. Símbolos e Ofuscação
+# ===============================================================
+app.*.symbols
+app.*.map.json
