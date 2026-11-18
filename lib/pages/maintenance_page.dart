@@ -952,7 +952,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       return Positioned(
         left: 16,
         right: 16,
-        bottom: 14,
+        bottom: 80,
         child: Center(
           child: AppleGlassCard(
             enableBlur: true,
@@ -1749,22 +1749,24 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          QuickIssueDialog.show(
-            context: context,
-            roomController: widget.roomController,
-            preSelectedRoom: selectRoom,
-          );
-        },
-        backgroundColor: AppleColors.accentBlue,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded, size: 22),
-        label: const Text(
-          'Novo Chamado',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
+      floatingActionButton: selectedSeat != null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                QuickIssueDialog.show(
+                  context: context,
+                  roomController: widget.roomController,
+                  preSelectedRoom: selectRoom,
+                );
+              },
+              backgroundColor: AppleColors.accentBlue,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded, size: 22),
+              label: const Text(
+                'Novo Chamado',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
       body: SafeArea(
         child: Column(
           children: [
