@@ -7,6 +7,7 @@ import '../models/room.dart';
 import '../models/app_user.dart';
 import '../models/maintenance_issue.dart';
 import '../widgets/apple_surfaces.dart';
+import '../widgets/quick_issue_dialog.dart';
 import '../services/app_update_service.dart';
 import 'user_management_page.dart';
 
@@ -542,6 +543,21 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     final rooms = roomController.rooms;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          QuickIssueDialog.show(
+            context: context,
+            roomController: roomController,
+          );
+        },
+        backgroundColor: AppleColors.accentBlue,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_task_rounded, size: 20),
+        label: const Text(
+          'Novo Chamado',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
       appBar: AppBar(
         title: GestureDetector(
           onTap: (currentUser?.role.canSwitchCinema ?? false)

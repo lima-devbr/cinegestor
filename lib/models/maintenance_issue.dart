@@ -129,6 +129,35 @@ class MaintenanceIssue {
   /// True quando a demanda ativa interdita o assento (Encosto Solto / Assento Solto)
   bool get isBlockingSeat => isBlockingProblem(problemType);
 
+  bool get isLightingIssue =>
+      seatId.startsWith('LED-') ||
+      seatId.startsWith('ARAN-') ||
+      seatId.startsWith('REF-');
+
+  bool get isGeneralIssue =>
+      seatId.startsWith('GERAL-') ||
+      seatId == 'SALA' ||
+      seatId.startsWith('INFRA-');
+
+  bool get isSeatIssue => !isLightingIssue && !isGeneralIssue;
+
+  String get targetCategoryLabel {
+    if (isGeneralIssue) return 'Infraestrutura da Sala';
+    if (isLightingIssue) return 'Iluminação Técnica';
+    return 'Poltrona';
+  }
+
+  String get targetDisplayLabel {
+    if (isGeneralIssue) {
+      final clean = seatId.replaceFirst('GERAL-', '').replaceAll('_', ' ');
+      return clean.isNotEmpty ? clean : 'Geral da Sala';
+    }
+    if (isLightingIssue) {
+      return seatId;
+    }
+    return 'Poltrona $seatId';
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
