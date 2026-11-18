@@ -99,12 +99,13 @@ class _HistoryPageState extends State<HistoryPage> {
         runSpacing: 12,
         children: [
           SizedBox(
-            width: 170,
+            width: 190,
             child: DropdownButtonFormField<String>(
               key: ValueKey('room_$_selectedRoomFilter'),
               initialValue: _selectedRoomFilter,
+              isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'Sala',
+                labelText: 'Local',
                 isDense: true,
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -112,15 +113,21 @@ class _HistoryPageState extends State<HistoryPage> {
               items: [
                 const DropdownMenuItem(
                   value: 'all',
-                  child: Text('Todas as Salas e Áreas'),
+                  child: Text(
+                    'Todas as Salas / Áreas',
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 ...roomController.rooms.map(
-                  (r) => DropdownMenuItem(value: r.id, child: Text(r.nome)),
+                  (r) => DropdownMenuItem(
+                    value: r.id,
+                    child: Text(r.nome, overflow: TextOverflow.ellipsis),
+                  ),
                 ),
                 ...CinemaSector.commonSectors.map(
                   (s) => DropdownMenuItem(
                     value: s.id,
-                    child: Text('🏢 ${s.name}'),
+                    child: Text('🏢 ${s.name}', overflow: TextOverflow.ellipsis),
                   ),
                 ),
               ],
@@ -129,10 +136,11 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
           SizedBox(
-            width: 170,
+            width: 160,
             child: DropdownButtonFormField<String>(
               key: ValueKey('status_$_selectedStatusFilter'),
               initialValue: _selectedStatusFilter,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Status',
                 isDense: true,
@@ -140,23 +148,33 @@ class _HistoryPageState extends State<HistoryPage> {
                     EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
-                DropdownMenuItem(value: 'all', child: Text('Todos')),
-                DropdownMenuItem(value: 'staging', child: Text('Em Triagem')),
+                DropdownMenuItem(
+                  value: 'all',
+                  child: Text('Todos', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'staging',
+                  child: Text('Em Triagem', overflow: TextOverflow.ellipsis),
+                ),
                 DropdownMenuItem(
                   value: 'active',
-                  child: Text('Em Manutenção'),
+                  child: Text('Em Manutenção', overflow: TextOverflow.ellipsis),
                 ),
-                DropdownMenuItem(value: 'resolved', child: Text('Resolvidos')),
+                DropdownMenuItem(
+                  value: 'resolved',
+                  child: Text('Resolvidos', overflow: TextOverflow.ellipsis),
+                ),
               ],
               onChanged: (val) =>
                   setState(() => _selectedStatusFilter = val ?? 'all'),
             ),
           ),
           SizedBox(
-            width: 160,
+            width: 150,
             child: DropdownButtonFormField<String>(
               key: ValueKey('urgency_$_selectedUrgencyFilter'),
               initialValue: _selectedUrgencyFilter,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Urgência',
                 isDense: true,
@@ -164,10 +182,22 @@ class _HistoryPageState extends State<HistoryPage> {
                     EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
-                DropdownMenuItem(value: 'all', child: Text('Todas')),
-                DropdownMenuItem(value: 'Alta', child: Text('Alta')),
-                DropdownMenuItem(value: 'Média', child: Text('Média')),
-                DropdownMenuItem(value: 'Baixa', child: Text('Baixa')),
+                DropdownMenuItem(
+                  value: 'all',
+                  child: Text('Todas', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'Alta',
+                  child: Text('Alta', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'Média',
+                  child: Text('Média', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'Baixa',
+                  child: Text('Baixa', overflow: TextOverflow.ellipsis),
+                ),
               ],
               onChanged: (val) =>
                   setState(() => _selectedUrgencyFilter = val ?? 'all'),
