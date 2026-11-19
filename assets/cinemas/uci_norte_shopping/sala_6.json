@@ -1,0 +1,3687 @@
+{
+  "id": "6",
+  "theaterBoxOfficeId": "2161",
+  "theaterName": "UCI Kinoplex NorteShopping",
+  "theaterLocationBoxOfficeId": "2161",
+  "theaterLocationName": "Sala 6",
+  "totalSeats": 422,
+  "bounds": {
+    "lines": 25,
+    "columns": 34
+  },
+  "stage": {
+    "upperLeft": {
+      "line": 24,
+      "column": 1
+    },
+    "lowerRight": {
+      "line": 24,
+      "column": 33
+    }
+  },
+  "labels": [
+    {
+      "label": "S",
+      "line": 2,
+      "column": 1
+    },
+    {
+      "label": "S",
+      "line": 2,
+      "column": 33
+    },
+    {
+      "label": "R",
+      "line": 3,
+      "column": 1
+    },
+    {
+      "label": "R",
+      "line": 3,
+      "column": 33
+    },
+    {
+      "label": "Q",
+      "line": 4,
+      "column": 1
+    },
+    {
+      "label": "Q",
+      "line": 4,
+      "column": 33
+    },
+    {
+      "label": "P",
+      "line": 5,
+      "column": 1
+    },
+    {
+      "label": "P",
+      "line": 5,
+      "column": 33
+    },
+    {
+      "label": "O",
+      "line": 6,
+      "column": 1
+    },
+    {
+      "label": "O",
+      "line": 6,
+      "column": 33
+    },
+    {
+      "label": "N",
+      "line": 7,
+      "column": 1
+    },
+    {
+      "label": "N",
+      "line": 7,
+      "column": 33
+    },
+    {
+      "label": "M",
+      "line": 8,
+      "column": 1
+    },
+    {
+      "label": "M",
+      "line": 8,
+      "column": 33
+    },
+    {
+      "label": "L",
+      "line": 9,
+      "column": 1
+    },
+    {
+      "label": "L",
+      "line": 9,
+      "column": 33
+    },
+    {
+      "label": "K",
+      "line": 10,
+      "column": 1
+    },
+    {
+      "label": "K",
+      "line": 10,
+      "column": 33
+    },
+    {
+      "label": "J",
+      "line": 12,
+      "column": 1
+    },
+    {
+      "label": "J",
+      "line": 12,
+      "column": 33
+    },
+    {
+      "label": "I",
+      "line": 13,
+      "column": 1
+    },
+    {
+      "label": "I",
+      "line": 13,
+      "column": 33
+    },
+    {
+      "label": "H",
+      "line": 14,
+      "column": 1
+    },
+    {
+      "label": "H",
+      "line": 14,
+      "column": 33
+    },
+    {
+      "label": "G",
+      "line": 15,
+      "column": 1
+    },
+    {
+      "label": "G",
+      "line": 15,
+      "column": 33
+    },
+    {
+      "label": "F",
+      "line": 16,
+      "column": 1
+    },
+    {
+      "label": "F",
+      "line": 16,
+      "column": 33
+    },
+    {
+      "label": "E",
+      "line": 17,
+      "column": 1
+    },
+    {
+      "label": "E",
+      "line": 17,
+      "column": 33
+    },
+    {
+      "label": "D",
+      "line": 18,
+      "column": 33
+    },
+    {
+      "label": "D",
+      "line": 19,
+      "column": 1
+    },
+    {
+      "label": "C",
+      "line": 20,
+      "column": 1
+    },
+    {
+      "label": "C",
+      "line": 20,
+      "column": 33
+    },
+    {
+      "label": "B",
+      "line": 21,
+      "column": 1
+    },
+    {
+      "label": "B",
+      "line": 21,
+      "column": 33
+    },
+    {
+      "label": "A",
+      "line": 22,
+      "column": 1
+    },
+    {
+      "label": "A",
+      "line": 22,
+      "column": 33
+    }
+  ],
+  "lines": [
+    {
+      "line": 1,
+      "seats": [
+        {
+          "label": "S1",
+          "row": "S",
+          "number": 1,
+          "line": 2,
+          "column": 2,
+          "type": "Regular"
+        },
+        {
+          "label": "S2",
+          "row": "S",
+          "number": 2,
+          "line": 2,
+          "column": 3,
+          "type": "Regular"
+        },
+        {
+          "label": "S3",
+          "row": "S",
+          "number": 3,
+          "line": 2,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "S4",
+          "row": "S",
+          "number": 4,
+          "line": 2,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "S5",
+          "row": "S",
+          "number": 5,
+          "line": 2,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "S6",
+          "row": "S",
+          "number": 6,
+          "line": 2,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "S7",
+          "row": "S",
+          "number": 7,
+          "line": 2,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "S8",
+          "row": "S",
+          "number": 8,
+          "line": 2,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "S9",
+          "row": "S",
+          "number": 9,
+          "line": 2,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "S10",
+          "row": "S",
+          "number": 10,
+          "line": 2,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "S11",
+          "row": "S",
+          "number": 11,
+          "line": 2,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "S12",
+          "row": "S",
+          "number": 12,
+          "line": 2,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "S13",
+          "row": "S",
+          "number": 13,
+          "line": 2,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "S14",
+          "row": "S",
+          "number": 14,
+          "line": 2,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "S15",
+          "row": "S",
+          "number": 15,
+          "line": 2,
+          "column": 16,
+          "type": "Regular"
+        },
+        {
+          "label": "S16",
+          "row": "S",
+          "number": 16,
+          "line": 2,
+          "column": 17,
+          "type": "Regular"
+        },
+        {
+          "label": "S17",
+          "row": "S",
+          "number": 17,
+          "line": 2,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "S18",
+          "row": "S",
+          "number": 18,
+          "line": 2,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "S19",
+          "row": "S",
+          "number": 19,
+          "line": 2,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "S20",
+          "row": "S",
+          "number": 20,
+          "line": 2,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "S21",
+          "row": "S",
+          "number": 21,
+          "line": 2,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "S22",
+          "row": "S",
+          "number": 22,
+          "line": 2,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "S23",
+          "row": "S",
+          "number": 23,
+          "line": 2,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "S24",
+          "row": "S",
+          "number": 24,
+          "line": 2,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "S25",
+          "row": "S",
+          "number": 25,
+          "line": 2,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "S26",
+          "row": "S",
+          "number": 26,
+          "line": 2,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "S27",
+          "row": "S",
+          "number": 27,
+          "line": 2,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "S28",
+          "row": "S",
+          "number": 28,
+          "line": 2,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "S29",
+          "row": "S",
+          "number": 29,
+          "line": 2,
+          "column": 30,
+          "type": "Regular"
+        },
+        {
+          "label": "S30",
+          "row": "S",
+          "number": 30,
+          "line": 2,
+          "column": 31,
+          "type": "Regular"
+        },
+        {
+          "label": "S31",
+          "row": "S",
+          "number": 31,
+          "line": 2,
+          "column": 32,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 2,
+      "seats": [
+        {
+          "label": "R3",
+          "row": "R",
+          "number": 3,
+          "line": 3,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "R4",
+          "row": "R",
+          "number": 4,
+          "line": 3,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "R5",
+          "row": "R",
+          "number": 5,
+          "line": 3,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "R6",
+          "row": "R",
+          "number": 6,
+          "line": 3,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "R7",
+          "row": "R",
+          "number": 7,
+          "line": 3,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "R8",
+          "row": "R",
+          "number": 8,
+          "line": 3,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "R9",
+          "row": "R",
+          "number": 9,
+          "line": 3,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "R10",
+          "row": "R",
+          "number": 10,
+          "line": 3,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "R11",
+          "row": "R",
+          "number": 11,
+          "line": 3,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "R12",
+          "row": "R",
+          "number": 12,
+          "line": 3,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "R13",
+          "row": "R",
+          "number": 13,
+          "line": 3,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "R14",
+          "row": "R",
+          "number": 14,
+          "line": 3,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "R17",
+          "row": "R",
+          "number": 17,
+          "line": 3,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "R18",
+          "row": "R",
+          "number": 18,
+          "line": 3,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "R19",
+          "row": "R",
+          "number": 19,
+          "line": 3,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "R20",
+          "row": "R",
+          "number": 20,
+          "line": 3,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "R21",
+          "row": "R",
+          "number": 21,
+          "line": 3,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "R22",
+          "row": "R",
+          "number": 22,
+          "line": 3,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "R23",
+          "row": "R",
+          "number": 23,
+          "line": 3,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "R24",
+          "row": "R",
+          "number": 24,
+          "line": 3,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "R25",
+          "row": "R",
+          "number": 25,
+          "line": 3,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "R26",
+          "row": "R",
+          "number": 26,
+          "line": 3,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "R27",
+          "row": "R",
+          "number": 27,
+          "line": 3,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "R28",
+          "row": "R",
+          "number": 28,
+          "line": 3,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "R29",
+          "row": "R",
+          "number": 29,
+          "line": 3,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 3,
+      "seats": [
+        {
+          "label": "Q3",
+          "row": "Q",
+          "number": 3,
+          "line": 4,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "Q4",
+          "row": "Q",
+          "number": 4,
+          "line": 4,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "Q5",
+          "row": "Q",
+          "number": 5,
+          "line": 4,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "Q6",
+          "row": "Q",
+          "number": 6,
+          "line": 4,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "Q7",
+          "row": "Q",
+          "number": 7,
+          "line": 4,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "Q8",
+          "row": "Q",
+          "number": 8,
+          "line": 4,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "Q9",
+          "row": "Q",
+          "number": 9,
+          "line": 4,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "Q10",
+          "row": "Q",
+          "number": 10,
+          "line": 4,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "Q11",
+          "row": "Q",
+          "number": 11,
+          "line": 4,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "Q12",
+          "row": "Q",
+          "number": 12,
+          "line": 4,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "Q13",
+          "row": "Q",
+          "number": 13,
+          "line": 4,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "Q14",
+          "row": "Q",
+          "number": 14,
+          "line": 4,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "Q17",
+          "row": "Q",
+          "number": 17,
+          "line": 4,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "Q18",
+          "row": "Q",
+          "number": 18,
+          "line": 4,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "Q19",
+          "row": "Q",
+          "number": 19,
+          "line": 4,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "Q20",
+          "row": "Q",
+          "number": 20,
+          "line": 4,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "Q21",
+          "row": "Q",
+          "number": 21,
+          "line": 4,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "Q22",
+          "row": "Q",
+          "number": 22,
+          "line": 4,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "Q23",
+          "row": "Q",
+          "number": 23,
+          "line": 4,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "Q24",
+          "row": "Q",
+          "number": 24,
+          "line": 4,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "Q25",
+          "row": "Q",
+          "number": 25,
+          "line": 4,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "Q26",
+          "row": "Q",
+          "number": 26,
+          "line": 4,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "Q27",
+          "row": "Q",
+          "number": 27,
+          "line": 4,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "Q28",
+          "row": "Q",
+          "number": 28,
+          "line": 4,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "Q29",
+          "row": "Q",
+          "number": 29,
+          "line": 4,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 4,
+      "seats": [
+        {
+          "label": "P7",
+          "row": "P",
+          "number": 7,
+          "line": 5,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "P8",
+          "row": "P",
+          "number": 8,
+          "line": 5,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "P9",
+          "row": "P",
+          "number": 9,
+          "line": 5,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "P10",
+          "row": "P",
+          "number": 10,
+          "line": 5,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "P11",
+          "row": "P",
+          "number": 11,
+          "line": 5,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "P12",
+          "row": "P",
+          "number": 12,
+          "line": 5,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "P13",
+          "row": "P",
+          "number": 13,
+          "line": 5,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "P14",
+          "row": "P",
+          "number": 14,
+          "line": 5,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "P17",
+          "row": "P",
+          "number": 17,
+          "line": 5,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "P18",
+          "row": "P",
+          "number": 18,
+          "line": 5,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "P19",
+          "row": "P",
+          "number": 19,
+          "line": 5,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "P20",
+          "row": "P",
+          "number": 20,
+          "line": 5,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "P21",
+          "row": "P",
+          "number": 21,
+          "line": 5,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "P22",
+          "row": "P",
+          "number": 22,
+          "line": 5,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "P23",
+          "row": "P",
+          "number": 23,
+          "line": 5,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "P24",
+          "row": "P",
+          "number": 24,
+          "line": 5,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "P25",
+          "row": "P",
+          "number": 25,
+          "line": 5,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "P26",
+          "row": "P",
+          "number": 26,
+          "line": 5,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "P27",
+          "row": "P",
+          "number": 27,
+          "line": 5,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "P28",
+          "row": "P",
+          "number": 28,
+          "line": 5,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "P29",
+          "row": "P",
+          "number": 29,
+          "line": 5,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 5,
+      "seats": [
+        {
+          "label": "O7",
+          "row": "O",
+          "number": 7,
+          "line": 6,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "O8",
+          "row": "O",
+          "number": 8,
+          "line": 6,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "O9",
+          "row": "O",
+          "number": 9,
+          "line": 6,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "O10",
+          "row": "O",
+          "number": 10,
+          "line": 6,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "O11",
+          "row": "O",
+          "number": 11,
+          "line": 6,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "O12",
+          "row": "O",
+          "number": 12,
+          "line": 6,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "O13",
+          "row": "O",
+          "number": 13,
+          "line": 6,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "O14",
+          "row": "O",
+          "number": 14,
+          "line": 6,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "O17",
+          "row": "O",
+          "number": 17,
+          "line": 6,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "O18",
+          "row": "O",
+          "number": 18,
+          "line": 6,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "O19",
+          "row": "O",
+          "number": 19,
+          "line": 6,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "O20",
+          "row": "O",
+          "number": 20,
+          "line": 6,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "O21",
+          "row": "O",
+          "number": 21,
+          "line": 6,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "O22",
+          "row": "O",
+          "number": 22,
+          "line": 6,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "O23",
+          "row": "O",
+          "number": 23,
+          "line": 6,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "O24",
+          "row": "O",
+          "number": 24,
+          "line": 6,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "O25",
+          "row": "O",
+          "number": 25,
+          "line": 6,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "O26",
+          "row": "O",
+          "number": 26,
+          "line": 6,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "O27",
+          "row": "O",
+          "number": 27,
+          "line": 6,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "O28",
+          "row": "O",
+          "number": 28,
+          "line": 6,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "O29",
+          "row": "O",
+          "number": 29,
+          "line": 6,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 6,
+      "seats": [
+        {
+          "label": "N7",
+          "row": "N",
+          "number": 7,
+          "line": 7,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "N8",
+          "row": "N",
+          "number": 8,
+          "line": 7,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "N9",
+          "row": "N",
+          "number": 9,
+          "line": 7,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "N10",
+          "row": "N",
+          "number": 10,
+          "line": 7,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "N11",
+          "row": "N",
+          "number": 11,
+          "line": 7,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "N12",
+          "row": "N",
+          "number": 12,
+          "line": 7,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "N13",
+          "row": "N",
+          "number": 13,
+          "line": 7,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "N14",
+          "row": "N",
+          "number": 14,
+          "line": 7,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "N17",
+          "row": "N",
+          "number": 17,
+          "line": 7,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "N18",
+          "row": "N",
+          "number": 18,
+          "line": 7,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "N19",
+          "row": "N",
+          "number": 19,
+          "line": 7,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "N20",
+          "row": "N",
+          "number": 20,
+          "line": 7,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "N21",
+          "row": "N",
+          "number": 21,
+          "line": 7,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "N22",
+          "row": "N",
+          "number": 22,
+          "line": 7,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "N23",
+          "row": "N",
+          "number": 23,
+          "line": 7,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "N24",
+          "row": "N",
+          "number": 24,
+          "line": 7,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "N25",
+          "row": "N",
+          "number": 25,
+          "line": 7,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "N26",
+          "row": "N",
+          "number": 26,
+          "line": 7,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "N27",
+          "row": "N",
+          "number": 27,
+          "line": 7,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "N28",
+          "row": "N",
+          "number": 28,
+          "line": 7,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "N29",
+          "row": "N",
+          "number": 29,
+          "line": 7,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 7,
+      "seats": [
+        {
+          "label": "M7",
+          "row": "M",
+          "number": 7,
+          "line": 8,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "M8",
+          "row": "M",
+          "number": 8,
+          "line": 8,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "M9",
+          "row": "M",
+          "number": 9,
+          "line": 8,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "M10",
+          "row": "M",
+          "number": 10,
+          "line": 8,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "M11",
+          "row": "M",
+          "number": 11,
+          "line": 8,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "M12",
+          "row": "M",
+          "number": 12,
+          "line": 8,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "M13",
+          "row": "M",
+          "number": 13,
+          "line": 8,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "M14",
+          "row": "M",
+          "number": 14,
+          "line": 8,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "M17",
+          "row": "M",
+          "number": 17,
+          "line": 8,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "M18",
+          "row": "M",
+          "number": 18,
+          "line": 8,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "M19",
+          "row": "M",
+          "number": 19,
+          "line": 8,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "M20",
+          "row": "M",
+          "number": 20,
+          "line": 8,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "M21",
+          "row": "M",
+          "number": 21,
+          "line": 8,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "M22",
+          "row": "M",
+          "number": 22,
+          "line": 8,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "M23",
+          "row": "M",
+          "number": 23,
+          "line": 8,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "M24",
+          "row": "M",
+          "number": 24,
+          "line": 8,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "M25",
+          "row": "M",
+          "number": 25,
+          "line": 8,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "M26",
+          "row": "M",
+          "number": 26,
+          "line": 8,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "M27",
+          "row": "M",
+          "number": 27,
+          "line": 8,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "M28",
+          "row": "M",
+          "number": 28,
+          "line": 8,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "M29",
+          "row": "M",
+          "number": 29,
+          "line": 8,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 8,
+      "seats": [
+        {
+          "label": "L7",
+          "row": "L",
+          "number": 7,
+          "line": 9,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "L8",
+          "row": "L",
+          "number": 8,
+          "line": 9,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "L9",
+          "row": "L",
+          "number": 9,
+          "line": 9,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "L10",
+          "row": "L",
+          "number": 10,
+          "line": 9,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "L11",
+          "row": "L",
+          "number": 11,
+          "line": 9,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "L12",
+          "row": "L",
+          "number": 12,
+          "line": 9,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "L13",
+          "row": "L",
+          "number": 13,
+          "line": 9,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "L14",
+          "row": "L",
+          "number": 14,
+          "line": 9,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "L17",
+          "row": "L",
+          "number": 17,
+          "line": 9,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "L18",
+          "row": "L",
+          "number": 18,
+          "line": 9,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "L19",
+          "row": "L",
+          "number": 19,
+          "line": 9,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "L20",
+          "row": "L",
+          "number": 20,
+          "line": 9,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "L21",
+          "row": "L",
+          "number": 21,
+          "line": 9,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "L22",
+          "row": "L",
+          "number": 22,
+          "line": 9,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "L23",
+          "row": "L",
+          "number": 23,
+          "line": 9,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "L24",
+          "row": "L",
+          "number": 24,
+          "line": 9,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "L25",
+          "row": "L",
+          "number": 25,
+          "line": 9,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "L26",
+          "row": "L",
+          "number": 26,
+          "line": 9,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "L27",
+          "row": "L",
+          "number": 27,
+          "line": 9,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "L28",
+          "row": "L",
+          "number": 28,
+          "line": 9,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "L29",
+          "row": "L",
+          "number": 29,
+          "line": 9,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 9,
+      "seats": [
+        {
+          "label": "K7",
+          "row": "K",
+          "number": 7,
+          "line": 10,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "K8",
+          "row": "K",
+          "number": 8,
+          "line": 10,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "K9",
+          "row": "K",
+          "number": 9,
+          "line": 10,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "K10",
+          "row": "K",
+          "number": 10,
+          "line": 10,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "K11",
+          "row": "K",
+          "number": 11,
+          "line": 10,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "K12",
+          "row": "K",
+          "number": 12,
+          "line": 10,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "K13",
+          "row": "K",
+          "number": 13,
+          "line": 10,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "K14",
+          "row": "K",
+          "number": 14,
+          "line": 10,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "K17",
+          "row": "K",
+          "number": 17,
+          "line": 10,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "K18",
+          "row": "K",
+          "number": 18,
+          "line": 10,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "K19",
+          "row": "K",
+          "number": 19,
+          "line": 10,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "K20",
+          "row": "K",
+          "number": 20,
+          "line": 10,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "K21",
+          "row": "K",
+          "number": 21,
+          "line": 10,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "K22",
+          "row": "K",
+          "number": 22,
+          "line": 10,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "K23",
+          "row": "K",
+          "number": 23,
+          "line": 10,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "K24",
+          "row": "K",
+          "number": 24,
+          "line": 10,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "K25",
+          "row": "K",
+          "number": 25,
+          "line": 10,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "K26",
+          "row": "K",
+          "number": 26,
+          "line": 10,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "K27",
+          "row": "K",
+          "number": 27,
+          "line": 10,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "K28",
+          "row": "K",
+          "number": 28,
+          "line": 10,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "K29",
+          "row": "K",
+          "number": 29,
+          "line": 10,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 11,
+      "seats": [
+        {
+          "label": "J3",
+          "row": "J",
+          "number": 3,
+          "line": 12,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "J4",
+          "row": "J",
+          "number": 4,
+          "line": 12,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "J5",
+          "row": "J",
+          "number": 5,
+          "line": 12,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "J6",
+          "row": "J",
+          "number": 6,
+          "line": 12,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "J7",
+          "row": "J",
+          "number": 7,
+          "line": 12,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "J8",
+          "row": "J",
+          "number": 8,
+          "line": 12,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "J9",
+          "row": "J",
+          "number": 9,
+          "line": 12,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "J10",
+          "row": "J",
+          "number": 10,
+          "line": 12,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "J11",
+          "row": "J",
+          "number": 11,
+          "line": 12,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "J12",
+          "row": "J",
+          "number": 12,
+          "line": 12,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "J13",
+          "row": "J",
+          "number": 13,
+          "line": 12,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "J14",
+          "row": "J",
+          "number": 14,
+          "line": 12,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "J17",
+          "row": "J",
+          "number": 17,
+          "line": 12,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "J18",
+          "row": "J",
+          "number": 18,
+          "line": 12,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "J19",
+          "row": "J",
+          "number": 19,
+          "line": 12,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "J20",
+          "row": "J",
+          "number": 20,
+          "line": 12,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "J21",
+          "row": "J",
+          "number": 21,
+          "line": 12,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "J22",
+          "row": "J",
+          "number": 22,
+          "line": 12,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "J23",
+          "row": "J",
+          "number": 23,
+          "line": 12,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "J24",
+          "row": "J",
+          "number": 24,
+          "line": 12,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "J25",
+          "row": "J",
+          "number": 25,
+          "line": 12,
+          "column": 26,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 12,
+      "seats": [
+        {
+          "label": "I3",
+          "row": "I",
+          "number": 3,
+          "line": 13,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "I4",
+          "row": "I",
+          "number": 4,
+          "line": 13,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "I5",
+          "row": "I",
+          "number": 5,
+          "line": 13,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "I6",
+          "row": "I",
+          "number": 6,
+          "line": 13,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "I7",
+          "row": "I",
+          "number": 7,
+          "line": 13,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "I8",
+          "row": "I",
+          "number": 8,
+          "line": 13,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "I9",
+          "row": "I",
+          "number": 9,
+          "line": 13,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "I10",
+          "row": "I",
+          "number": 10,
+          "line": 13,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "I11",
+          "row": "I",
+          "number": 11,
+          "line": 13,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "I12",
+          "row": "I",
+          "number": 12,
+          "line": 13,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "I13",
+          "row": "I",
+          "number": 13,
+          "line": 13,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "I14",
+          "row": "I",
+          "number": 14,
+          "line": 13,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "I17",
+          "row": "I",
+          "number": 17,
+          "line": 13,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "I18",
+          "row": "I",
+          "number": 18,
+          "line": 13,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "I19",
+          "row": "I",
+          "number": 19,
+          "line": 13,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "I20",
+          "row": "I",
+          "number": 20,
+          "line": 13,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "I21",
+          "row": "I",
+          "number": 21,
+          "line": 13,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "I22",
+          "row": "I",
+          "number": 22,
+          "line": 13,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "I23",
+          "row": "I",
+          "number": 23,
+          "line": 13,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "I24",
+          "row": "I",
+          "number": 24,
+          "line": 13,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "I25",
+          "row": "I",
+          "number": 25,
+          "line": 13,
+          "column": 26,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 13,
+      "seats": [
+        {
+          "label": "H3",
+          "row": "H",
+          "number": 3,
+          "line": 14,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "H4",
+          "row": "H",
+          "number": 4,
+          "line": 14,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "H5",
+          "row": "H",
+          "number": 5,
+          "line": 14,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "H6",
+          "row": "H",
+          "number": 6,
+          "line": 14,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "H7",
+          "row": "H",
+          "number": 7,
+          "line": 14,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "H8",
+          "row": "H",
+          "number": 8,
+          "line": 14,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "H9",
+          "row": "H",
+          "number": 9,
+          "line": 14,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "H10",
+          "row": "H",
+          "number": 10,
+          "line": 14,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "H11",
+          "row": "H",
+          "number": 11,
+          "line": 14,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "H12",
+          "row": "H",
+          "number": 12,
+          "line": 14,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "H13",
+          "row": "H",
+          "number": 13,
+          "line": 14,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "H14",
+          "row": "H",
+          "number": 14,
+          "line": 14,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "H17",
+          "row": "H",
+          "number": 17,
+          "line": 14,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "H18",
+          "row": "H",
+          "number": 18,
+          "line": 14,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "H19",
+          "row": "H",
+          "number": 19,
+          "line": 14,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "H20",
+          "row": "H",
+          "number": 20,
+          "line": 14,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "H21",
+          "row": "H",
+          "number": 21,
+          "line": 14,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "H22",
+          "row": "H",
+          "number": 22,
+          "line": 14,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "H23",
+          "row": "H",
+          "number": 23,
+          "line": 14,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "H24",
+          "row": "H",
+          "number": 24,
+          "line": 14,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "H25",
+          "row": "H",
+          "number": 25,
+          "line": 14,
+          "column": 26,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 14,
+      "seats": [
+        {
+          "label": "G3",
+          "row": "G",
+          "number": 3,
+          "line": 15,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "G4",
+          "row": "G",
+          "number": 4,
+          "line": 15,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "G5",
+          "row": "G",
+          "number": 5,
+          "line": 15,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "G6",
+          "row": "G",
+          "number": 6,
+          "line": 15,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "G7",
+          "row": "G",
+          "number": 7,
+          "line": 15,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "G8",
+          "row": "G",
+          "number": 8,
+          "line": 15,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "G9",
+          "row": "G",
+          "number": 9,
+          "line": 15,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "G10",
+          "row": "G",
+          "number": 10,
+          "line": 15,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "G11",
+          "row": "G",
+          "number": 11,
+          "line": 15,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "G12",
+          "row": "G",
+          "number": 12,
+          "line": 15,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "G13",
+          "row": "G",
+          "number": 13,
+          "line": 15,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "G14",
+          "row": "G",
+          "number": 14,
+          "line": 15,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "G17",
+          "row": "G",
+          "number": 17,
+          "line": 15,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "G18",
+          "row": "G",
+          "number": 18,
+          "line": 15,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "G19",
+          "row": "G",
+          "number": 19,
+          "line": 15,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "G20",
+          "row": "G",
+          "number": 20,
+          "line": 15,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "G21",
+          "row": "G",
+          "number": 21,
+          "line": 15,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "G22",
+          "row": "G",
+          "number": 22,
+          "line": 15,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "G23",
+          "row": "G",
+          "number": 23,
+          "line": 15,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "G24",
+          "row": "G",
+          "number": 24,
+          "line": 15,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "G25",
+          "row": "G",
+          "number": 25,
+          "line": 15,
+          "column": 26,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 15,
+      "seats": [
+        {
+          "label": "F3",
+          "row": "F",
+          "number": 3,
+          "line": 16,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "F4",
+          "row": "F",
+          "number": 4,
+          "line": 16,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "F5",
+          "row": "F",
+          "number": 5,
+          "line": 16,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "F6",
+          "row": "F",
+          "number": 6,
+          "line": 16,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "F7",
+          "row": "F",
+          "number": 7,
+          "line": 16,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "F8",
+          "row": "F",
+          "number": 8,
+          "line": 16,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "F9",
+          "row": "F",
+          "number": 9,
+          "line": 16,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "F10",
+          "row": "F",
+          "number": 10,
+          "line": 16,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "F11",
+          "row": "F",
+          "number": 11,
+          "line": 16,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "F12",
+          "row": "F",
+          "number": 12,
+          "line": 16,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "F13",
+          "row": "F",
+          "number": 13,
+          "line": 16,
+          "column": 14,
+          "type": "Obese"
+        },
+        {
+          "label": "F18",
+          "row": "F",
+          "number": 18,
+          "line": 16,
+          "column": 19,
+          "type": "Obese"
+        },
+        {
+          "label": "F19",
+          "row": "F",
+          "number": 19,
+          "line": 16,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "F20",
+          "row": "F",
+          "number": 20,
+          "line": 16,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "F21",
+          "row": "F",
+          "number": 21,
+          "line": 16,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "F22",
+          "row": "F",
+          "number": 22,
+          "line": 16,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "F23",
+          "row": "F",
+          "number": 23,
+          "line": 16,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "F24",
+          "row": "F",
+          "number": 24,
+          "line": 16,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "F25",
+          "row": "F",
+          "number": 25,
+          "line": 16,
+          "column": 26,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 16,
+      "seats": [
+        {
+          "label": "E4",
+          "row": "E",
+          "number": 4,
+          "line": 17,
+          "column": 5,
+          "type": "Disability"
+        },
+        {
+          "label": "E6",
+          "row": "E",
+          "number": 6,
+          "line": 17,
+          "column": 7,
+          "type": "Obese"
+        },
+        {
+          "label": "E7",
+          "row": "E",
+          "number": 7,
+          "line": 17,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "E8",
+          "row": "E",
+          "number": 8,
+          "line": 17,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "E9",
+          "row": "E",
+          "number": 9,
+          "line": 17,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "E10",
+          "row": "E",
+          "number": 10,
+          "line": 17,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "E11",
+          "row": "E",
+          "number": 11,
+          "line": 17,
+          "column": 12,
+          "type": "Obese"
+        },
+        {
+          "label": "E13",
+          "row": "E",
+          "number": 13,
+          "line": 17,
+          "column": 14,
+          "type": "Disability"
+        },
+        {
+          "label": "E18",
+          "row": "E",
+          "number": 18,
+          "line": 17,
+          "column": 19,
+          "type": "Disability"
+        },
+        {
+          "label": "E20",
+          "row": "E",
+          "number": 20,
+          "line": 17,
+          "column": 21,
+          "type": "Obese"
+        },
+        {
+          "label": "E21",
+          "row": "E",
+          "number": 21,
+          "line": 17,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "E22",
+          "row": "E",
+          "number": 22,
+          "line": 17,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "E23",
+          "row": "E",
+          "number": 23,
+          "line": 17,
+          "column": 24,
+          "type": "Companion"
+        },
+        {
+          "label": "E24",
+          "row": "E",
+          "number": 24,
+          "line": 17,
+          "column": 25,
+          "type": "Disability"
+        }
+      ]
+    },
+    {
+      "line": 18,
+      "seats": [
+        {
+          "label": "D3",
+          "row": "D",
+          "number": 3,
+          "line": 19,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "D4",
+          "row": "D",
+          "number": 4,
+          "line": 19,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "D5",
+          "row": "D",
+          "number": 5,
+          "line": 19,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "D6",
+          "row": "D",
+          "number": 6,
+          "line": 19,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "D7",
+          "row": "D",
+          "number": 7,
+          "line": 19,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "D8",
+          "row": "D",
+          "number": 8,
+          "line": 19,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "D9",
+          "row": "D",
+          "number": 9,
+          "line": 19,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "D10",
+          "row": "D",
+          "number": 10,
+          "line": 19,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "D11",
+          "row": "D",
+          "number": 11,
+          "line": 19,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "D12",
+          "row": "D",
+          "number": 12,
+          "line": 19,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "D13",
+          "row": "D",
+          "number": 13,
+          "line": 19,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "D14",
+          "row": "D",
+          "number": 14,
+          "line": 19,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "D17",
+          "row": "D",
+          "number": 17,
+          "line": 19,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "D18",
+          "row": "D",
+          "number": 18,
+          "line": 19,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "D19",
+          "row": "D",
+          "number": 19,
+          "line": 19,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "D20",
+          "row": "D",
+          "number": 20,
+          "line": 19,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "D21",
+          "row": "D",
+          "number": 21,
+          "line": 19,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "D22",
+          "row": "D",
+          "number": 22,
+          "line": 19,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "D23",
+          "row": "D",
+          "number": 23,
+          "line": 19,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "D24",
+          "row": "D",
+          "number": 24,
+          "line": 19,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "D25",
+          "row": "D",
+          "number": 25,
+          "line": 19,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "D26",
+          "row": "D",
+          "number": 26,
+          "line": 19,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "D27",
+          "row": "D",
+          "number": 27,
+          "line": 19,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "D28",
+          "row": "D",
+          "number": 28,
+          "line": 19,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "D29",
+          "row": "D",
+          "number": 29,
+          "line": 19,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 19,
+      "seats": [
+        {
+          "label": "C3",
+          "row": "C",
+          "number": 3,
+          "line": 20,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "C4",
+          "row": "C",
+          "number": 4,
+          "line": 20,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "C5",
+          "row": "C",
+          "number": 5,
+          "line": 20,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "C6",
+          "row": "C",
+          "number": 6,
+          "line": 20,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "C7",
+          "row": "C",
+          "number": 7,
+          "line": 20,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "C8",
+          "row": "C",
+          "number": 8,
+          "line": 20,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "C9",
+          "row": "C",
+          "number": 9,
+          "line": 20,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "C10",
+          "row": "C",
+          "number": 10,
+          "line": 20,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "C11",
+          "row": "C",
+          "number": 11,
+          "line": 20,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "C12",
+          "row": "C",
+          "number": 12,
+          "line": 20,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "C13",
+          "row": "C",
+          "number": 13,
+          "line": 20,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "C14",
+          "row": "C",
+          "number": 14,
+          "line": 20,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "C17",
+          "row": "C",
+          "number": 17,
+          "line": 20,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "C18",
+          "row": "C",
+          "number": 18,
+          "line": 20,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "C19",
+          "row": "C",
+          "number": 19,
+          "line": 20,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "C20",
+          "row": "C",
+          "number": 20,
+          "line": 20,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "C21",
+          "row": "C",
+          "number": 21,
+          "line": 20,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "C22",
+          "row": "C",
+          "number": 22,
+          "line": 20,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "C23",
+          "row": "C",
+          "number": 23,
+          "line": 20,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "C24",
+          "row": "C",
+          "number": 24,
+          "line": 20,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "C25",
+          "row": "C",
+          "number": 25,
+          "line": 20,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "C26",
+          "row": "C",
+          "number": 26,
+          "line": 20,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "C27",
+          "row": "C",
+          "number": 27,
+          "line": 20,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "C28",
+          "row": "C",
+          "number": 28,
+          "line": 20,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "C29",
+          "row": "C",
+          "number": 29,
+          "line": 20,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 20,
+      "seats": [
+        {
+          "label": "B3",
+          "row": "B",
+          "number": 3,
+          "line": 21,
+          "column": 4,
+          "type": "Regular"
+        },
+        {
+          "label": "B4",
+          "row": "B",
+          "number": 4,
+          "line": 21,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "B5",
+          "row": "B",
+          "number": 5,
+          "line": 21,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "B6",
+          "row": "B",
+          "number": 6,
+          "line": 21,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "B7",
+          "row": "B",
+          "number": 7,
+          "line": 21,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "B8",
+          "row": "B",
+          "number": 8,
+          "line": 21,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "B9",
+          "row": "B",
+          "number": 9,
+          "line": 21,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "B10",
+          "row": "B",
+          "number": 10,
+          "line": 21,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "B11",
+          "row": "B",
+          "number": 11,
+          "line": 21,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "B12",
+          "row": "B",
+          "number": 12,
+          "line": 21,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "B13",
+          "row": "B",
+          "number": 13,
+          "line": 21,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "B14",
+          "row": "B",
+          "number": 14,
+          "line": 21,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "B17",
+          "row": "B",
+          "number": 17,
+          "line": 21,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "B18",
+          "row": "B",
+          "number": 18,
+          "line": 21,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "B19",
+          "row": "B",
+          "number": 19,
+          "line": 21,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "B20",
+          "row": "B",
+          "number": 20,
+          "line": 21,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "B21",
+          "row": "B",
+          "number": 21,
+          "line": 21,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "B22",
+          "row": "B",
+          "number": 22,
+          "line": 21,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "B23",
+          "row": "B",
+          "number": 23,
+          "line": 21,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "B24",
+          "row": "B",
+          "number": 24,
+          "line": 21,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "B25",
+          "row": "B",
+          "number": 25,
+          "line": 21,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "B26",
+          "row": "B",
+          "number": 26,
+          "line": 21,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "B27",
+          "row": "B",
+          "number": 27,
+          "line": 21,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "B28",
+          "row": "B",
+          "number": 28,
+          "line": 21,
+          "column": 29,
+          "type": "Regular"
+        },
+        {
+          "label": "B29",
+          "row": "B",
+          "number": 29,
+          "line": 21,
+          "column": 30,
+          "type": "Regular"
+        }
+      ]
+    },
+    {
+      "line": 21,
+      "seats": [
+        {
+          "label": "A4",
+          "row": "A",
+          "number": 4,
+          "line": 22,
+          "column": 5,
+          "type": "Regular"
+        },
+        {
+          "label": "A5",
+          "row": "A",
+          "number": 5,
+          "line": 22,
+          "column": 6,
+          "type": "Regular"
+        },
+        {
+          "label": "A6",
+          "row": "A",
+          "number": 6,
+          "line": 22,
+          "column": 7,
+          "type": "Regular"
+        },
+        {
+          "label": "A7",
+          "row": "A",
+          "number": 7,
+          "line": 22,
+          "column": 8,
+          "type": "Regular"
+        },
+        {
+          "label": "A8",
+          "row": "A",
+          "number": 8,
+          "line": 22,
+          "column": 9,
+          "type": "Regular"
+        },
+        {
+          "label": "A9",
+          "row": "A",
+          "number": 9,
+          "line": 22,
+          "column": 10,
+          "type": "Regular"
+        },
+        {
+          "label": "A10",
+          "row": "A",
+          "number": 10,
+          "line": 22,
+          "column": 11,
+          "type": "Regular"
+        },
+        {
+          "label": "A11",
+          "row": "A",
+          "number": 11,
+          "line": 22,
+          "column": 12,
+          "type": "Regular"
+        },
+        {
+          "label": "A12",
+          "row": "A",
+          "number": 12,
+          "line": 22,
+          "column": 13,
+          "type": "Regular"
+        },
+        {
+          "label": "A13",
+          "row": "A",
+          "number": 13,
+          "line": 22,
+          "column": 14,
+          "type": "Regular"
+        },
+        {
+          "label": "A14",
+          "row": "A",
+          "number": 14,
+          "line": 22,
+          "column": 15,
+          "type": "Regular"
+        },
+        {
+          "label": "A17",
+          "row": "A",
+          "number": 17,
+          "line": 22,
+          "column": 18,
+          "type": "Regular"
+        },
+        {
+          "label": "A18",
+          "row": "A",
+          "number": 18,
+          "line": 22,
+          "column": 19,
+          "type": "Regular"
+        },
+        {
+          "label": "A19",
+          "row": "A",
+          "number": 19,
+          "line": 22,
+          "column": 20,
+          "type": "Regular"
+        },
+        {
+          "label": "A20",
+          "row": "A",
+          "number": 20,
+          "line": 22,
+          "column": 21,
+          "type": "Regular"
+        },
+        {
+          "label": "A21",
+          "row": "A",
+          "number": 21,
+          "line": 22,
+          "column": 22,
+          "type": "Regular"
+        },
+        {
+          "label": "A22",
+          "row": "A",
+          "number": 22,
+          "line": 22,
+          "column": 23,
+          "type": "Regular"
+        },
+        {
+          "label": "A23",
+          "row": "A",
+          "number": 23,
+          "line": 22,
+          "column": 24,
+          "type": "Regular"
+        },
+        {
+          "label": "A24",
+          "row": "A",
+          "number": 24,
+          "line": 22,
+          "column": 25,
+          "type": "Regular"
+        },
+        {
+          "label": "A25",
+          "row": "A",
+          "number": 25,
+          "line": 22,
+          "column": 26,
+          "type": "Regular"
+        },
+        {
+          "label": "A26",
+          "row": "A",
+          "number": 26,
+          "line": 22,
+          "column": 27,
+          "type": "Regular"
+        },
+        {
+          "label": "A27",
+          "row": "A",
+          "number": 27,
+          "line": 22,
+          "column": 28,
+          "type": "Regular"
+        },
+        {
+          "label": "A28",
+          "row": "A",
+          "number": 28,
+          "line": 22,
+          "column": 29,
+          "type": "Regular"
+        }
+      ]
+    }
+  ]
+}
