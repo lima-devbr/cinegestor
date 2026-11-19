@@ -26,6 +26,9 @@ dependencies:
   pdf: ^3.12.0
   printing: ^5.14.3
 
+dependency_overrides:
+  archive: ^4.7.1
+
 flutter:
   uses-material-design: true
   assets:
