@@ -78,12 +78,8 @@ class AuthController extends ChangeNotifier {
 
   Future<void> _saveLocalUsers(List<AppUser> users) async {
     final prefs = await SharedPreferences.getInstance();
-    final list = users
-        .map((u) => {
-              ...u.toJson(),
-              'password': u.password,
-            })
-        .toList();
+    // Armazena apenas os dados de perfil (sem senhas em texto puro)
+    final list = users.map((u) => u.toJson()).toList();
     await prefs.setString('managed_users_cache', json.encode(list));
   }
 
@@ -157,169 +153,140 @@ class AuthController extends ChangeNotifier {
       return false;
     }
 
-    final localUsers = await _loadLocalUsers();
-    final isBootstrapAdminLogin =
-        normalizedEmail == bootstrapAdmin.email && normalizedPass == 'admin123';
-
-    final matchedLocal = localUsers.firstWhere(
-      (u) =>
-          u.email.toLowerCase() == normalizedEmail &&
-          u.password.isNotEmpty &&
-          u.password == normalizedPass,
-      orElse: () => isBootstrapAdminLogin
-          ? bootstrapAdmin
-          : const AppUser(
-              id: '',
-              name: '',
-              email: '',
-              password: '',
-              role: UserRole.operacao,
-              cinemaId: '',
-              cinemaName: '',
-            ),
-    );
-
-    if (matchedLocal.id.isNotEmpty && !matchedLocal.active) {
-      _errorMessage = 'Este acesso foi desativado pela gerência.';
+    if (!isFirebaseInitialized) {
+      _errorMessage =
+          'Serviço de autenticação indisponível. Verifique sua conexão e tente novamente.';
       notifyListeners();
       return false;
     }
 
-    if (isFirebaseInitialized) {
+    final isBootstrapAdminLogin =
+        normalizedEmail == bootstrapAdmin.email && normalizedPass == 'admin123';
+
+    try {
+      final firebasePass = toFirebasePassword(normalizedPass);
+
+      UserCredential credential;
       try {
-        final firebasePass = toFirebasePassword(normalizedPass);
+        credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: normalizedEmail,
+          password: firebasePass,
+        );
+      } on FirebaseAuthException catch (e) {
+        final isAuthNotFoundOrInvalid = e.code == 'user-not-found' ||
+            e.code == 'invalid-credential' ||
+            e.code == 'invalid-login-credentials' ||
+            e.code == 'wrong-password';
 
-        UserCredential credential;
-        try {
-          credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: normalizedEmail,
-            password: firebasePass,
-          );
-        } on FirebaseAuthException catch (e) {
-          final isAuthNotFoundOrInvalid = e.code == 'user-not-found' ||
-              e.code == 'invalid-credential' ||
-              e.code == 'invalid-login-credentials' ||
-              e.code == 'wrong-password';
-
-          if (isBootstrapAdminLogin && isAuthNotFoundOrInvalid) {
-            try {
-              // Se ainda não existir no Firebase Auth, cria com admin123
-              credential =
-                  await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                email: normalizedEmail,
-                password: firebasePass,
-              );
-            } on FirebaseAuthException catch (createErr) {
-              if (createErr.code == 'email-already-in-use') {
-                // Migra automaticamente caso tenha sido criado antes com a senha antiga '123' ('cine123')
-                credential =
-                    await FirebaseAuth.instance.signInWithEmailAndPassword(
-                  email: normalizedEmail,
-                  password: 'cine123',
-                );
-                await credential.user?.updatePassword(firebasePass);
-              } else {
-                rethrow;
-              }
-            }
-          } else if (matchedLocal.id.isNotEmpty && isAuthNotFoundOrInvalid) {
+        if (isBootstrapAdminLogin && isAuthNotFoundOrInvalid) {
+          try {
+            // Se ainda não existir no Firebase Auth, cria com admin123
             credential =
                 await FirebaseAuth.instance.createUserWithEmailAndPassword(
               email: normalizedEmail,
               password: firebasePass,
             );
-          } else {
-            rethrow;
-          }
-        }
-
-        final uid = credential.user!.uid;
-        final userDocRef =
-            FirebaseFirestore.instance.collection('users').doc(uid);
-        final userSnapshot = await userDocRef.get();
-
-        AppUser resolvedUser;
-        if (userSnapshot.exists && userSnapshot.data() != null) {
-          resolvedUser = AppUser.fromJson(userSnapshot.data()!);
-          // Garante que o login admin sempre tenha o papel admin atualizado
-          if (normalizedEmail == bootstrapAdmin.email &&
-              resolvedUser.role != UserRole.admin) {
-            resolvedUser = resolvedUser.copyWith(role: UserRole.admin);
-            await userDocRef.set(resolvedUser.toJson());
+          } on FirebaseAuthException catch (createErr) {
+            if (createErr.code == 'email-already-in-use') {
+              // Migra automaticamente caso tenha sido criado antes com a senha antiga '123' ('cine123')
+              credential =
+                  await FirebaseAuth.instance.signInWithEmailAndPassword(
+                email: normalizedEmail,
+                password: 'cine123',
+              );
+              await credential.user?.updatePassword(firebasePass);
+            } else {
+              rethrow;
+            }
           }
         } else {
-          final isAdminEmail = normalizedEmail == bootstrapAdmin.email;
-          resolvedUser = AppUser(
-            id: uid,
-            name: isAdminEmail
-                ? bootstrapAdmin.name
-                : (matchedLocal.id.isNotEmpty
-                    ? matchedLocal.name
-                    : normalizedEmail.split('@').first),
-            username: normalizedEmail.split('@').first,
-            email: normalizedEmail,
-            password: '',
-            role: isAdminEmail
-                ? UserRole.admin
-                : (matchedLocal.id.isNotEmpty
-                    ? matchedLocal.role
-                    : UserRole.operacao),
-            cinemaId: matchedLocal.id.isNotEmpty &&
-                    matchedLocal.cinemaId.isNotEmpty
-                ? matchedLocal.cinemaId
-                : bootstrapAdmin.cinemaId,
-            cinemaName: matchedLocal.id.isNotEmpty &&
-                    matchedLocal.cinemaName.isNotEmpty
-                ? matchedLocal.cinemaName
-                : bootstrapAdmin.cinemaName,
-            active: true,
-            mustChangePassword: matchedLocal.mustChangePassword,
-          );
+          rethrow;
+        }
+      }
+
+      final uid = credential.user!.uid;
+      final userDocRef =
+          FirebaseFirestore.instance.collection('users').doc(uid);
+      final userSnapshot = await userDocRef.get();
+
+      AppUser resolvedUser;
+      if (userSnapshot.exists && userSnapshot.data() != null) {
+        final data = Map<String, dynamic>.from(userSnapshot.data()!);
+        data['id'] ??= uid;
+        resolvedUser = AppUser.fromJson(data);
+        // Garante que o login admin sempre tenha o papel admin atualizado
+        if (normalizedEmail == bootstrapAdmin.email &&
+            resolvedUser.role != UserRole.admin) {
+          resolvedUser = resolvedUser.copyWith(role: UserRole.admin);
           await userDocRef.set(resolvedUser.toJson());
         }
-
-        if (!resolvedUser.active) {
-          await FirebaseAuth.instance.signOut();
-          _errorMessage = 'Este acesso foi desativado pela gerência.';
-          notifyListeners();
-          return false;
-        }
-
-        _currentUser = resolvedUser;
-        _errorMessage = null;
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-          'current_user_session',
-          json.encode(resolvedUser.toJson()),
+      } else {
+        final isAdminEmail = normalizedEmail == bootstrapAdmin.email;
+        resolvedUser = AppUser(
+          id: uid,
+          name: isAdminEmail
+              ? bootstrapAdmin.name
+              : normalizedEmail.split('@').first,
+          username: normalizedEmail.split('@').first,
+          email: normalizedEmail,
+          password: '',
+          role: isAdminEmail ? UserRole.admin : UserRole.operacao,
+          cinemaId: bootstrapAdmin.cinemaId,
+          cinemaName: bootstrapAdmin.cinemaName,
+          active: true,
+          mustChangePassword: false,
         );
-
-        notifyListeners();
-        return true;
-      } catch (e) {
-        debugPrint('Fallback login local após erro Firebase Auth: $e');
+        await userDocRef.set(resolvedUser.toJson());
       }
-    }
 
-    if (matchedLocal.id.isNotEmpty) {
-      if (!matchedLocal.active) {
+      if (!resolvedUser.active) {
+        await FirebaseAuth.instance.signOut();
         _errorMessage = 'Este acesso foi desativado pela gerência.';
         notifyListeners();
         return false;
       }
-      _currentUser = matchedLocal;
+
+      _currentUser = resolvedUser;
       _errorMessage = null;
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         'current_user_session',
-        json.encode(matchedLocal.toJson()),
+        json.encode(resolvedUser.toJson()),
       );
 
       notifyListeners();
       return true;
-    } else {
-      _errorMessage = 'Usuário ou senha inválidos.';
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Erro Firebase Auth no login (${e.code}): ${e.message}');
+      switch (e.code) {
+        case 'user-not-found':
+        case 'wrong-password':
+        case 'invalid-credential':
+        case 'invalid-login-credentials':
+          _errorMessage = 'Usuário ou senha inválidos.';
+          break;
+        case 'network-request-failed':
+          _errorMessage =
+              'Sem conexão com a internet. É necessário estar online para fazer login.';
+          break;
+        case 'too-many-requests':
+          _errorMessage =
+              'Muitas tentativas seguidas. Aguarde alguns instantes e tente novamente.';
+          break;
+        case 'user-disabled':
+          _errorMessage = 'Este acesso foi desativado pela gerência.';
+          break;
+        default:
+          _errorMessage =
+              'Não foi possível entrar. Verifique sua conexão e tente novamente.';
+      }
+      notifyListeners();
+      return false;
+    } catch (e) {
+      debugPrint('Erro inesperado no login: $e');
+      _errorMessage =
+          'Não foi possível entrar. Verifique sua conexão e tente novamente.';
       notifyListeners();
       return false;
     }
@@ -335,40 +302,45 @@ class AuthController extends ChangeNotifier {
       return 'A nova senha deve ter pelo menos 3 caracteres.';
     }
 
-    if (isFirebaseInitialized && FirebaseAuth.instance.currentUser != null) {
-      try {
-        final fbUser = FirebaseAuth.instance.currentUser!;
-        final email = fbUser.email ?? _currentUser!.email;
-        final cred = EmailAuthProvider.credential(
-          email: email,
-          password: toFirebasePassword(currentPassword),
-        );
-        await fbUser.reauthenticateWithCredential(cred);
-        await fbUser.updatePassword(toFirebasePassword(newPassword));
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'wrong-password' ||
-            e.code == 'invalid-credential' ||
-            e.code == 'invalid-login-credentials') {
-          return 'A senha atual informada está incorreta.';
-        }
-        return 'Erro ao atualizar senha no servidor: ${e.message}';
-      } catch (_) {}
+    if (!isFirebaseInitialized || FirebaseAuth.instance.currentUser == null) {
+      return 'É necessário estar conectado à internet para alterar a senha.';
+    }
+
+    try {
+      final fbUser = FirebaseAuth.instance.currentUser!;
+      final email = fbUser.email ?? _currentUser!.email;
+      final cred = EmailAuthProvider.credential(
+        email: email,
+        password: toFirebasePassword(currentPassword),
+      );
+      await fbUser.reauthenticateWithCredential(cred);
+      await fbUser.updatePassword(toFirebasePassword(newPassword));
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password' ||
+          e.code == 'invalid-credential' ||
+          e.code == 'invalid-login-credentials') {
+        return 'A senha atual informada está incorreta.';
+      }
+      if (e.code == 'network-request-failed') {
+        return 'Sem conexão com a internet para alterar a senha.';
+      }
+      return 'Erro ao atualizar senha no servidor: ${e.message}';
+    } catch (e) {
+      return 'Não foi possível atualizar a senha. Tente novamente.';
     }
 
     final updated = _currentUser!.copyWith(
-      password: newPassword.trim(),
+      password: '',
       mustChangePassword: false,
     );
     _currentUser = updated;
 
-    if (isFirebaseInitialized) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(updated.id)
-            .set(updated.toJson());
-      } catch (_) {}
-    }
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(updated.id)
+          .set(updated.toJson());
+    } catch (_) {}
 
     final localUsers = await _loadLocalUsers();
     final idx = localUsers.indexWhere(
@@ -441,10 +413,7 @@ class AuthController extends ChangeNotifier {
           data['id'] ??= doc.id;
           final cloudUser = AppUser.fromJson(data);
           if (cloudUser.email.isNotEmpty) {
-            final existingLocal = byEmail[cloudUser.email.toLowerCase()];
-            byEmail[cloudUser.email.toLowerCase()] = cloudUser.copyWith(
-              password: existingLocal?.password ?? '123',
-            );
+            byEmail[cloudUser.email.toLowerCase()] = cloudUser;
           }
         }
       } catch (e) {
@@ -485,35 +454,44 @@ class AuthController extends ChangeNotifier {
       return 'Preencha nome, usuário e senha inicial.';
     }
 
+    if (!isFirebaseInitialized) {
+      return 'É necessário estar online para cadastrar novos colaboradores.';
+    }
+
     String newUserId = 'usr_${DateTime.now().millisecondsSinceEpoch}';
 
-    if (isFirebaseInitialized) {
-      FirebaseApp? secondaryApp;
+    FirebaseApp? secondaryApp;
+    try {
       try {
-        try {
-          secondaryApp = Firebase.app('SecondaryUserCreator');
-        } catch (_) {
-          secondaryApp = await Firebase.initializeApp(
-            name: 'SecondaryUserCreator',
-            options: DefaultFirebaseOptions.currentPlatform,
-          );
-        }
-
-        final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
-        final cred = await secondaryAuth.createUserWithEmailAndPassword(
-          email: normalizedEmail,
-          password: toFirebasePassword(cleanPass),
+        secondaryApp = Firebase.app('SecondaryUserCreator');
+      } catch (_) {
+        secondaryApp = await Firebase.initializeApp(
+          name: 'SecondaryUserCreator',
+          options: DefaultFirebaseOptions.currentPlatform,
         );
-        newUserId = cred.user!.uid;
-        await secondaryAuth.signOut();
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'email-already-in-use') {
-          return 'Este usuário ($shortUser) já está cadastrado.';
-        }
-        debugPrint('Aviso criação secundária Firebase Auth: $e');
-      } catch (e) {
-        debugPrint('Erro ao criar em app secundário: $e');
       }
+
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+      final cred = await secondaryAuth.createUserWithEmailAndPassword(
+        email: normalizedEmail,
+        password: toFirebasePassword(cleanPass),
+      );
+      newUserId = cred.user!.uid;
+      await secondaryAuth.signOut();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        return 'Este usuário ($shortUser) já está cadastrado.';
+      }
+      if (e.code == 'network-request-failed') {
+        return 'Sem conexão com a internet para criar o colaborador.';
+      }
+      if (e.code == 'weak-password') {
+        return 'A senha inicial informada é muito fraca.';
+      }
+      return 'Erro ao criar login do colaborador: ${e.message}';
+    } catch (e) {
+      debugPrint('Erro ao criar em app secundário: $e');
+      return 'Não foi possível criar o colaborador. Verifique sua conexão.';
     }
 
     final newUser = AppUser(
@@ -521,7 +499,7 @@ class AuthController extends ChangeNotifier {
       name: name.trim(),
       username: shortUser,
       email: normalizedEmail,
-      password: cleanPass,
+      password: '',
       role: role,
       cinemaId: cinemaId,
       cinemaName: cinemaName,
@@ -552,13 +530,8 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Atualiza cargo, unidade, status ativo ou exigência de troca de senha de um colaborador
-  Future<void> updateEmployee(
-    AppUser updatedUser, {
-    String? newResetPassword,
-  }) async {
-    final finalUser = newResetPassword != null && newResetPassword.isNotEmpty
-        ? updatedUser.copyWith(password: newResetPassword.trim())
-        : updatedUser;
+  Future<void> updateEmployee(AppUser updatedUser) async {
+    final finalUser = updatedUser.copyWith(password: '');
 
     if (isFirebaseInitialized) {
       try {

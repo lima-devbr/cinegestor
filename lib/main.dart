@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/room_controller.dart';
 import 'controllers/theme_controller.dart';
+import 'models/room.dart';
 import 'pages/login_page.dart';
 import 'pages/room_selection_page.dart';
 import 'pages/maintenance_page.dart';
@@ -43,7 +44,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeController()..initTheme()),
         ChangeNotifierProvider(create: (_) => AuthController()..initSession()),
-        ChangeNotifierProvider(create: (_) => RoomController()..loadRooms()),
+        ChangeNotifierProvider(create: (_) => RoomController()),
       ],
       child: const GineGestorApp(),
     ),
@@ -81,13 +82,21 @@ class GineGestorApp extends StatelessWidget {
               builder: (_) => RoomSelectionPage(roomController: roomController),
             );
           case '/maintenance':
-            final args = settings.arguments as Map<String, dynamic>;
+            final args = settings.arguments;
+            if (args is Map<String, dynamic> &&
+                args['roomId'] is String &&
+                args['room'] is Room) {
+              return MaterialPageRoute(
+                builder: (_) => MaintenancePage(
+                  roomId: args['roomId'] as String,
+                  room: args['room'] as Room,
+                  roomController: roomController,
+                ),
+              );
+            }
+            // Fallback seguro (ex: F5 na Web sem argumentos de navegação)
             return MaterialPageRoute(
-              builder: (_) => MaintenancePage(
-                roomId: args['roomId'],
-                room: args['room'],
-                roomController: roomController,
-              ),
+              builder: (_) => const AuthGate(),
             );
           case '/history':
             return MaterialPageRoute(
@@ -107,7 +116,9 @@ class GineGestorApp extends StatelessWidget {
               builder: (_) => const UserManagementPage(),
             );
           default:
-            return null;
+            return MaterialPageRoute(
+              builder: (_) => const AuthGate(),
+            );
         }
       },
     );

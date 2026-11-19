@@ -111,7 +111,7 @@ class _LightingInspectionContentState
     final createsAsStaging = user?.role.createsAsStaging ?? false;
 
     final newIssue = MaintenanceIssue(
-      cinemaId: widget.room.theaterId ?? '2160',
+      cinemaId: widget.room.theaterId ?? user?.cinemaId ?? '2159',
       roomId: widget.room.id,
       seatId: widget.item.id,
       problemType: _selectedProblemType!,

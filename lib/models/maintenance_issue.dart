@@ -1,3 +1,18 @@
+import 'cinema_sector.dart';
+
+enum IssueDomain {
+  seat('💺', 'Poltronas'),
+  lighting('💡', 'Iluminação'),
+  climate('❄️', 'Climatização'),
+  audioVideo('🔊', 'Som / Imagem'),
+  cleaning('🧹', 'Limpeza'),
+  building('🏢', 'Predial / Outros');
+
+  final String emoji;
+  final String label;
+  const IssueDomain(this.emoji, this.label);
+}
+
 enum IssueStatus {
   staging, // Pendente de aprovação pela operação
   rejected, // Rejeitada na triagem
@@ -36,6 +51,12 @@ class MaintenanceIssue {
 
   /// Padroniza nomes antigos e atuais para a lista oficial de defeitos
   static String normalizeProblemType(String raw) {
+    if (raw.contains(':')) {
+      final prefix = raw.split(':').first.trim();
+      if (prefix.isNotEmpty && prefix.length <= 40) {
+        return prefix;
+      }
+    }
     final lower = raw.trim().toLowerCase();
     if (lower == 'trocar capa assento' ||
         lower == 'capa assento rasg.' ||
@@ -128,6 +149,88 @@ class MaintenanceIssue {
 
   /// True quando a demanda ativa interdita o assento (Encosto Solto / Assento Solto)
   bool get isBlockingSeat => isBlockingProblem(problemType);
+
+  /// True se o chamado for aberto para uma área comum do cinema (fora das salas)
+  bool get isCommonSector => roomId.startsWith('setor_');
+
+  /// Domínio (grupo) do chamado. Fonte única de verdade para filtros e organização.
+  IssueDomain get domain {
+    if (seatId.startsWith('LED-') ||
+        seatId.startsWith('ARAN-') ||
+        seatId.startsWith('REF-') ||
+        seatId == 'GERAL-ILUMINACAO') {
+      return IssueDomain.lighting;
+    }
+    switch (seatId) {
+      case 'GERAL-AR-COND':
+        return IssueDomain.climate;
+      case 'GERAL-SOM-TELA':
+        return IssueDomain.audioVideo;
+      case 'GERAL-LIMPEZA':
+        return IssueDomain.cleaning;
+    }
+    if (seatId.startsWith('GERAL-') ||
+        seatId == 'SALA' ||
+        seatId.startsWith('INFRA-')) {
+      return IssueDomain.building;
+    }
+    return isCommonSector ? IssueDomain.building : IssueDomain.seat;
+  }
+
+  bool get isLightingIssue => domain == IssueDomain.lighting;
+
+  /// Qualquer chamado de infraestrutura (tudo que não é poltrona nem iluminação)
+  bool get isGeneralIssue =>
+      domain != IssueDomain.seat && domain != IssueDomain.lighting;
+
+  bool get isSeatIssue => domain == IssueDomain.seat;
+
+  String get _cleanGeneralLabel {
+    switch (seatId) {
+      case 'GERAL-AR-COND':
+        return 'Ar-Condicionado';
+      case 'GERAL-ILUMINACAO':
+        return 'Iluminação Geral';
+      case 'GERAL-CARPETE':
+        return 'Piso / Carpete';
+      case 'GERAL-PORTA':
+        return 'Porta / Saída';
+      case 'GERAL-SOM-TELA':
+        return 'Som / Imagem';
+      case 'GERAL-LIMPEZA':
+        return 'Limpeza';
+      case 'GERAL-SEGURANCA':
+        return 'Segurança';
+      case 'GERAL-OUTROS':
+        return 'Outros';
+    }
+    final clean = seatId.replaceFirst('GERAL-', '').replaceAll('_', ' ');
+    return clean.isNotEmpty ? clean : 'Geral da Sala';
+  }
+
+  String get targetCategoryLabel {
+    if (isCommonSector) {
+      final sector = CinemaSector.findById(roomId);
+      return sector?.name ?? 'Área Comum / Geral';
+    }
+    return domain == IssueDomain.seat ? 'Poltrona' : domain.label;
+  }
+
+  String get targetDisplayLabel {
+    if (isCommonSector) {
+      final sector = CinemaSector.findById(roomId);
+      final sectorName =
+          sector?.name ?? roomId.replaceFirst('setor_', '').toUpperCase();
+      if (seatId.startsWith('GERAL-')) {
+        return '$sectorName • $_cleanGeneralLabel';
+      }
+      return sectorName;
+    }
+    if (seatId.startsWith('GERAL-')) return _cleanGeneralLabel;
+    if (domain == IssueDomain.lighting) return seatId;
+    if (domain != IssueDomain.seat) return _cleanGeneralLabel;
+    return 'Poltrona $seatId';
+  }
 
   Map<String, dynamic> toJson() {
     return {

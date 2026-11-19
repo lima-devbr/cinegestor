@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/app_user.dart';
+import '../models/cinema_sector.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/photo_evidence_widgets.dart';
 
@@ -65,8 +66,28 @@ class StagingPage extends StatelessWidget {
               itemCount: stagingIssues.length,
               itemBuilder: (context, index) {
                 final issue = stagingIssues[index];
-                final room = roomController.getRoomById(issue.roomId);
-                final roomName = room?.displayName ?? 'Sala ${issue.roomId}';
+                String itemTitle;
+                IconData itemIcon;
+
+                if (issue.isCommonSector) {
+                  final sector = CinemaSector.findById(issue.roomId);
+                  final sectorName = sector?.name ?? 'Área Comum';
+                  itemTitle = '$sectorName • ${issue.targetDisplayLabel}';
+                  itemIcon = sector?.icon ?? Icons.storefront_rounded;
+                } else {
+                  final room = roomController.getRoomById(issue.roomId);
+                  final roomName = room?.displayName ?? 'Sala ${issue.roomId}';
+                  if (issue.isGeneralIssue) {
+                    itemTitle = '$roomName • Infraestrutura (${issue.targetDisplayLabel})';
+                    itemIcon = Icons.build_circle_outlined;
+                  } else if (issue.isLightingIssue) {
+                    itemTitle = '$roomName • Iluminação (${issue.targetDisplayLabel})';
+                    itemIcon = Icons.lightbulb_outline_rounded;
+                  } else {
+                    itemTitle = '$roomName • Poltrona ${issue.seatId}';
+                    itemIcon = Icons.chair_rounded;
+                  }
+                }
 
                 return AppleGlassCard(
                   margin: const EdgeInsets.only(bottom: 14),
@@ -91,7 +112,7 @@ class StagingPage extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Icon(
-                                    Icons.pending_actions_rounded,
+                                    itemIcon,
                                     color: AppleColors.systemAmber,
                                     size: 18,
                                   ),
@@ -99,7 +120,7 @@ class StagingPage extends StatelessWidget {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    '$roomName • Poltrona ${issue.seatId}',
+                                    itemTitle,
                                     style:
                                         Theme.of(context).textTheme.titleMedium,
                                   ),

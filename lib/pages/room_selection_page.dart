@@ -7,6 +7,8 @@ import '../models/room.dart';
 import '../models/app_user.dart';
 import '../models/maintenance_issue.dart';
 import '../widgets/apple_surfaces.dart';
+import '../widgets/quick_issue_dialog.dart';
+import '../widgets/common_sectors_sheet.dart';
 import '../services/app_update_service.dart';
 import 'user_management_page.dart';
 
@@ -137,6 +139,77 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     );
   }
 
+  Widget _buildSyncStatusBanner(RoomController roomController) {
+    final syncError = roomController.lastSyncError;
+    final hasPending = roomController.hasPendingSync;
+    final isOfflineCache = roomController.isFromCache;
+
+    if (syncError == null && !hasPending && !isOfflineCache) {
+      return const SizedBox.shrink();
+    }
+
+    late final Color accentColor;
+    late final IconData icon;
+    late final String message;
+
+    if (syncError != null) {
+      accentColor = AppleColors.systemRed;
+      icon = Icons.sync_problem_rounded;
+      message = syncError;
+    } else if (hasPending) {
+      final count = roomController.pendingSyncCount;
+      accentColor = AppleColors.systemAmber;
+      icon = Icons.cloud_upload_outlined;
+      message = isOfflineCache
+          ? '$count alteração${count > 1 ? "ões" : ""} salva${count > 1 ? "s" : ""} localmente • aguardando conexão'
+          : 'Sincronizando $count alteração${count > 1 ? "ões" : ""} com a nuvem...';
+    } else {
+      accentColor = AppleColors.textSecondary;
+      icon = Icons.cloud_off_rounded;
+      message = 'Modo offline • exibindo dados salvos no aparelho';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppleGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        borderRadius: 12,
+        borderColor: accentColor.withValues(alpha: 0.35),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: accentColor),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: syncError != null
+                      ? accentColor
+                      : AppleColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (syncError != null)
+              InkWell(
+                onTap: roomController.clearSyncError,
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: AppleColors.textSecondary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Faixa única e compacta de métricas no topo (3 colunas lado a lado)
   /// Poltronas com defeitos usuais (Capas, s/ Número, PC-E/D, S/Mola, Arremate)
   /// continuam Operacionais; apenas Encosto Solto e Assento Solto interditam a cadeira.
@@ -149,19 +222,26 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
         roomController.issues.where((i) => i.isActive).toList();
     final stagingCount = roomController.getStagingIssues().length;
 
-    final blockingSeatsCount = activeIssues
+    final seatIssues = activeIssues.where((i) => i.isSeatIssue).toList();
+    final nonSeatIssuesCount = activeIssues.length - seatIssues.length;
+
+    final blockingSeatsCount = seatIssues
         .where((i) => i.isBlockingSeat)
         .map((i) => '${i.roomId}_${i.seatId}')
         .toSet()
         .length;
     final affectedSeatsCount =
-        activeIssues.map((i) => '${i.roomId}_${i.seatId}').toSet().length;
+        seatIssues.map((i) => '${i.roomId}_${i.seatId}').toSet().length;
 
     final operationalSeats =
         (totalSeats - blockingSeatsCount).clamp(0, totalSeats);
     final operationalPercent = totalSeats > 0
         ? ((operationalSeats / totalSeats) * 100).toStringAsFixed(1)
         : '100.0';
+
+    final String pendenciasSub = nonSeatIssuesCount > 0
+        ? '$affectedSeatsCount poltrona(s) • $nonSeatIssuesCount geral'
+        : '$affectedSeatsCount poltrona(s)';
 
     return AppleGlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -188,7 +268,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               child: _buildCompactMetricItem(
                 label: 'PENDÊNCIAS',
                 value: '${activeIssues.length}',
-                sub: '$affectedSeatsCount poltrona(s)',
+                sub: pendenciasSub,
                 color: activeIssues.isNotEmpty
                     ? (blockingSeatsCount > 0
                         ? AppleColors.systemRed
@@ -391,6 +471,115 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     );
   }
 
+  Widget _buildCommonSectorsCard(RoomController roomController) {
+    final commonIssues = roomController.activeIssues
+        .where((i) => i.isCommonSector)
+        .toList();
+    final issueCount = commonIssues.length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: AppleGlassCard(
+        elevated: true,
+        borderRadius: 16,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        onTap: () => CommonSectorsSheet.show(context, roomController),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: (issueCount > 0
+                        ? AppleColors.systemOrange
+                        : AppleColors.systemGreen)
+                    .withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.storefront_rounded,
+                  color: issueCount > 0
+                      ? AppleColors.systemOrange
+                      : AppleColors.systemGreen,
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Áreas Comuns do Cinema',
+                    style: TextStyle(
+                      color: AppleColors.textPrimary,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Bomboniere, Foyer, Banheiros, Bilheteria e Copa',
+                    style: TextStyle(
+                      color: AppleColors.textSecondary,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: (issueCount > 0
+                        ? AppleColors.systemOrange
+                        : AppleColors.systemGreen)
+                    .withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    issueCount > 0
+                        ? Icons.warning_amber_rounded
+                        : Icons.check_circle_rounded,
+                    size: 13,
+                    color: issueCount > 0
+                        ? AppleColors.systemOrange
+                        : AppleColors.systemGreen,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    issueCount > 0
+                        ? '$issueCount aberto${issueCount > 1 ? "s" : ""}'
+                        : '100% OK',
+                    style: TextStyle(
+                      color: issueCount > 0
+                          ? AppleColors.systemOrange
+                          : AppleColors.systemGreen,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppleColors.textTertiary,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Item compacto de Sala com Termômetro baseado em % da sala:
   /// - 0% a 5% usuais: Verde
   /// - 5.1% a 12% usuais: Amarelo
@@ -542,6 +731,18 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     final rooms = roomController.rooms;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          QuickIssueDialog.show(
+            context: context,
+            roomController: roomController,
+          );
+        },
+        backgroundColor: AppleColors.accentBlue,
+        foregroundColor: Colors.white,
+        tooltip: 'Novo Chamado',
+        child: const Icon(Icons.add_rounded, size: 28),
+      ),
       appBar: AppBar(
         title: GestureDetector(
           onTap: (currentUser?.role.canSwitchCinema ?? false)
@@ -670,6 +871,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   Navigator.pushNamed(context, '/history');
                   break;
                 case 'logout':
+                  roomController.resetSession();
                   authController.logout(context);
                   break;
               }
@@ -781,12 +983,15 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
+              _buildSyncStatusBanner(roomController),
               _buildCompactMetricsStrip(rooms, roomController),
               const SizedBox(height: 12),
               _buildHorizontalDefectBar(roomController),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
+              _buildCommonSectorsCard(roomController),
+              const SizedBox(height: 8),
               Padding(
-                padding: EdgeInsets.only(left: 4, bottom: 10),
+                padding: const EdgeInsets.only(left: 4, bottom: 10),
                 child: Text(
                   'SALAS DA UNIDADE • TERMÔMETRO DE MANUTENÇÃO',
                   style: TextStyle(
@@ -800,11 +1005,14 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               ...rooms.map((room) {
                 final roomActiveIssues =
                     roomController.getIssuesByRoom(room.id, onlyActive: true);
-                final blockingSeatIds = roomActiveIssues
+                final roomActiveSeatIssues =
+                    roomActiveIssues.where((i) => i.isSeatIssue).toList();
+
+                final blockingSeatIds = roomActiveSeatIssues
                     .where((i) => i.isBlockingSeat)
                     .map((i) => i.seatId)
                     .toSet();
-                final usualSeatIds = roomActiveIssues
+                final usualSeatIds = roomActiveSeatIssues
                     .where((i) => !i.isBlockingSeat)
                     .map((i) => i.seatId)
                     .where((seatId) => !blockingSeatIds.contains(seatId))
