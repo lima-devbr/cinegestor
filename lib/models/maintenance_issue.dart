@@ -16,7 +16,8 @@ enum IssueDomain {
 enum IssueStatus {
   staging, // Pendente de aprovação pela operação
   rejected, // Rejeitada na triagem
-  active, // Aprovada / em manutenção
+  active, // Aprovada / em aberto
+  inProgress, // Em andamento / sendo atendida pelo técnico
   resolved, // Finalizada
 }
 
@@ -29,6 +30,8 @@ extension IssueStatusExtension on IssueStatus {
         return 'Rejeitada';
       case IssueStatus.active:
         return 'Em Aberto';
+      case IssueStatus.inProgress:
+        return 'Em Andamento';
       case IssueStatus.resolved:
         return 'Resolvida';
     }
@@ -121,6 +124,8 @@ class MaintenanceIssue {
   String? resolvedBy;
   String? afterPhotoBase64; // Foto de evidência na conclusão
   String? rejectionReason;
+  String? assignedTo; // Responsável / técnico atribuído à OS
+  DateTime? assignedAt; // Data/hora da atribuição ou início
 
   MaintenanceIssue({
     String? id,
@@ -139,12 +144,16 @@ class MaintenanceIssue {
     this.resolvedBy,
     this.afterPhotoBase64,
     this.rejectionReason,
+    this.assignedTo,
+    this.assignedAt,
   })  : id = id ?? '${cinemaId}_${roomId}_${seatId}_${(dateTime ?? DateTime.now()).microsecondsSinceEpoch}',
         dateTime = dateTime ?? DateTime.now();
 
   bool get resolved => status == IssueStatus.resolved;
   bool get isStaging => status == IssueStatus.staging;
-  bool get isActive => status == IssueStatus.active;
+  bool get isInProgress => status == IssueStatus.inProgress;
+  bool get isOpen => status == IssueStatus.active;
+  bool get isActive => status == IssueStatus.active || status == IssueStatus.inProgress;
   bool get isRejected => status == IssueStatus.rejected;
 
   /// True quando a demanda ativa interdita o assento (Encosto Solto / Assento Solto)
@@ -250,6 +259,8 @@ class MaintenanceIssue {
       'resolvedBy': resolvedBy,
       'afterPhotoBase64': afterPhotoBase64,
       'rejectionReason': rejectionReason,
+      'assignedTo': assignedTo,
+      'assignedAt': assignedAt?.toIso8601String(),
     };
   }
 
@@ -259,10 +270,15 @@ class MaintenanceIssue {
     // Compatibilidade com registros legados (que usavam bool resolved)
     IssueStatus parsedStatus;
     if (json.containsKey('status')) {
-      parsedStatus = IssueStatus.values.firstWhere(
-        (s) => s.name == json['status'],
-        orElse: () => IssueStatus.active,
-      );
+      final rawStatus = json['status'].toString();
+      if (rawStatus == 'in_progress') {
+        parsedStatus = IssueStatus.inProgress;
+      } else {
+        parsedStatus = IssueStatus.values.firstWhere(
+          (s) => s.name == rawStatus,
+          orElse: () => IssueStatus.active,
+        );
+      }
     } else {
       final wasResolved = json['resolved'] == true;
       parsedStatus = wasResolved ? IssueStatus.resolved : IssueStatus.active;
@@ -285,6 +301,8 @@ class MaintenanceIssue {
       resolvedBy: json['resolvedBy'],
       afterPhotoBase64: json['afterPhotoBase64'],
       rejectionReason: json['rejectionReason'],
+      assignedTo: json['assignedTo'],
+      assignedAt: json['assignedAt'] != null ? DateTime.tryParse(json['assignedAt']) : null,
     );
   }
 }

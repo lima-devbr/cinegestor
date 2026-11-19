@@ -9,6 +9,7 @@ import '../models/cinema_sector.dart';
 import '../models/room.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
+import '../widgets/assign_responsible_dialog.dart';
 
 class DefectSummaryPage extends StatefulWidget {
   final String? initialProblemType;
@@ -665,6 +666,54 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                                 ),
                               ],
                             ] else if (canResolve) ...[
+                              if (issue.assignedTo != null &&
+                                  issue.assignedTo!.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppleColors.accentIndigo
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.engineering_rounded,
+                                          size: 12,
+                                          color: AppleColors.accentIndigo),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        issue.assignedTo!,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppleColors.accentIndigo,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: () => AssignResponsibleDialog.show(
+                                  context: context,
+                                  issue: issue,
+                                  roomController: roomController,
+                                ),
+                                child: Tooltip(
+                                  message: issue.assignedTo != null
+                                      ? 'Reatribuir responsável'
+                                      : 'Atribuir responsável',
+                                  child: Icon(
+                                    Icons.assignment_ind_rounded,
+                                    size: 17,
+                                    color: AppleColors.accentIndigo,
+                                  ),
+                                ),
+                              ),
                               const SizedBox(width: 8),
                               InkWell(
                                 onTap: () async {
@@ -874,6 +923,41 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                             ),
                           ),
                           if (canResolve && issue.isActive) ...[
+                            if (issue.assignedTo != null &&
+                                issue.assignedTo!.isNotEmpty) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppleColors.accentIndigo
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '👤 ${issue.assignedTo}',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    color: AppleColors.accentIndigo,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            IconButton(
+                              icon: const Icon(Icons.assignment_ind_rounded,
+                                  size: 18),
+                              color: AppleColors.accentIndigo,
+                              visualDensity: VisualDensity.compact,
+                              tooltip: issue.assignedTo != null
+                                  ? 'Reatribuir responsável'
+                                  : 'Atribuir responsável',
+                              onPressed: () => AssignResponsibleDialog.show(
+                                context: context,
+                                issue: issue,
+                                roomController: roomController,
+                              ),
+                            ),
                             IconButton(
                               icon: const Icon(
                                   Icons.check_circle_outline_rounded,

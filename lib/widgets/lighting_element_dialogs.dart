@@ -7,6 +7,7 @@ import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import 'apple_surfaces.dart';
 import 'photo_evidence_widgets.dart';
+import 'assign_responsible_dialog.dart';
 
 class LightingElementDialogs {
   static void showInspectionSheet({
@@ -225,14 +226,25 @@ class _LightingInspectionContentState
                     ],
                   ),
                 ),
-                if (activeIssue != null)
+                if (activeIssue != null) ...[
                   AppleStatusPill(
                     label: activeIssue.status.displayName,
-                    color: activeIssue.isActive
-                        ? AppleColors.systemRed
-                        : AppleColors.systemAmber,
-                  )
-                else
+                    color: activeIssue.isInProgress
+                        ? AppleColors.accentIndigo
+                        : (activeIssue.isOpen
+                            ? AppleColors.systemRed
+                            : AppleColors.systemAmber),
+                  ),
+                  if (activeIssue.assignedTo != null &&
+                      activeIssue.assignedTo!.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    AppleStatusPill(
+                      icon: Icons.person_rounded,
+                      label: 'Resp: ${activeIssue.assignedTo}',
+                      color: AppleColors.accentIndigo,
+                    ),
+                  ],
+                ] else
                   AppleStatusPill(
                     label: 'Operacional',
                     color: AppleColors.systemGreen,
@@ -370,6 +382,26 @@ class _LightingInspectionContentState
                 ),
               ] else if (activeIssue.isActive &&
                   (user?.role.canResolveIssue ?? false)) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await AssignResponsibleDialog.show(
+                        context: context,
+                        issue: activeIssue,
+                        roomController: widget.roomController,
+                      );
+                      if (context.mounted) setState(() {});
+                    },
+                    icon: const Icon(Icons.assignment_ind_rounded, size: 16),
+                    label: Text(
+                      activeIssue.assignedTo != null
+                          ? 'Reatribuir Técnico (${activeIssue.assignedTo})'
+                          : 'Atribuir Técnico Responsável',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 PhotoEvidencePickerTile(
                   photoBase64: _afterPhotoBase64,
                   label: 'Foto do reparo concluído (opcional)',

@@ -9,6 +9,7 @@ import '../models/cinema_sector.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/photo_evidence_widgets.dart';
+import '../widgets/assign_responsible_dialog.dart';
 
 class HistoryPage extends StatefulWidget {
   final String? initialRoomId;
@@ -67,7 +68,10 @@ class _HistoryPageState extends State<HistoryPage> {
       if (_selectedStatusFilter == 'staging' && !issue.isStaging) {
         return false;
       }
-      if (_selectedStatusFilter == 'active' && !issue.isActive) {
+      if (_selectedStatusFilter == 'active' && issue.status != IssueStatus.active) {
+        return false;
+      }
+      if (_selectedStatusFilter == 'inProgress' && !issue.isInProgress) {
         return false;
       }
       if (_selectedStatusFilter == 'resolved' && !issue.resolved) {
@@ -158,7 +162,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 DropdownMenuItem(
                   value: 'active',
-                  child: Text('Em Manutenção', overflow: TextOverflow.ellipsis),
+                  child: Text('Em Aberto', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'inProgress',
+                  child: Text('Em Andamento', overflow: TextOverflow.ellipsis),
                 ),
                 DropdownMenuItem(
                   value: 'resolved',
@@ -444,7 +452,9 @@ class _HistoryPageState extends State<HistoryPage> {
                           ? AppleColors.systemGreen
                           : issue.isStaging
                               ? AppleColors.systemAmber
-                              : AppleColors.systemRed;
+                              : issue.isInProgress
+                                  ? AppleColors.accentIndigo
+                                  : AppleColors.systemRed;
 
                       return AppleGlassCard(
                         margin: const EdgeInsets.only(bottom: 14),
@@ -463,7 +473,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                             ? Icons.check_circle_rounded
                                             : issue.isStaging
                                                 ? Icons.pending_actions_rounded
-                                                : Icons.warning_amber_rounded,
+                                                : issue.isInProgress
+                                                    ? Icons.handyman_rounded
+                                                    : Icons.warning_amber_rounded,
                                         color: statusColor,
                                         size: 20,
                                       ),
@@ -496,6 +508,15 @@ class _HistoryPageState extends State<HistoryPage> {
                                 label:
                                     'Reincidente (${roomController.getSeatRecurrenceCount(issue.roomId, issue.seatId)}x)',
                                 color: AppleColors.systemAmber,
+                              ),
+                            ],
+                            if (issue.assignedTo != null &&
+                                issue.assignedTo!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              AppleStatusPill(
+                                icon: Icons.engineering_rounded,
+                                label: 'Responsável: ${issue.assignedTo}',
+                                color: AppleColors.accentIndigo,
                               ),
                             ],
                             const SizedBox(height: 10),
@@ -642,7 +663,25 @@ class _HistoryPageState extends State<HistoryPage> {
                                         ),
                                         label: const Text('Aprovar'),
                                       )
-                                    else if (issue.isActive && canResolve)
+                                    else if (issue.isActive && canResolve) ...[
+                                      OutlinedButton.icon(
+                                        onPressed: () =>
+                                            AssignResponsibleDialog.show(
+                                          context: context,
+                                          issue: issue,
+                                          roomController: roomController,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.assignment_ind_rounded,
+                                          size: 16,
+                                        ),
+                                        label: Text(
+                                          issue.assignedTo != null
+                                              ? 'Reatribuir'
+                                              : 'Atribuir',
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
                                       ElevatedButton.icon(
                                         onPressed: () {
                                           roomController.resolveIssue(
@@ -664,8 +703,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                           size: 17,
                                         ),
                                         label: const Text('Concluir'),
-                                      )
-                                    else if (issue.resolved && canReopen)
+                                      ),
+                                    ] else if (issue.resolved && canReopen)
                                       OutlinedButton.icon(
                                         onPressed: () {
                                           roomController.reopenIssue(issue.id);

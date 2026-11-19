@@ -13,6 +13,7 @@ import 'package:cinegestor/widgets/photo_evidence_widgets.dart';
 import 'package:cinegestor/models/room.dart';
 import 'package:cinegestor/widgets/lighting_element_dialogs.dart';
 import 'package:cinegestor/widgets/quick_issue_dialog.dart';
+import 'package:cinegestor/widgets/assign_responsible_dialog.dart';
 import 'history_page.dart';
 
 class MaintenancePage extends StatefulWidget {
@@ -861,9 +862,24 @@ class _MaintenancePageState extends State<MaintenancePage>
                                     AppleStatusPill(
                                       label: 'Triagem',
                                       color: AppleColors.systemAmber,
+                                    )
+                                  else if (issue.isInProgress)
+                                    AppleStatusPill(
+                                      label: 'Em Andamento',
+                                      color: AppleColors.accentIndigo,
                                     ),
                                 ],
                               ),
+                              if (issue.assignedTo != null &&
+                                  issue.assignedTo!.isNotEmpty)
+                                Text(
+                                  '👤 Resp: ${issue.assignedTo}',
+                                  style: TextStyle(
+                                    color: AppleColors.accentIndigo,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
                               if (issue.notes != null &&
                                   issue.notes!.isNotEmpty)
                                 Text(
@@ -913,7 +929,30 @@ class _MaintenancePageState extends State<MaintenancePage>
                               ),
                             ),
                           )
-                        else if (issue.isActive && canResolve)
+                        else if (issue.isActive && canResolve) ...[
+                          TextButton.icon(
+                            onPressed: () async {
+                              await AssignResponsibleDialog.show(
+                                context: context,
+                                issue: issue,
+                                roomController: widget.roomController,
+                              );
+                              if (mounted) setState(() {});
+                            },
+                            icon: Icon(
+                              Icons.assignment_ind_rounded,
+                              color: AppleColors.accentIndigo,
+                              size: 15,
+                            ),
+                            label: Text(
+                              issue.assignedTo != null ? 'Reatribuir' : 'Atribuir',
+                              style: TextStyle(
+                                color: AppleColors.accentIndigo,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ),
                           TextButton.icon(
                             onPressed: () => _showResolveWithPhotoDialog(
                               issue,
@@ -933,6 +972,7 @@ class _MaintenancePageState extends State<MaintenancePage>
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   );
@@ -1511,9 +1551,9 @@ class _MaintenancePageState extends State<MaintenancePage>
         break;
     }
 
-    final statusColor = issue.isActive
-        ? AppleColors.systemRed
-        : AppleColors.systemAmber;
+    final statusColor = issue.isInProgress
+        ? AppleColors.accentIndigo
+        : (issue.isOpen ? AppleColors.systemRed : AppleColors.systemAmber);
 
     return AppleGlassCard(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1548,9 +1588,23 @@ class _MaintenancePageState extends State<MaintenancePage>
                   ),
                 ],
               ),
-              AppleStatusPill(
-                label: issue.status.displayName,
-                color: statusColor,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppleStatusPill(
+                    label: issue.status.displayName,
+                    color: statusColor,
+                  ),
+                  if (issue.assignedTo != null &&
+                      issue.assignedTo!.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    AppleStatusPill(
+                      icon: Icons.person_rounded,
+                      label: 'Resp: ${issue.assignedTo}',
+                      color: AppleColors.accentIndigo,
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -1646,6 +1700,24 @@ class _MaintenancePageState extends State<MaintenancePage>
                   ),
                 ] else if (issue.isActive &&
                     (user?.role.canResolveIssue ?? false)) ...[
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await AssignResponsibleDialog.show(
+                        context: context,
+                        issue: issue,
+                        roomController: widget.roomController,
+                      );
+                      if (mounted) setState(() {});
+                    },
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.assignment_ind_rounded, size: 16),
+                    label: Text(
+                      issue.assignedTo != null ? 'Reatribuir' : 'Atribuir',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () => _showResolveIssueDialog(issue, user),
                     style: ElevatedButton.styleFrom(
