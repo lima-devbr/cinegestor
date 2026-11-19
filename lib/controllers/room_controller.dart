@@ -51,6 +51,8 @@ class RoomController extends ChangeNotifier {
       _lastHistoryDoc = null;
       _hasMoreHistory = true;
       _historicalIssues.clear();
+      _activeIssues.clear();
+      _issues.clear();
     }
 
     try {
@@ -330,22 +332,28 @@ class RoomController extends ChangeNotifier {
     }
   }
 
+  String get _cacheKey => 'maintenance_issues_$_activeCinemaId';
+
   Future<void> _saveIssuesLocally() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = _issues.map((i) => i.toJson()).toList();
-    await prefs.setString('maintenance_issues', json.encode(jsonList));
+    await prefs.setString(_cacheKey, json.encode(jsonList));
   }
 
   Future<void> loadIssues() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString('maintenance_issues');
+    final jsonString =
+        prefs.getString(_cacheKey) ?? prefs.getString('maintenance_issues');
 
     if (jsonString != null) {
       try {
         final List<dynamic> decoded = json.decode(jsonString);
-        _issues = decoded.map((issue) => MaintenanceIssue.fromJson(issue)).toList();
-        _activeIssues = _issues.where((i) => i.isActive || i.isStaging).toList();
-        _historicalIssues = _issues.where((i) => i.resolved || i.isRejected).toList();
+        _issues =
+            decoded.map((issue) => MaintenanceIssue.fromJson(issue)).toList();
+        _activeIssues =
+            _issues.where((i) => i.isActive || i.isStaging).toList();
+        _historicalIssues =
+            _issues.where((i) => i.resolved || i.isRejected).toList();
       } catch (e) {
         debugPrint('Erro ao carregar histórico local de manutenção: $e');
       }

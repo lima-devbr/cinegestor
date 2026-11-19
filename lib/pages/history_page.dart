@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/maintenance_issue.dart';
+import '../models/cinema_sector.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/photo_evidence_widgets.dart';
@@ -98,12 +99,13 @@ class _HistoryPageState extends State<HistoryPage> {
         runSpacing: 12,
         children: [
           SizedBox(
-            width: 170,
+            width: 190,
             child: DropdownButtonFormField<String>(
               key: ValueKey('room_$_selectedRoomFilter'),
               initialValue: _selectedRoomFilter,
+              isExpanded: true,
               decoration: const InputDecoration(
-                labelText: 'Sala',
+                labelText: 'Local',
                 isDense: true,
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -111,10 +113,22 @@ class _HistoryPageState extends State<HistoryPage> {
               items: [
                 const DropdownMenuItem(
                   value: 'all',
-                  child: Text('Todas as Salas'),
+                  child: Text(
+                    'Todas as Salas / Áreas',
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 ...roomController.rooms.map(
-                  (r) => DropdownMenuItem(value: r.id, child: Text(r.nome)),
+                  (r) => DropdownMenuItem(
+                    value: r.id,
+                    child: Text(r.nome, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+                ...CinemaSector.commonSectors.map(
+                  (s) => DropdownMenuItem(
+                    value: s.id,
+                    child: Text('🏢 ${s.name}', overflow: TextOverflow.ellipsis),
+                  ),
                 ),
               ],
               onChanged: (val) =>
@@ -122,10 +136,11 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ),
           SizedBox(
-            width: 170,
+            width: 160,
             child: DropdownButtonFormField<String>(
               key: ValueKey('status_$_selectedStatusFilter'),
               initialValue: _selectedStatusFilter,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Status',
                 isDense: true,
@@ -133,23 +148,33 @@ class _HistoryPageState extends State<HistoryPage> {
                     EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
-                DropdownMenuItem(value: 'all', child: Text('Todos')),
-                DropdownMenuItem(value: 'staging', child: Text('Em Triagem')),
+                DropdownMenuItem(
+                  value: 'all',
+                  child: Text('Todos', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'staging',
+                  child: Text('Em Triagem', overflow: TextOverflow.ellipsis),
+                ),
                 DropdownMenuItem(
                   value: 'active',
-                  child: Text('Em Manutenção'),
+                  child: Text('Em Manutenção', overflow: TextOverflow.ellipsis),
                 ),
-                DropdownMenuItem(value: 'resolved', child: Text('Resolvidos')),
+                DropdownMenuItem(
+                  value: 'resolved',
+                  child: Text('Resolvidos', overflow: TextOverflow.ellipsis),
+                ),
               ],
               onChanged: (val) =>
                   setState(() => _selectedStatusFilter = val ?? 'all'),
             ),
           ),
           SizedBox(
-            width: 160,
+            width: 150,
             child: DropdownButtonFormField<String>(
               key: ValueKey('urgency_$_selectedUrgencyFilter'),
               initialValue: _selectedUrgencyFilter,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Urgência',
                 isDense: true,
@@ -157,10 +182,22 @@ class _HistoryPageState extends State<HistoryPage> {
                     EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               items: const [
-                DropdownMenuItem(value: 'all', child: Text('Todas')),
-                DropdownMenuItem(value: 'Alta', child: Text('Alta')),
-                DropdownMenuItem(value: 'Média', child: Text('Média')),
-                DropdownMenuItem(value: 'Baixa', child: Text('Baixa')),
+                DropdownMenuItem(
+                  value: 'all',
+                  child: Text('Todas', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'Alta',
+                  child: Text('Alta', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'Média',
+                  child: Text('Média', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'Baixa',
+                  child: Text('Baixa', overflow: TextOverflow.ellipsis),
+                ),
               ],
               onChanged: (val) =>
                   setState(() => _selectedUrgencyFilter = val ?? 'all'),
@@ -210,12 +247,17 @@ class _HistoryPageState extends State<HistoryPage> {
     buffer.writeln('--------------------------------------------');
 
     for (final issue in filteredIssues) {
-      final roomName =
-          roomController.getRoomById(issue.roomId)?.displayName ??
-              'Sala ${issue.roomId}';
+      String locationName;
+      if (issue.isCommonSector) {
+        final sector = CinemaSector.findById(issue.roomId);
+        locationName = 'Área: ${sector?.name ?? issue.roomId}';
+      } else {
+        locationName = roomController.getRoomById(issue.roomId)?.displayName ??
+            'Sala ${issue.roomId}';
+      }
       final status = issue.resolved ? 'RESOLVIDO' : 'PENDENTE';
       final openedAt = DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime);
-      buffer.writeln('[$status] $roomName - Assento ${issue.seatId}');
+      buffer.writeln('[$status] $locationName - ${issue.targetDisplayLabel}');
       buffer.writeln(
         '  Problema: ${issue.problemType} | Urgência: ${issue.urgency}',
       );
@@ -377,9 +419,27 @@ class _HistoryPageState extends State<HistoryPage> {
                         );
                       }
                       final issue = filteredIssues[index];
-                      final room = roomController.getRoomById(issue.roomId);
-                      final roomName =
-                          room?.displayName ?? 'Sala ${issue.roomId}';
+                      String itemTitle;
+
+                      if (issue.isCommonSector) {
+                        final sector = CinemaSector.findById(issue.roomId);
+                        final sectorName = sector?.name ?? 'Área Comum';
+                        itemTitle = '$sectorName • ${issue.targetDisplayLabel}';
+                      } else {
+                        final room = roomController.getRoomById(issue.roomId);
+                        final roomName =
+                            room?.displayName ?? 'Sala ${issue.roomId}';
+                        if (issue.isGeneralIssue) {
+                          itemTitle =
+                              '$roomName • Infraestrutura (${issue.targetDisplayLabel})';
+                        } else if (issue.isLightingIssue) {
+                          itemTitle =
+                              '$roomName • Iluminação (${issue.targetDisplayLabel})';
+                        } else {
+                          itemTitle = '$roomName • Poltrona ${issue.seatId}';
+                        }
+                      }
+
                       final statusColor = issue.resolved
                           ? AppleColors.systemGreen
                           : issue.isStaging
@@ -410,7 +470,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          '$roomName • Poltrona ${issue.seatId}',
+                                          itemTitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,

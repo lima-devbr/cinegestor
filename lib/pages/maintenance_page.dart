@@ -12,6 +12,7 @@ import 'package:cinegestor/widgets/apple_surfaces.dart';
 import 'package:cinegestor/widgets/photo_evidence_widgets.dart';
 import 'package:cinegestor/models/room.dart';
 import 'package:cinegestor/widgets/lighting_element_dialogs.dart';
+import 'package:cinegestor/widgets/quick_issue_dialog.dart';
 import 'history_page.dart';
 
 class MaintenancePage extends StatefulWidget {
@@ -44,6 +45,10 @@ class _MaintenancePageState extends State<MaintenancePage>
   // Usa ValueNotifier para atualizar apenas o indicador de % sem reconstruir as 350 poltronas
   final ValueNotifier<double> _zoomNotifier = ValueNotifier<double>(0.8);
   Size _viewportSize = Size.zero;
+
+  // Alternância entre Mapa Visual e Lista de Ocorrências da Sala
+  bool _showListView = false;
+  String _listFilterCategory = 'all'; // 'all', 'seat', 'lighting', 'general'
 
   late final AnimationController _matrixAnimController;
   Animation<Matrix4>? _matrixAnimation;
@@ -947,7 +952,7 @@ class _MaintenancePageState extends State<MaintenancePage>
       return Positioned(
         left: 16,
         right: 16,
-        bottom: 14,
+        bottom: 80,
         child: Center(
           child: AppleGlassCard(
             enableBlur: true,
@@ -1239,9 +1244,484 @@ class _MaintenancePageState extends State<MaintenancePage>
     );
   }
 
+  Widget _buildModeSwitch(int roomIssuesCount) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: AppleColors.backgroundSecondary,
+      child: Container(
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppleColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppleColors.glassBorder),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _showListView = false),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: !_showListView
+                        ? AppleColors.accentBlue
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.grid_view_rounded,
+                          size: 16,
+                          color: !_showListView
+                              ? Colors.white
+                              : AppleColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Mapa da Sala',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: !_showListView
+                                ? Colors.white
+                                : AppleColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _showListView = true),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _showListView
+                        ? AppleColors.accentBlue
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.format_list_bulleted_rounded,
+                          size: 16,
+                          color: _showListView
+                              ? Colors.white
+                              : AppleColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Ocorrências ($roomIssuesCount)',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: _showListView
+                                ? Colors.white
+                                : AppleColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilterChip({
+    required String label,
+    required String key,
+  }) {
+    final isSel = _listFilterCategory == key;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSel,
+      selectedColor: AppleColors.accentBlue,
+      onSelected: (_) => setState(() => _listFilterCategory = key),
+      labelStyle: TextStyle(
+        color: isSel ? Colors.white : AppleColors.textPrimary,
+        fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+        fontSize: 12,
+      ),
+    );
+  }
+
+  Widget _buildRoomIssuesListView(
+    Room room,
+    List<MaintenanceIssue> allRoomIssues,
+  ) {
+    final auth = Provider.of<AuthController>(context);
+    final user = auth.currentUser;
+
+    // Contagem por domínio (organização única baseada em issue.domain)
+    final Map<IssueDomain, int> domainCounts = {
+      for (final d in IssueDomain.values) d: 0,
+    };
+    for (final i in allRoomIssues) {
+      domainCounts[i.domain] = (domainCounts[i.domain] ?? 0) + 1;
+    }
+
+    final List<MaintenanceIssue> filteredIssues = _listFilterCategory == 'all'
+        ? allRoomIssues
+        : allRoomIssues
+            .where((i) => i.domain.name == _listFilterCategory)
+            .toList();
+
+    return Column(
+      children: [
+        // Filtros por Domínio (só exibe grupos com ocorrências + o selecionado)
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildCategoryFilterChip(
+                  label: 'Todos (${allRoomIssues.length})',
+                  key: 'all',
+                ),
+                for (final d in IssueDomain.values)
+                  if ((domainCounts[d] ?? 0) > 0 ||
+                      d == IssueDomain.seat ||
+                      _listFilterCategory == d.name) ...[
+                    const SizedBox(width: 8),
+                    _buildCategoryFilterChip(
+                      label: '${d.emoji} ${d.label} (${domainCounts[d] ?? 0})',
+                      key: d.name,
+                    ),
+                  ],
+              ],
+            ),
+          ),
+        ),
+
+        // Lista de Ocorrências
+        Expanded(
+          child: filteredIssues.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppleColors.systemGreen.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.check_circle_rounded,
+                            size: 34,
+                            color: AppleColors.systemGreen,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Nenhuma ocorrência nesta categoria!',
+                        style: TextStyle(
+                          color: AppleColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Tudo operando normalmente na ${room.nome}.',
+                        style: TextStyle(
+                          color: AppleColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          QuickIssueDialog.show(
+                            context: context,
+                            roomController: widget.roomController,
+                            preSelectedRoom: room,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppleColors.accentBlue,
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Abrir Novo Chamado'),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+                  itemCount: filteredIssues.length,
+                  itemBuilder: (context, index) {
+                    final issue = filteredIssues[index];
+                    return _buildIssueCard(issue, user, room);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIssueCard(
+    MaintenanceIssue issue,
+    AppUser? user,
+    Room room,
+  ) {
+    Color typeColor = AppleColors.accentBlue;
+    IconData typeIcon = Icons.chair_rounded;
+    switch (issue.domain) {
+      case IssueDomain.lighting:
+        typeColor = const Color(0xFFFFD60A);
+        typeIcon = Icons.lightbulb_rounded;
+        break;
+      case IssueDomain.climate:
+        typeColor = AppleColors.systemCyan;
+        typeIcon = Icons.ac_unit_rounded;
+        break;
+      case IssueDomain.audioVideo:
+        typeColor = AppleColors.accentIndigo;
+        typeIcon = Icons.volume_up_rounded;
+        break;
+      case IssueDomain.cleaning:
+        typeColor = AppleColors.systemGreen;
+        typeIcon = Icons.cleaning_services_rounded;
+        break;
+      case IssueDomain.building:
+        typeColor = AppleColors.systemOrange;
+        typeIcon = Icons.build_circle_rounded;
+        break;
+      case IssueDomain.seat:
+        break;
+    }
+
+    final statusColor = issue.isActive
+        ? AppleColors.systemRed
+        : AppleColors.systemAmber;
+
+    return AppleGlassCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      borderRadius: 16,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: typeColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Icon(typeIcon, color: typeColor, size: 17),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    issue.targetDisplayLabel,
+                    style: TextStyle(
+                      color: AppleColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              AppleStatusPill(
+                label: issue.status.displayName,
+                color: statusColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            issue.problemType,
+            style: TextStyle(
+              color: AppleColors.textPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+          if (issue.notes != null && issue.notes!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              issue.notes!,
+              style: TextStyle(
+                color: AppleColors.textSecondary,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
+          if (issue.beforePhotoBase64 != null &&
+              issue.beforePhotoBase64!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            PhotoEvidenceThumb(
+              photoBase64: issue.beforePhotoBase64!,
+              tagLabel: 'Evidência',
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Por ${issue.reportedBy ?? "Equipe"} • ${DateFormat("dd/MM HH:mm").format(issue.dateTime)}',
+                style: TextStyle(
+                  color: AppleColors.textTertiary,
+                  fontSize: 11.5,
+                ),
+              ),
+              Text(
+                'Urgência: ${issue.urgency}',
+                style: TextStyle(
+                  color: issue.urgency == 'Alta'
+                      ? AppleColors.systemRed
+                      : issue.urgency == 'Média'
+                          ? AppleColors.systemOrange
+                          : AppleColors.systemGreen,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          if ((issue.isStaging && (user?.role.canApproveStaging ?? false)) ||
+              (issue.isActive && (user?.role.canResolveIssue ?? false))) ...[
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (issue.isStaging &&
+                    (user?.role.canApproveStaging ?? false)) ...[
+                  TextButton(
+                    onPressed: () {
+                      widget.roomController.rejectStagingIssue(
+                        issue.id,
+                        reason: 'Descartado na lista de sala',
+                      );
+                    },
+                    child: Text(
+                      'Recusar',
+                      style: TextStyle(color: AppleColors.systemRed),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      widget.roomController.approveStagingIssue(
+                        issue.id,
+                        approvedBy: user?.name,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppleColors.systemGreen,
+                      foregroundColor: Colors.black,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.check_rounded, size: 16),
+                    label: const Text('Aprovar'),
+                  ),
+                ] else if (issue.isActive &&
+                    (user?.role.canResolveIssue ?? false)) ...[
+                  ElevatedButton.icon(
+                    onPressed: () => _showResolveIssueDialog(issue, user),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppleColors.systemGreen,
+                      foregroundColor: Colors.black,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.check_circle_rounded, size: 16),
+                    label: const Text('Concluir Reparo'),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showResolveIssueDialog(MaintenanceIssue issue, AppUser? user) {
+    String? afterPhoto;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Concluir: ${issue.targetDisplayLabel}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Confirma a finalização deste chamado?',
+                style: TextStyle(color: AppleColors.textSecondary),
+              ),
+              const SizedBox(height: 14),
+              PhotoEvidencePickerTile(
+                photoBase64: afterPhoto,
+                label: 'Foto do Reparo Concluído (opcional)',
+                onChanged: (val) => setDialogState(() => afterPhoto = val),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await widget.roomController.resolveIssue(
+                  issue.id,
+                  resolvedBy: user?.name,
+                  afterPhotoBase64: afterPhoto,
+                );
+                if (mounted) {
+                  showTopNotice(context, 'Chamado concluído com sucesso!');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppleColors.systemGreen,
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Confirmar Conclusão'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectRoom = widget.roomController.selectRoom ?? widget.room;
+    final allRoomIssues = widget.roomController.issues
+        .where((i) => i.roomId == selectRoom.id && (i.isActive || i.isStaging))
+        .toList();
 
     return Scaffold(
       backgroundColor: AppleColors.background,
@@ -1279,40 +1759,61 @@ class _MaintenancePageState extends State<MaintenancePage>
           ),
         ],
       ),
+      floatingActionButton: selectedSeat != null
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                QuickIssueDialog.show(
+                  context: context,
+                  roomController: widget.roomController,
+                  preSelectedRoom: selectRoom,
+                );
+              },
+              backgroundColor: AppleColors.accentBlue,
+              foregroundColor: Colors.white,
+              tooltip: 'Novo Chamado',
+              child: const Icon(Icons.add_rounded, size: 28),
+            ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildLegend(),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  _viewportSize =
-                      Size(constraints.maxWidth, constraints.maxHeight);
-                  return Stack(
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onDoubleTapDown: _handleDoubleTapDown,
-                        onDoubleTap: () {},
-                        child: InteractiveViewer(
-                          transformationController: _transformationController,
-                          constrained: false,
-                          boundaryMargin: const EdgeInsets.symmetric(
-                            horizontal: 240,
-                            vertical: 260,
+            _buildModeSwitch(allRoomIssues.length),
+            if (!_showListView) ...[
+              _buildLegend(),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    _viewportSize =
+                        Size(constraints.maxWidth, constraints.maxHeight);
+                    return Stack(
+                      children: [
+                        GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onDoubleTapDown: _handleDoubleTapDown,
+                          onDoubleTap: () {},
+                          child: InteractiveViewer(
+                            transformationController: _transformationController,
+                            constrained: false,
+                            boundaryMargin: const EdgeInsets.symmetric(
+                              horizontal: 240,
+                              vertical: 260,
+                            ),
+                            minScale: _minZoom,
+                            maxScale: _maxZoom,
+                            child: _buildSeatLayout(selectRoom),
                           ),
-                          minScale: _minZoom,
-                          maxScale: _maxZoom,
-                          child: _buildSeatLayout(selectRoom),
                         ),
-                      ),
-                      _buildZoomControls(),
-                      _buildBottomOverlay(selectRoom),
-                    ],
-                  );
-                },
+                        _buildZoomControls(),
+                        _buildBottomOverlay(selectRoom),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
+            ] else
+              Expanded(
+                child: _buildRoomIssuesListView(selectRoom, allRoomIssues),
+              ),
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../controllers/room_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/maintenance_issue.dart';
+import '../models/cinema_sector.dart';
 import '../models/room.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
@@ -40,6 +41,22 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
 
   IconData _getIconForProblem(String problemType) {
     final normalized = normalizeProblemType(problemType).toLowerCase();
+    if (normalized.contains('ar-condicionado') || normalized.contains('climatização')) {
+      return Icons.ac_unit_rounded;
+    }
+    if (normalized.contains('iluminação') || normalized.contains('lâmpada')) {
+      return Icons.lightbulb_outline_rounded;
+    }
+    if (normalized.contains('limpeza')) return Icons.cleaning_services_rounded;
+    if (normalized.contains('porta') || normalized.contains('saída')) {
+      return Icons.meeting_room_rounded;
+    }
+    if (normalized.contains('som') || normalized.contains('imagem') || normalized.contains('tela')) {
+      return Icons.volume_up_rounded;
+    }
+    if (normalized.contains('segurança') || normalized.contains('extintor')) {
+      return Icons.health_and_safety_rounded;
+    }
     if (normalized.contains('capa')) return Icons.texture_rounded;
     if (normalized.contains('pc-e') ||
         normalized.contains('pc-d') ||
@@ -63,6 +80,13 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
       return AppleColors.systemRed;
     }
     final normalized = normalizeProblemType(problemType).toLowerCase();
+    if (normalized.contains('ar-condicionado')) return AppleColors.systemCyan;
+    if (normalized.contains('iluminação')) return const Color(0xFFFFD60A);
+    if (normalized.contains('limpeza')) return AppleColors.systemGreen;
+    if (normalized.contains('porta')) return AppleColors.systemRed;
+    if (normalized.contains('som') || normalized.contains('tela')) {
+      return AppleColors.accentIndigo;
+    }
     if (normalized.contains('capa')) return AppleColors.systemOrange;
     if (normalized.contains('pc-e') || normalized.contains('pc-d')) {
       return AppleColors.systemCyan;
@@ -156,6 +180,30 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
         buffer.writeln(
           '  🔧 ${entry.key} (${entry.value.length}x): Assentos [ ${seats.join(', ')} ]',
         );
+      }
+    }
+
+    for (final sector in CinemaSector.commonSectors) {
+      final sectorIssues = targetIssues.where((i) {
+        if (i.roomId != sector.id) return false;
+        if (_selectedProblemType != 'all' &&
+            normalizeProblemType(i.problemType) != _selectedProblemType) {
+          return false;
+        }
+        return true;
+      }).toList();
+
+      if (sectorIssues.isEmpty) continue;
+
+      buffer.writeln(
+        '\n🏢 ${sector.name.toUpperCase()} (${sectorIssues.length} item(ns)):',
+      );
+      for (final issue in sectorIssues) {
+        final openedAt = DateFormat('dd/MM HH:mm').format(issue.dateTime);
+        buffer.writeln('  🔧 ${issue.problemType} (Aberto em: $openedAt)');
+        if (issue.notes != null && issue.notes!.isNotEmpty) {
+          buffer.writeln('     Obs: ${issue.notes}');
+        }
       }
     }
 
@@ -655,6 +703,211 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
     );
   }
 
+  Widget _buildSectorTaskCard({
+    required CinemaSector sector,
+    required List<MaintenanceIssue> sectorIssues,
+    required RoomController roomController,
+    required AppUser? currentUser,
+  }) {
+    final canResolve = currentUser?.role.canResolveIssue ?? false;
+
+    final Map<String, List<MaintenanceIssue>> issuesByProblem = {};
+    for (final issue in sectorIssues) {
+      final type = normalizeProblemType(issue.problemType);
+      issuesByProblem.putIfAbsent(type, () => []).add(issue);
+    }
+
+    return AppleGlassCard(
+      margin: const EdgeInsets.only(bottom: 16),
+      borderRadius: 18,
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppleColors.systemOrange.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        sector.icon,
+                        color: AppleColors.systemOrange,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '🏢 ${sector.name}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppleStatusPill(
+                label: '${sectorIssues.length} pendente(s)',
+                color: AppleColors.systemOrange,
+                showDot: false,
+              ),
+            ],
+          ),
+          const Divider(height: 22),
+          ...issuesByProblem.entries.map((entry) {
+            final problemType = entry.key;
+            final groupIssues = entry.value;
+            final color = _getColorForProblem(problemType);
+            final activeIds = groupIssues
+                .where((i) => i.isActive)
+                .map((i) => i.id)
+                .toList();
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppleColors.backgroundSecondary,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              _getIconForProblem(problemType),
+                              color: color,
+                              size: 19,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                problemType,
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (canResolve && activeIds.isNotEmpty)
+                        ApplePressable(
+                          pressedScale: 0.95,
+                          onPressed: () async {
+                            await roomController.resolveIssuesBatch(
+                              activeIds,
+                              resolvedBy: currentUser?.name,
+                            );
+                            if (mounted) {
+                              showTopNotice(
+                                context,
+                                '${activeIds.length} chamado(s) de "$problemType" concluído(s) em ${sector.name}!',
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppleColors.systemGreen,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.done_all_rounded,
+                                  size: 15,
+                                  color: Colors.black,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Concluir Tudo (${activeIds.length})',
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ...groupIssues.map((issue) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.arrow_right_rounded,
+                              color: color, size: 16),
+                          Expanded(
+                            child: Text(
+                              issue.notes != null && issue.notes!.isNotEmpty
+                                  ? '${issue.targetDisplayLabel}: ${issue.notes}'
+                                  : issue.targetDisplayLabel,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppleColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (canResolve && issue.isActive) ...[
+                            IconButton(
+                              icon: const Icon(
+                                  Icons.check_circle_outline_rounded,
+                                  size: 18),
+                              color: AppleColors.systemGreen,
+                              visualDensity: VisualDensity.compact,
+                              tooltip: 'Concluir chamado',
+                              onPressed: () async {
+                                await roomController.resolveIssue(
+                                  issue.id,
+                                  resolvedBy: currentUser?.name,
+                                );
+                                if (mounted) {
+                                  showTopNotice(
+                                    context,
+                                    'Chamado de ${sector.name} concluído!',
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final roomController = Provider.of<RoomController>(context);
@@ -677,6 +930,12 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
       return filteredIssues.any((i) => i.roomId == room.id);
     }).toList();
 
+    final sectorsWithIssues = CinemaSector.commonSectors.where((sector) {
+      return filteredIssues.any((i) => i.roomId == sector.id);
+    }).toList();
+
+    final totalSections = roomsWithIssues.length + sectorsWithIssues.length;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Roteiro por Tipo de Defeito'),
@@ -684,7 +943,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
           if (filteredIssues.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.ios_share_rounded),
-              tooltip: 'Copiar Roteiro de Serviço por Sala',
+              tooltip: 'Copiar Roteiro de Serviço por Sala e Setor',
               onPressed: () =>
                   _exportTaskChecklist(context, targetIssues, roomController),
             ),
@@ -695,7 +954,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
         children: [
           _buildDefectCounterBar(countsByType, targetIssues.length),
           Expanded(
-            child: roomsWithIssues.isEmpty
+            child: totalSections == 0
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -708,8 +967,8 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                         const SizedBox(height: 12),
                         Text(
                           _selectedProblemType == 'all'
-                              ? 'Nenhuma manutenção pendente nas salas!'
-                              : 'Nenhuma poltrona pendente com "$_selectedProblemType".',
+                              ? 'Nenhuma manutenção pendente nas salas ou áreas!'
+                              : 'Nenhuma ocorrência pendente com "$_selectedProblemType".',
                           style: TextStyle(
                             color: AppleColors.textSecondary,
                             fontSize: 15,
@@ -732,18 +991,32 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    itemCount: roomsWithIssues.length,
+                    itemCount: totalSections,
                     itemBuilder: (context, index) {
-                      final room = roomsWithIssues[index];
-                      final roomIssues = filteredIssues
-                          .where((i) => i.roomId == room.id)
-                          .toList();
-                      return _buildRoomTaskCard(
-                        room: room,
-                        roomIssues: roomIssues,
-                        roomController: roomController,
-                        currentUser: currentUser,
-                      );
+                      if (index < roomsWithIssues.length) {
+                        final room = roomsWithIssues[index];
+                        final roomIssues = filteredIssues
+                            .where((i) => i.roomId == room.id)
+                            .toList();
+                        return _buildRoomTaskCard(
+                          room: room,
+                          roomIssues: roomIssues,
+                          roomController: roomController,
+                          currentUser: currentUser,
+                        );
+                      } else {
+                        final sectorIndex = index - roomsWithIssues.length;
+                        final sector = sectorsWithIssues[sectorIndex];
+                        final sectorIssues = filteredIssues
+                            .where((i) => i.roomId == sector.id)
+                            .toList();
+                        return _buildSectorTaskCard(
+                          sector: sector,
+                          sectorIssues: sectorIssues,
+                          roomController: roomController,
+                          currentUser: currentUser,
+                        );
+                      }
                     },
                   ),
           ),
