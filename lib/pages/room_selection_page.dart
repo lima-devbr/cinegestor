@@ -139,6 +139,77 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     );
   }
 
+  Widget _buildSyncStatusBanner(RoomController roomController) {
+    final syncError = roomController.lastSyncError;
+    final hasPending = roomController.hasPendingSync;
+    final isOfflineCache = roomController.isFromCache;
+
+    if (syncError == null && !hasPending && !isOfflineCache) {
+      return const SizedBox.shrink();
+    }
+
+    late final Color accentColor;
+    late final IconData icon;
+    late final String message;
+
+    if (syncError != null) {
+      accentColor = AppleColors.systemRed;
+      icon = Icons.sync_problem_rounded;
+      message = syncError;
+    } else if (hasPending) {
+      final count = roomController.pendingSyncCount;
+      accentColor = AppleColors.systemAmber;
+      icon = Icons.cloud_upload_outlined;
+      message = isOfflineCache
+          ? '$count alteração${count > 1 ? "ões" : ""} salva${count > 1 ? "s" : ""} localmente • aguardando conexão'
+          : 'Sincronizando $count alteração${count > 1 ? "ões" : ""} com a nuvem...';
+    } else {
+      accentColor = AppleColors.textSecondary;
+      icon = Icons.cloud_off_rounded;
+      message = 'Modo offline • exibindo dados salvos no aparelho';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppleGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        borderRadius: 12,
+        borderColor: accentColor.withValues(alpha: 0.35),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: accentColor),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  color: syncError != null
+                      ? accentColor
+                      : AppleColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (syncError != null)
+              InkWell(
+                onTap: roomController.clearSyncError,
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: AppleColors.textSecondary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Faixa única e compacta de métricas no topo (3 colunas lado a lado)
   /// Poltronas com defeitos usuais (Capas, s/ Número, PC-E/D, S/Mola, Arremate)
   /// continuam Operacionais; apenas Encosto Solto e Assento Solto interditam a cadeira.
@@ -800,6 +871,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   Navigator.pushNamed(context, '/history');
                   break;
                 case 'logout':
+                  roomController.resetSession();
                   authController.logout(context);
                   break;
               }
@@ -911,6 +983,7 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
+              _buildSyncStatusBanner(roomController),
               _buildCompactMetricsStrip(rooms, roomController),
               const SizedBox(height: 12),
               _buildHorizontalDefectBar(roomController),
