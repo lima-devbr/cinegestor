@@ -10,6 +10,7 @@ import '../models/room.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/assign_responsible_dialog.dart';
+import '../services/pdf_report_service.dart';
 
 class DefectSummaryPage extends StatefulWidget {
   final String? initialProblemType;
@@ -1024,13 +1025,33 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
       appBar: AppBar(
         title: const Text('Roteiro por Tipo de Defeito'),
         actions: [
-          if (filteredIssues.isNotEmpty)
+          if (filteredIssues.isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_rounded),
+              tooltip: 'Exportar Roteiro em PDF',
+              onPressed: () {
+                final cinemaName = currentUser?.cinemaName ?? 'CineGestor';
+                final cinemaId = currentUser?.cinemaId ?? '2159';
+                final filterTitle = _selectedProblemType == 'all'
+                    ? 'Roteiro Completo de Manutenções Pendentes'
+                    : 'Roteiro de Defeito: $_selectedProblemType';
+                PdfReportService.generateAndPrintReport(
+                  cinemaName: cinemaName,
+                  cinemaId: cinemaId,
+                  issues: filteredIssues,
+                  rooms: roomController.rooms,
+                  currentUser: currentUser,
+                  subtitleFilter: filterTitle,
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'Copiar Roteiro de Serviço por Sala e Setor',
               onPressed: () =>
                   _exportTaskChecklist(context, targetIssues, roomController),
             ),
+          ],
         ],
       ),
       body: Column(

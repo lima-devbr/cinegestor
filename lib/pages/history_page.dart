@@ -10,6 +10,7 @@ import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/photo_evidence_widgets.dart';
 import '../widgets/assign_responsible_dialog.dart';
+import '../services/pdf_report_service.dart';
 
 class HistoryPage extends StatefulWidget {
   final String? initialRoomId;
@@ -242,6 +243,41 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  Future<void> _generatePdf(
+    BuildContext context,
+    List<MaintenanceIssue> filteredIssues,
+    RoomController roomController,
+  ) async {
+    final auth = Provider.of<AuthController>(context, listen: false);
+    final currentUser = auth.currentUser;
+    final cinemaName = currentUser?.cinemaName ?? 'CineGestor';
+    final cinemaId = currentUser?.cinemaId ?? '2159';
+
+    final List<String> activeFilters = [];
+    if (_selectedRoomFilter != 'all') {
+      final room = roomController.getRoomById(_selectedRoomFilter);
+      activeFilters.add(room?.nome ?? _selectedRoomFilter);
+    }
+    if (_selectedStatusFilter != 'all') {
+      activeFilters.add('Status: $_selectedStatusFilter');
+    }
+    if (_selectedUrgencyFilter != 'all') {
+      activeFilters.add('Urgência: $_selectedUrgencyFilter');
+    }
+    final filterSubtitle = activeFilters.isNotEmpty
+        ? activeFilters.join(' • ')
+        : 'Todos os registros';
+
+    await PdfReportService.generateAndPrintReport(
+      cinemaName: cinemaName,
+      cinemaId: cinemaId,
+      issues: filteredIssues,
+      rooms: roomController.rooms,
+      currentUser: currentUser,
+      subtitleFilter: filterSubtitle,
+    );
+  }
+
   void _showExportDialog(
     BuildContext context,
     List<MaintenanceIssue> filteredIssues,
@@ -263,12 +299,17 @@ class _HistoryPageState extends State<HistoryPage> {
         locationName = roomController.getRoomById(issue.roomId)?.displayName ??
             'Sala ${issue.roomId}';
       }
-      final status = issue.resolved ? 'RESOLVIDO' : 'PENDENTE';
+      final status = issue.resolved
+          ? 'RESOLVIDO'
+          : (issue.isInProgress ? 'EM ANDAMENTO' : 'PENDENTE');
       final openedAt = DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime);
       buffer.writeln('[$status] $locationName - ${issue.targetDisplayLabel}');
       buffer.writeln(
         '  Problema: ${issue.problemType} | Urgência: ${issue.urgency}',
       );
+      if (issue.assignedTo != null && issue.assignedTo!.isNotEmpty) {
+        buffer.writeln('  Responsável: ${issue.assignedTo}');
+      }
       if (issue.notes != null && issue.notes!.isNotEmpty) {
         buffer.writeln('  Obs: ${issue.notes}');
       }
@@ -288,12 +329,35 @@ class _HistoryPageState extends State<HistoryPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Exportar Relatório'),
         content: SizedBox(
-          width: 480,
-          child: SingleChildScrollView(
-            child: SelectableText(
-              reportText,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            ),
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Escolha se deseja gerar o documento oficial em PDF (com cabeçalho, métricas e espaço para assinaturas) ou copiar os dados em texto puro:',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppleColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 180,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppleColors.backgroundSecondary,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppleColors.glassBorder),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    reportText,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -301,7 +365,7 @@ class _HistoryPageState extends State<HistoryPage> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Fechar'),
           ),
-          ElevatedButton.icon(
+          OutlinedButton.icon(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: reportText));
               if (ctx.mounted) {
@@ -312,8 +376,20 @@ class _HistoryPageState extends State<HistoryPage> {
                 );
               }
             },
-            icon: const Icon(Icons.copy_rounded, size: 17),
-            label: const Text('Copiar Relatório'),
+            icon: const Icon(Icons.copy_rounded, size: 16),
+            label: const Text('Copiar Texto'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _generatePdf(context, filteredIssues, roomController);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppleColors.accentIndigo,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 17),
+            label: const Text('Gerar PDF'),
           ),
         ],
       ),
@@ -329,13 +405,20 @@ class _HistoryPageState extends State<HistoryPage> {
       appBar: AppBar(
         title: const Text('Histórico de Manutenções'),
         actions: [
-          if (filteredIssues.isNotEmpty)
+          if (filteredIssues.isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_rounded),
+              tooltip: 'Gerar Relatório em PDF',
+              onPressed: () =>
+                  _generatePdf(context, filteredIssues, roomController),
+            ),
             IconButton(
               icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'Exportar / Copiar Relatório',
               onPressed: () =>
                   _showExportDialog(context, filteredIssues, roomController),
             ),
+          ],
         ],
       ),
       body: Column(
