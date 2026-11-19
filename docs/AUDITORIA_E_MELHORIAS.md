@@ -69,11 +69,32 @@ flowchart TD
         B3["Proteção de Rotas Web contra Recarregamento (F5)"]
     end
 
-    subgraph Fase3["Fase 3: Novas Funcionalidades"]
-        C1["Editor Visual de Iluminação/LEDs por Sala"]
-        C2["Gestão de Roteiros e OS com Assinatura Digital"]
-        C3["Suíte de Testes Unitários Automatizados"]
+    subgraph Fase3["Fase 3: Ordens de Serviço (OS) & Produtividade (Em Andamento)"]
+        C1["Atribuição de Responsável + Status Em Andamento (Atual)"] --> C2["Relatório e OS em PDF Formatado com Fotos"]
+        C2 --> C3["Registro de Peças / Insumos Utilizados"]
+        C3 --> C4["Código Curto Sequencial de OS (#OS-0042)"]
+        C4 --> C5["Tempo de Resolução e Badges de SLA"]
+        C5 --> C6["Assinatura Digital / Rubrica na Conclusão"]
     end
 
-    Fase1 --> Fase2 --> Fase3
+    subgraph Fase4["Fase 4: Novas Funcionalidades"]
+        D1["Editor Visual de Iluminação/LEDs por Sala"]
+        D2["Suíte de Testes Unitários Automatizados"]
+    end
+
+    Fase1 --> Fase2 --> Fase3 --> Fase4
 ```
+
+---
+
+## 4. Detalhamento das Melhorias em Ordens de Serviço (OS)
+
+| Item | Objetivo | Status |
+| :--- | :--- | :--- |
+| **1. Atribuição de Responsável + Status 'Em Andamento'** | Permitir indicar quem está executando o reparo (técnico interno ou terceirizada) e marcar a OS como 'Em Andamento' para sinalizar que o serviço já foi iniciado. | ✅ Concluído (`feature/os-responsavel`) |
+| **2. Relatório / OS em PDF Formatado com Fotos** | Exportação profissional em PDF com logotipo, dados do cinema, fotos de antes/depois lado a lado e espaço para assinatura. | ✅ Concluído (`feature/os-responsavel`) |
+| **3. Registro de Peças e Peças Substituídas** | Registro de insumos gastos (molas, parafusos, lâmpadas, braços) para controle de estoque e custos. | ⏳ Próximo da Fila |
+| **4. Código Curto Sequencial (#OS-0042)** | Código amigável e legível para comunicação ágil via rádio ou mensagens de texto entre a equipe. | 📋 Na Fila |
+| **5. Tempo de Resolução (SLA / Métricas)** | Indicadores visuais de tempo decorrido desde a abertura até a conclusão (ex: 'Resolvido em 45min'). | 📋 Na Fila |
+| **6. Assinatura Digital na Conclusão** | Rubrica desenhada na tela pelo responsável/gerente para comprovação formal de entrega do serviço. | 📋 Na Fila |
+

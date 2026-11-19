@@ -175,7 +175,7 @@ class RoomController extends ChangeNotifier {
       _issuesSubscription = FirebaseFirestore.instance
           .collection('maintenance_issues')
           .where('cinemaId', isEqualTo: cinemaId)
-          .where('status', whereIn: ['staging', 'active'])
+          .where('status', whereIn: ['staging', 'active', 'inProgress', 'in_progress'])
           .snapshots(includeMetadataChanges: true)
           .listen(
         (snapshot) async {
@@ -322,6 +322,65 @@ class RoomController extends ChangeNotifier {
       _mergeAndSyncIssues();
       await _saveIssuesLocally();
       _queueIssueSyncToFirestore(_activeIssues[index]);
+    }
+  }
+
+  /// Atribui um responsável (técnico interno ou terceirizada) à OS e opcionalmente
+  /// marca o chamado como 'Em Andamento'
+  Future<void> assignIssue(
+    String issueId, {
+    required String assignedTo,
+    bool markInProgress = true,
+  }) async {
+    final trimmed = assignedTo.trim();
+    final now = DateTime.now();
+
+    final index = _activeIssues.indexWhere((i) => i.id == issueId);
+    if (index != -1) {
+      final item = _activeIssues[index];
+      item.assignedTo = trimmed;
+      item.assignedAt = now;
+      if (markInProgress && item.status == IssueStatus.active) {
+        item.status = IssueStatus.inProgress;
+      }
+      _mergeAndSyncIssues();
+      await _saveIssuesLocally();
+      _queueIssueSyncToFirestore(item);
+      return;
+    }
+
+    final hIndex = _historicalIssues.indexWhere((i) => i.id == issueId);
+    if (hIndex != -1) {
+      final item = _historicalIssues[hIndex];
+      item.assignedTo = trimmed;
+      item.assignedAt = now;
+      if (markInProgress && item.status == IssueStatus.active) {
+        item.status = IssueStatus.inProgress;
+        _historicalIssues.removeAt(hIndex);
+        _activeIssues.insert(0, item);
+      }
+      _mergeAndSyncIssues();
+      await _saveIssuesLocally();
+      _queueIssueSyncToFirestore(item);
+    }
+  }
+
+  /// Altera o status da OS diretamente para 'Em Andamento'
+  Future<void> setIssueInProgress(
+    String issueId, {
+    String? assignedTo,
+  }) async {
+    final index = _activeIssues.indexWhere((i) => i.id == issueId);
+    if (index != -1) {
+      final item = _activeIssues[index];
+      item.status = IssueStatus.inProgress;
+      if (assignedTo != null && assignedTo.trim().isNotEmpty) {
+        item.assignedTo = assignedTo.trim();
+        item.assignedAt = DateTime.now();
+      }
+      _mergeAndSyncIssues();
+      await _saveIssuesLocally();
+      _queueIssueSyncToFirestore(item);
     }
   }
 

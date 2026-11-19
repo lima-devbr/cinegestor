@@ -9,6 +9,8 @@ import '../models/cinema_sector.dart';
 import '../models/app_user.dart';
 import '../widgets/apple_surfaces.dart';
 import '../widgets/photo_evidence_widgets.dart';
+import '../widgets/assign_responsible_dialog.dart';
+import '../services/pdf_report_service.dart';
 
 class HistoryPage extends StatefulWidget {
   final String? initialRoomId;
@@ -67,7 +69,10 @@ class _HistoryPageState extends State<HistoryPage> {
       if (_selectedStatusFilter == 'staging' && !issue.isStaging) {
         return false;
       }
-      if (_selectedStatusFilter == 'active' && !issue.isActive) {
+      if (_selectedStatusFilter == 'active' && issue.status != IssueStatus.active) {
+        return false;
+      }
+      if (_selectedStatusFilter == 'inProgress' && !issue.isInProgress) {
         return false;
       }
       if (_selectedStatusFilter == 'resolved' && !issue.resolved) {
@@ -158,7 +163,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 DropdownMenuItem(
                   value: 'active',
-                  child: Text('Em Manutenção', overflow: TextOverflow.ellipsis),
+                  child: Text('Em Aberto', overflow: TextOverflow.ellipsis),
+                ),
+                DropdownMenuItem(
+                  value: 'inProgress',
+                  child: Text('Em Andamento', overflow: TextOverflow.ellipsis),
                 ),
                 DropdownMenuItem(
                   value: 'resolved',
@@ -234,6 +243,41 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  Future<void> _generatePdf(
+    BuildContext context,
+    List<MaintenanceIssue> filteredIssues,
+    RoomController roomController,
+  ) async {
+    final auth = Provider.of<AuthController>(context, listen: false);
+    final currentUser = auth.currentUser;
+    final cinemaName = currentUser?.cinemaName ?? 'CineGestor';
+    final cinemaId = currentUser?.cinemaId ?? '2159';
+
+    final List<String> activeFilters = [];
+    if (_selectedRoomFilter != 'all') {
+      final room = roomController.getRoomById(_selectedRoomFilter);
+      activeFilters.add(room?.nome ?? _selectedRoomFilter);
+    }
+    if (_selectedStatusFilter != 'all') {
+      activeFilters.add('Status: $_selectedStatusFilter');
+    }
+    if (_selectedUrgencyFilter != 'all') {
+      activeFilters.add('Urgência: $_selectedUrgencyFilter');
+    }
+    final filterSubtitle = activeFilters.isNotEmpty
+        ? activeFilters.join(' • ')
+        : 'Todos os registros';
+
+    await PdfReportService.generateAndPrintReport(
+      cinemaName: cinemaName,
+      cinemaId: cinemaId,
+      issues: filteredIssues,
+      rooms: roomController.rooms,
+      currentUser: currentUser,
+      subtitleFilter: filterSubtitle,
+    );
+  }
+
   void _showExportDialog(
     BuildContext context,
     List<MaintenanceIssue> filteredIssues,
@@ -255,12 +299,17 @@ class _HistoryPageState extends State<HistoryPage> {
         locationName = roomController.getRoomById(issue.roomId)?.displayName ??
             'Sala ${issue.roomId}';
       }
-      final status = issue.resolved ? 'RESOLVIDO' : 'PENDENTE';
+      final status = issue.resolved
+          ? 'RESOLVIDO'
+          : (issue.isInProgress ? 'EM ANDAMENTO' : 'PENDENTE');
       final openedAt = DateFormat('dd/MM/yyyy HH:mm').format(issue.dateTime);
       buffer.writeln('[$status] $locationName - ${issue.targetDisplayLabel}');
       buffer.writeln(
         '  Problema: ${issue.problemType} | Urgência: ${issue.urgency}',
       );
+      if (issue.assignedTo != null && issue.assignedTo!.isNotEmpty) {
+        buffer.writeln('  Responsável: ${issue.assignedTo}');
+      }
       if (issue.notes != null && issue.notes!.isNotEmpty) {
         buffer.writeln('  Obs: ${issue.notes}');
       }
@@ -280,12 +329,35 @@ class _HistoryPageState extends State<HistoryPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Exportar Relatório'),
         content: SizedBox(
-          width: 480,
-          child: SingleChildScrollView(
-            child: SelectableText(
-              reportText,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            ),
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Escolha se deseja gerar o documento oficial em PDF (com cabeçalho, métricas e espaço para assinaturas) ou copiar os dados em texto puro:',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppleColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 180,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppleColors.backgroundSecondary,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppleColors.glassBorder),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    reportText,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -293,7 +365,7 @@ class _HistoryPageState extends State<HistoryPage> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Fechar'),
           ),
-          ElevatedButton.icon(
+          OutlinedButton.icon(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: reportText));
               if (ctx.mounted) {
@@ -304,8 +376,20 @@ class _HistoryPageState extends State<HistoryPage> {
                 );
               }
             },
-            icon: const Icon(Icons.copy_rounded, size: 17),
-            label: const Text('Copiar Relatório'),
+            icon: const Icon(Icons.copy_rounded, size: 16),
+            label: const Text('Copiar Texto'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _generatePdf(context, filteredIssues, roomController);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppleColors.accentIndigo,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 17),
+            label: const Text('Gerar PDF'),
           ),
         ],
       ),
@@ -321,13 +405,20 @@ class _HistoryPageState extends State<HistoryPage> {
       appBar: AppBar(
         title: const Text('Histórico de Manutenções'),
         actions: [
-          if (filteredIssues.isNotEmpty)
+          if (filteredIssues.isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf_rounded),
+              tooltip: 'Gerar Relatório em PDF',
+              onPressed: () =>
+                  _generatePdf(context, filteredIssues, roomController),
+            ),
             IconButton(
               icon: const Icon(Icons.ios_share_rounded),
               tooltip: 'Exportar / Copiar Relatório',
               onPressed: () =>
                   _showExportDialog(context, filteredIssues, roomController),
             ),
+          ],
         ],
       ),
       body: Column(
@@ -444,7 +535,9 @@ class _HistoryPageState extends State<HistoryPage> {
                           ? AppleColors.systemGreen
                           : issue.isStaging
                               ? AppleColors.systemAmber
-                              : AppleColors.systemRed;
+                              : issue.isInProgress
+                                  ? AppleColors.accentIndigo
+                                  : AppleColors.systemRed;
 
                       return AppleGlassCard(
                         margin: const EdgeInsets.only(bottom: 14),
@@ -463,7 +556,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                             ? Icons.check_circle_rounded
                                             : issue.isStaging
                                                 ? Icons.pending_actions_rounded
-                                                : Icons.warning_amber_rounded,
+                                                : issue.isInProgress
+                                                    ? Icons.handyman_rounded
+                                                    : Icons.warning_amber_rounded,
                                         color: statusColor,
                                         size: 20,
                                       ),
@@ -496,6 +591,15 @@ class _HistoryPageState extends State<HistoryPage> {
                                 label:
                                     'Reincidente (${roomController.getSeatRecurrenceCount(issue.roomId, issue.seatId)}x)',
                                 color: AppleColors.systemAmber,
+                              ),
+                            ],
+                            if (issue.assignedTo != null &&
+                                issue.assignedTo!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              AppleStatusPill(
+                                icon: Icons.engineering_rounded,
+                                label: 'Responsável: ${issue.assignedTo}',
+                                color: AppleColors.accentIndigo,
                               ),
                             ],
                             const SizedBox(height: 10),
@@ -642,7 +746,25 @@ class _HistoryPageState extends State<HistoryPage> {
                                         ),
                                         label: const Text('Aprovar'),
                                       )
-                                    else if (issue.isActive && canResolve)
+                                    else if (issue.isActive && canResolve) ...[
+                                      OutlinedButton.icon(
+                                        onPressed: () =>
+                                            AssignResponsibleDialog.show(
+                                          context: context,
+                                          issue: issue,
+                                          roomController: roomController,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.assignment_ind_rounded,
+                                          size: 16,
+                                        ),
+                                        label: Text(
+                                          issue.assignedTo != null
+                                              ? 'Reatribuir'
+                                              : 'Atribuir',
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
                                       ElevatedButton.icon(
                                         onPressed: () {
                                           roomController.resolveIssue(
@@ -664,8 +786,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                           size: 17,
                                         ),
                                         label: const Text('Concluir'),
-                                      )
-                                    else if (issue.resolved && canReopen)
+                                      ),
+                                    ] else if (issue.resolved && canReopen)
                                       OutlinedButton.icon(
                                         onPressed: () {
                                           roomController.reopenIssue(issue.id);

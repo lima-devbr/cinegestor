@@ -9,6 +9,7 @@ import '../controllers/auth_controller.dart';
 import 'apple_surfaces.dart';
 import 'photo_evidence_widgets.dart';
 import 'quick_issue_dialog.dart';
+import 'assign_responsible_dialog.dart';
 
 class CommonSectorsSheet extends StatefulWidget {
   final RoomController roomController;
@@ -140,7 +141,43 @@ class _CommonSectorsSheetState extends State<CommonSectorsSheet> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                )
+              else if (issue.isInProgress)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppleColors.accentIndigo.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'Em Andamento',
+                    style: TextStyle(
+                      color: AppleColors.accentIndigo,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
+              if (issue.assignedTo != null && issue.assignedTo!.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppleColors.accentIndigo.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '👤 ${issue.assignedTo}',
+                    style: TextStyle(
+                      color: AppleColors.accentIndigo,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
               const Spacer(),
               Text(
                 DateFormat('dd/MM HH:mm').format(issue.dateTime),
@@ -224,6 +261,24 @@ class _CommonSectorsSheetState extends State<CommonSectorsSheet> {
                   ),
                 ] else if (issue.isActive &&
                     (user?.role.canResolveIssue ?? false)) ...[
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await AssignResponsibleDialog.show(
+                        context: context,
+                        issue: issue,
+                        roomController: widget.roomController,
+                      );
+                      setState(() {});
+                    },
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.assignment_ind_rounded, size: 15),
+                    label: Text(
+                      issue.assignedTo != null ? 'Reatribuir' : 'Atribuir',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () => _showResolveDialog(issue, user),
                     style: ElevatedButton.styleFrom(
