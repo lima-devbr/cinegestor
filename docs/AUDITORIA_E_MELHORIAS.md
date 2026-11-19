@@ -44,11 +44,11 @@ No entanto, a recente expansão de escopo revelou inconsistências técnicas ent
 ---
 
 ### D. Segurança e Autenticação
-| Item | Gravidade | Descrição |
-| :--- | :--- | :--- |
-| **Senhas salvas em texto puro no cliente** | Média | O método `_saveLocalUsers` salva a senha em texto puro no `SharedPreferences` (`managed_users_cache`). |
-| **Credenciais fixas no código-fonte** | Baixa/Média | A senha mestre de bootstrap `admin123` e o prefixo `cine` estão no código compilado. |
-| **Fallback para login offline sem token** | Média | Ao autenticar exclusivamente pelo cache local se a rede falhar, o Firebase Auth não emite token, gerando erros de permissão em chamadas subsequentes ao Firestore. |
+| Item | Gravidade | Descrição | Status |
+| :--- | :--- | :--- | :--- |
+| **Senhas salvas em texto puro no cliente** | Média | O método `_saveLocalUsers` salva a senha em texto puro no `SharedPreferences` (`managed_users_cache`). | ✅ Resolvido (`feature/sync-e-robustez`) |
+| **Credenciais fixas no código-fonte** | Baixa/Média | A senha mestre de bootstrap `admin123` e o prefixo `cine` estão no código compilado. | Pendente |
+| **Fallback para login offline sem token** | Média | Ao autenticar exclusivamente pelo cache local se a rede falhar, o Firebase Auth não emite token, gerando erros de permissão em chamadas subsequentes ao Firestore. | ✅ Resolvido (sessão persistida via Auth, sem senhas locais) |
 
 ---
 
@@ -56,14 +56,14 @@ No entanto, a recente expansão de escopo revelou inconsistências técnicas ent
 
 ```mermaid
 flowchart TD
-    subgraph Fase1["Fase 1: Correções Imediatas & Estabilidade (Em Execução)"]
+    subgraph Fase1["Fase 1: Correções Imediatas & Estabilidade (Concluída)"]
         A1["Trava de 100 chars no QuickIssue"] --> A2["Validação de Foto Base64 <= 450KB"]
         A2 --> A3["Unificar Staging, History e DefectSummary"]
         A3 --> A4["Ajustar Métricas de Poltronas x Setores no Lobby"]
         A4 --> A5["Isolar Cache por Cinema (maintenance_issues_ID)"]
     end
 
-    subgraph Fase2["Fase 2: Robustez e Segurança"]
+    subgraph Fase2["Fase 2: Robustez e Segurança (Concluída)"]
         B1["Fila de Sincronização com Retry Offline"]
         B2["Remoção de Senhas em Plain Text do Cache"]
         B3["Proteção de Rotas Web contra Recarregamento (F5)"]
