@@ -50,6 +50,13 @@ class _MaintenancePageState extends State<MaintenancePage>
   // Alternância entre Mapa Visual e Lista de Ocorrências da Sala
   bool _showListView = false;
   String _listFilterCategory = 'all'; // 'all', 'seat', 'lighting', 'general'
+  int _seatCategoryIndex = 0; // 0: Estofamento, 1: Mecânica, 2: Outros
+
+  static const Map<int, List<String>> _seatProblemCategories = {
+    0: ['Capa Assento Rasg.', 'Capa Encosto Rasg.', 'Arremate Solto'],
+    1: ['Assento Solto', 'Encosto Solto', 'S/Mola', 'PC-E', 'PC-D'],
+    2: ['Poltrona s/ Número', 'Outros'],
+  };
 
   late final AnimationController _matrixAnimController;
   Animation<Matrix4>? _matrixAnimation;
@@ -184,6 +191,14 @@ class _MaintenancePageState extends State<MaintenancePage>
         selectedSeat = null;
       } else {
         selectedSeat = seat;
+        if (selectedIssueType != null) {
+          for (final entry in _seatProblemCategories.entries) {
+            if (entry.value.contains(selectedIssueType)) {
+              _seatCategoryIndex = entry.key;
+              break;
+            }
+          }
+        }
       }
     });
   }
@@ -984,6 +999,92 @@ class _MaintenancePageState extends State<MaintenancePage>
     );
   }
 
+  IconData _getSeatProblemIcon(String problem) {
+    final lower = problem.toLowerCase();
+    if (lower.contains('capa') || lower.contains('estof')) {
+      return Icons.texture_rounded;
+    }
+    if (lower.contains('arremate')) {
+      return Icons.build_circle_outlined;
+    }
+    if (lower.contains('mola')) {
+      return Icons.settings_suggest_rounded;
+    }
+    if (lower.contains('pc-e') || lower.contains('pc-d')) {
+      return Icons.local_drink_rounded;
+    }
+    if (lower.contains('número') || lower.contains('numero')) {
+      return Icons.pin_outlined;
+    }
+    if (lower.contains('solto') ||
+        lower.contains('encosto') ||
+        lower.contains('assento')) {
+      return Icons.warning_amber_rounded;
+    }
+    return Icons.handyman_rounded;
+  }
+
+  Widget _buildCategorySegment({
+    required int index,
+    required String title,
+    required IconData icon,
+  }) {
+    final isSelected = _seatCategoryIndex == index;
+    final categoryItems = _seatProblemCategories[index] ?? [];
+    final hasSelectedItem =
+        selectedIssueType != null && categoryItems.contains(selectedIssueType);
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() => _seatCategoryIndex = index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: isSelected ? AppleColors.accentBlue : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 13,
+                  color: isSelected ? Colors.white : AppleColors.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color:
+                        isSelected ? Colors.white : AppleColors.textSecondary,
+                  ),
+                ),
+                if (hasSelectedItem) ...[
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white : AppleColors.accentBlue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Painel flutuante recolhível estilo Apple Maps:
   /// - Quando nenhuma poltrona está selecionada, ocupa apenas uma pílula discreta.
   /// - Quando uma poltrona é tocada, abre o formulário compacto com opção de fechar.
@@ -1083,27 +1184,78 @@ class _MaintenancePageState extends State<MaintenancePage>
                 ),
                 const SizedBox(height: 6),
                 _buildActiveIssuesForSeat(room),
-                Text(
-                  'SELECIONE O DEFEITO:',
-                  style: TextStyle(
-                    color: AppleColors.textTertiary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
+                // Categorias em Abas (Modo 2 - Categorizado)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'SELECIONE O DEFEITO:',
+                      style: TextStyle(
+                        color: AppleColors.textTertiary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    if (selectedIssueType != null)
+                      GestureDetector(
+                        onTap: () => setState(() => selectedIssueType = null),
+                        child: Text(
+                          'Limpar seleção',
+                          style: TextStyle(
+                            color: AppleColors.systemRed,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 6),
+                Container(
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppleColors.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppleColors.glassBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildCategorySegment(
+                        index: 0,
+                        title: 'Estofamento',
+                        icon: Icons.texture_rounded,
+                      ),
+                      _buildCategorySegment(
+                        index: 1,
+                        title: 'Mecânica',
+                        icon: Icons.settings_suggest_rounded,
+                      ),
+                      _buildCategorySegment(
+                        index: 2,
+                        title: 'Outros',
+                        icon: Icons.category_rounded,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: issueTypes.map((type) {
+                  children: (_seatProblemCategories[_seatCategoryIndex] ?? [])
+                      .map((type) {
                     final isSelected = selectedIssueType == type;
+                    final icon = _getSeatProblemIcon(type);
                     return GestureDetector(
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        setState(() => selectedIssueType = type);
+                        setState(() {
+                          selectedIssueType = isSelected ? null : type;
+                        });
                       },
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 140),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 6,
@@ -1120,16 +1272,30 @@ class _MaintenancePageState extends State<MaintenancePage>
                             width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
-                        child: Text(
-                          type,
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : AppleColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w500,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              icon,
+                              size: 14,
+                              color: isSelected
+                                  ? AppleColors.accentBlue
+                                  : AppleColors.textSecondary,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              type,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppleColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );

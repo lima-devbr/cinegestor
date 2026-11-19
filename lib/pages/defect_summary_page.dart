@@ -249,12 +249,19 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
   }
 
   Widget _buildDefectCounterBar(
+    List<MaintenanceIssue> targetIssues,
     Map<String, int> countsByType,
-    int totalCount,
   ) {
+    final totalCount = targetIssues.length;
+    final criticalCount = targetIssues
+        .where((i) => i.isActive && i.urgency == 'Alta')
+        .length;
+    final inProgressCount = targetIssues.where((i) => i.isInProgress).length;
+    final stagingCount = targetIssues.where((i) => i.isStaging).length;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: AppleColors.backgroundSecondary,
         border: Border(
@@ -264,23 +271,51 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Barra de KPIs Operacionais (Modo 2 - Checklist)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  'RESUMO DE MATERIAIS E TAREFAS (TOQUE PARA FILTRAR)',
-                  style: TextStyle(
-                    color: AppleColors.textTertiary,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildKpiCard(
+                        label: 'Total Ativas',
+                        count: targetIssues.where((i) => i.isActive).length,
+                        color: AppleColors.accentBlue,
+                        icon: Icons.checklist_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildKpiCard(
+                        label: 'Críticas',
+                        count: criticalCount,
+                        color: AppleColors.systemRed,
+                        icon: Icons.error_outline_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildKpiCard(
+                        label: 'Em Andamento',
+                        count: inProgressCount,
+                        color: AppleColors.accentIndigo,
+                        icon: Icons.engineering_rounded,
+                      ),
+                      if (stagingCount > 0 || _includeStaging) ...[
+                        const SizedBox(width: 8),
+                        _buildKpiCard(
+                          label: 'Triagem',
+                          count: stagingCount,
+                          color: AppleColors.systemAmber,
+                          icon: Icons.hourglass_top_rounded,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               FilterChip(
                 label: const Text(
-                  'Incluir Triagem',
+                  'Triagem',
                   style: TextStyle(fontSize: 11.5),
                 ),
                 selected: _includeStaging,
@@ -292,41 +327,95 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
             ],
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _buildTypeFilterCard(
-                label: 'Todos os Defeitos',
-                count: totalCount,
-                icon: Icons.assignment_outlined,
-                color: AppleColors.accentBlue,
-                isSelected: _selectedProblemType == 'all',
-                onTap: () => setState(() => _selectedProblemType = 'all'),
-              ),
-              ...countsByType.entries.map((entry) {
-                final type = entry.key;
-                final count = entry.value;
-                return _buildTypeFilterCard(
-                  label: type,
-                  count: count,
-                  icon: _getIconForProblem(type),
-                  color: _getColorForProblem(type),
-                  isSelected: _selectedProblemType == type,
-                  onTap: () => setState(() {
-                    _selectedProblemType =
-                        _selectedProblemType == type ? 'all' : type;
-                  }),
-                );
-              }),
-            ],
+          // Filtro Horizontal de Tipos de Defeito
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildTypeFilterChip(
+                  label: 'Todos os Defeitos',
+                  count: totalCount,
+                  icon: Icons.assignment_outlined,
+                  color: AppleColors.accentBlue,
+                  isSelected: _selectedProblemType == 'all',
+                  onTap: () => setState(() => _selectedProblemType = 'all'),
+                ),
+                ...countsByType.entries.map((entry) {
+                  final type = entry.key;
+                  final count = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _buildTypeFilterChip(
+                      label: type,
+                      count: count,
+                      icon: _getIconForProblem(type),
+                      color: _getColorForProblem(type),
+                      isSelected: _selectedProblemType == type,
+                      onTap: () => setState(() {
+                        _selectedProblemType =
+                            _selectedProblemType == type ? 'all' : type;
+                      }),
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTypeFilterCard({
+  Widget _buildKpiCard({
+    required String label,
+    required int count,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypeFilterChip({
     required String label,
     required int count,
     required IconData icon,
@@ -338,13 +427,13 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
       pressedScale: 0.96,
       onPressed: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? color.withValues(alpha: 0.22)
               : AppleColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected ? color : AppleColors.glassBorder,
             width: isSelected ? 1.5 : 1.0,
@@ -353,19 +442,19 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
+            Icon(icon, color: color, size: 15),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 color: AppleColors.textPrimary,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: count > 0
                     ? color.withValues(alpha: 0.22)
@@ -377,7 +466,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                 style: TextStyle(
                   color: count > 0 ? color : AppleColors.textTertiary,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
+                  fontSize: 11,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
@@ -397,19 +486,24 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
     final canResolve = currentUser?.role.canResolveIssue ?? false;
     final canApprove = currentUser?.role.canApproveStaging ?? false;
 
-    final Map<String, List<MaintenanceIssue>> issuesByProblem = {};
-    for (final issue in roomIssues) {
-      final type = normalizeProblemType(issue.problemType);
-      issuesByProblem.putIfAbsent(type, () => []).add(issue);
-    }
+    final activeIssues = roomIssues.where((i) => i.isActive).toList();
+    final activeIds = activeIssues.map((i) => i.id).toList();
+
+    final sortedIssues = List<MaintenanceIssue>.from(roomIssues)
+      ..sort((a, b) {
+        if (a.urgency == 'Alta' && b.urgency != 'Alta') return -1;
+        if (a.urgency != 'Alta' && b.urgency == 'Alta') return 1;
+        return a.seatId.compareTo(b.seatId);
+      });
 
     return AppleGlassCard(
       margin: const EdgeInsets.only(bottom: 16),
       borderRadius: 18,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Cabeçalho da Sala com Ações Rápidas
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -430,324 +524,143 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         room.displayName,
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    AppleStatusPill(
+                      label: '${roomIssues.length} pendência(s)',
+                      color: AppleColors.accentBlue,
+                      showDot: false,
                     ),
                   ],
                 ),
               ),
-              ApplePressable(
-                pressedScale: 0.96,
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/maintenance',
-                    arguments: {
-                      'roomId': room.id,
-                      'room': room,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ApplePressable(
+                    pressedScale: 0.96,
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/maintenance',
+                        arguments: {
+                          'roomId': room.id,
+                          'room': room,
+                        },
+                      );
                     },
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppleColors.accentBlue.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: AppleColors.accentBlue.withValues(alpha: 0.4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppleColors.accentBlue.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: AppleColors.accentBlue.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.map_outlined,
+                            size: 14,
+                            color: AppleColors.accentBlue,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Abrir Mapa',
+                            style: TextStyle(
+                              color: AppleColors.accentBlue,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.map_outlined,
-                        size: 15,
-                        color: AppleColors.accentBlue,
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        'Abrir Mapa',
-                        style: TextStyle(
-                          color: AppleColors.accentBlue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 22),
-          ...issuesByProblem.entries.map((entry) {
-            final problemType = entry.key;
-            final groupIssues = entry.value
-              ..sort((a, b) => a.seatId.compareTo(b.seatId));
-            final color = _getColorForProblem(problemType);
-            final activeIds = groupIssues
-                .where((i) => i.isActive)
-                .map((i) => i.id)
-                .toList();
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppleColors.backgroundSecondary,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getIconForProblem(problemType),
-                              color: color,
-                              size: 19,
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                problemType,
-                                style: TextStyle(
-                                  color: color,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14.5,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            AppleStatusPill(
-                              label: '${groupIssues.length} poltrona(s)',
-                              color: color,
-                              showDot: false,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (canResolve && activeIds.isNotEmpty)
-                        ApplePressable(
-                          pressedScale: 0.95,
-                          onPressed: () async {
-                            await roomController.resolveIssuesBatch(
-                              activeIds,
-                              resolvedBy: currentUser?.name,
-                            );
-                            if (mounted) {
-                              showTopNotice(
-                                context,
-                                '${activeIds.length} poltrona(s) de "$problemType" concluída(s) na ${room.nome}!',
-                              );
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppleColors.systemGreen,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.done_all_rounded,
-                                  size: 15,
-                                  color: Colors.black,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  activeIds.length > 1
-                                      ? 'Concluir todos (${activeIds.length})'
-                                      : 'Concluir',
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: groupIssues.map((issue) {
-                      return Container(
+                  if (canResolve && activeIds.length > 1) ...[
+                    const SizedBox(width: 8),
+                    ApplePressable(
+                      pressedScale: 0.95,
+                      onPressed: () async {
+                        await roomController.resolveIssuesBatch(
+                          activeIds,
+                          resolvedBy: currentUser?.name,
+                        );
+                        if (mounted) {
+                          showTopNotice(
+                            context,
+                            '${activeIds.length} pendências concluídas na ${room.nome}!',
+                          );
+                        }
+                      },
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 7,
+                          horizontal: 10,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppleColors.surfaceElevated,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: issue.isStaging
-                                ? AppleColors.systemAmber.withValues(alpha: 0.6)
-                                : AppleColors.glassBorder,
-                          ),
+                          color: AppleColors.systemGreen,
+                          borderRadius: BorderRadius.circular(999),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.event_seat_rounded,
+                            const Icon(
+                              Icons.done_all_rounded,
                               size: 14,
-                              color: AppleColors.textSecondary,
+                              color: Colors.black,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Text(
-                              issue.seatId,
-                              style: TextStyle(
+                              'Concluir Todas (${activeIds.length})',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: AppleColors.textPrimary,
-                                fontFeatures: [FontFeature.tabularFigures()],
                               ),
                             ),
-                            if (issue.notes != null &&
-                                issue.notes!.isNotEmpty) ...[
-                              const SizedBox(width: 6),
-                              Tooltip(
-                                message: issue.notes!,
-                                child: Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 15,
-                                  color: AppleColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                            if (issue.isStaging) ...[
-                              const SizedBox(width: 6),
-                              Text(
-                                'Triagem',
-                                style: TextStyle(
-                                  color: AppleColors.systemAmber,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (canApprove) ...[
-                                const SizedBox(width: 6),
-                                InkWell(
-                                  onTap: () =>
-                                      roomController.approveStagingIssue(
-                                    issue.id,
-                                    approvedBy: currentUser?.name,
-                                  ),
-                                  child: Tooltip(
-                                    message: 'Aprovar solicitação',
-                                    child: Icon(
-                                      Icons.check_circle_outline_rounded,
-                                      size: 17,
-                                      color: AppleColors.systemAmber,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ] else if (canResolve) ...[
-                              if (issue.assignedTo != null &&
-                                  issue.assignedTo!.isNotEmpty) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppleColors.accentIndigo
-                                        .withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.engineering_rounded,
-                                          size: 12,
-                                          color: AppleColors.accentIndigo),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        issue.assignedTo!,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: AppleColors.accentIndigo,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () => AssignResponsibleDialog.show(
-                                  context: context,
-                                  issue: issue,
-                                  roomController: roomController,
-                                ),
-                                child: Tooltip(
-                                  message: issue.assignedTo != null
-                                      ? 'Reatribuir responsável'
-                                      : 'Atribuir responsável',
-                                  child: Icon(
-                                    Icons.assignment_ind_rounded,
-                                    size: 17,
-                                    color: AppleColors.accentIndigo,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () async {
-                                  await roomController.resolveIssue(
-                                    issue.id,
-                                    resolvedBy: currentUser?.name,
-                                  );
-                                  if (mounted) {
-                                    showTopNotice(
-                                      context,
-                                      'Assento ${issue.seatId} (${room.nome}) marcado como resolvido!',
-                                    );
-                                  }
-                                },
-                                child: Tooltip(
-                                  message: 'Marcar assento como resolvido',
-                                  child: Icon(
-                                    Icons.check_circle_outline_rounded,
-                                    size: 18,
-                                    color: AppleColors.systemGreen,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ],
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
-            );
-          }),
+            ],
+          ),
+          const Divider(height: 20),
+          // Lista em Formato Checklist Operacional
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sortedIssues.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 14, thickness: 0.5),
+            itemBuilder: (context, idx) {
+              final issue = sortedIssues[idx];
+              return _buildChecklistItem(
+                issue: issue,
+                locationLabel: room.nome,
+                canResolve: canResolve,
+                canApprove: canApprove,
+                roomController: roomController,
+                currentUser: currentUser,
+              );
+            },
+          ),
         ],
       ),
     );
@@ -760,17 +673,14 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
     required AppUser? currentUser,
   }) {
     final canResolve = currentUser?.role.canResolveIssue ?? false;
-
-    final Map<String, List<MaintenanceIssue>> issuesByProblem = {};
-    for (final issue in sectorIssues) {
-      final type = normalizeProblemType(issue.problemType);
-      issuesByProblem.putIfAbsent(type, () => []).add(issue);
-    }
+    final canApprove = currentUser?.role.canApproveStaging ?? false;
+    final activeIssues = sectorIssues.where((i) => i.isActive).toList();
+    final activeIds = activeIssues.map((i) => i.id).toList();
 
     return AppleGlassCard(
       margin: const EdgeInsets.only(bottom: 16),
       borderRadius: 18,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -797,199 +707,375 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
                     Expanded(
                       child: Text(
                         '🏢 ${sector.name}',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    AppleStatusPill(
+                      label: '${sectorIssues.length} pendente(s)',
+                      color: AppleColors.systemOrange,
+                      showDot: false,
+                    ),
+                  ],
+                ),
+              ),
+              if (canResolve && activeIds.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                ApplePressable(
+                  pressedScale: 0.95,
+                  onPressed: () async {
+                    await roomController.resolveIssuesBatch(
+                      activeIds,
+                      resolvedBy: currentUser?.name,
+                    );
+                    if (mounted) {
+                      showTopNotice(
+                        context,
+                        '${activeIds.length} chamado(s) concluído(s) em ${sector.name}!',
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppleColors.systemGreen,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.done_all_rounded,
+                          size: 14,
+                          color: Colors.black,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Concluir Tudo (${activeIds.length})',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const Divider(height: 20),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sectorIssues.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 14, thickness: 0.5),
+            itemBuilder: (context, idx) {
+              final issue = sectorIssues[idx];
+              return _buildChecklistItem(
+                issue: issue,
+                locationLabel: sector.name,
+                canResolve: canResolve,
+                canApprove: canApprove,
+                roomController: roomController,
+                currentUser: currentUser,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChecklistItem({
+    required MaintenanceIssue issue,
+    required String locationLabel,
+    required bool canResolve,
+    required bool canApprove,
+    required RoomController roomController,
+    required AppUser? currentUser,
+  }) {
+    final color = _getColorForProblem(issue.problemType);
+    final icon = _getIconForProblem(issue.problemType);
+
+    final String displaySeat = issue.seatId.startsWith('GERAL-')
+        ? (issue.targetDisplayLabel.contains('•')
+            ? issue.targetDisplayLabel.split('•').last.trim()
+            : 'Geral')
+        : issue.seatId;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Botão de Checklist rápido [✓]
+        if (canResolve && issue.isActive)
+          ApplePressable(
+            onPressed: () async {
+              await roomController.resolveIssue(
+                issue.id,
+                resolvedBy: currentUser?.name,
+              );
+              if (mounted) {
+                showTopNotice(
+                  context,
+                  'Assento ${issue.seatId} ($locationLabel) marcado como concluído!',
+                );
+              }
+            },
+            child: Container(
+              width: 28,
+              height: 28,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppleColors.systemGreen.withValues(alpha: 0.6),
+                  width: 1.8,
+                ),
+                color: AppleColors.systemGreen.withValues(alpha: 0.1),
+              ),
+              child: Icon(
+                Icons.check_rounded,
+                size: 16,
+                color: AppleColors.systemGreen,
+              ),
+            ),
+          )
+        else if (issue.isStaging)
+          Container(
+            width: 28,
+            height: 28,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppleColors.systemAmber.withValues(alpha: 0.15),
+              border: Border.all(
+                color: AppleColors.systemAmber.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Icon(
+              Icons.hourglass_empty_rounded,
+              size: 15,
+              color: AppleColors.systemAmber,
+            ),
+          )
+        else
+          Container(
+            width: 28,
+            height: 28,
+            margin: const EdgeInsets.only(right: 10),
+            child: Icon(
+              Icons.done_all_rounded,
+              size: 18,
+              color: AppleColors.systemGreen,
+            ),
+          ),
+
+        // Badge do Assento / Local
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppleColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppleColors.glassBorder),
+          ),
+          child: Text(
+            displaySeat,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 12.5,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // Descrição do Problema e Observação
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      normalizeProblemType(issue.problemType),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: AppleColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (issue.urgency == 'Alta') ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppleColors.systemRed.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Alta',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppleColors.systemRed,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (issue.isInProgress) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppleColors.accentIndigo.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Em Andamento',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppleColors.accentIndigo,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (issue.notes != null && issue.notes!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  issue.notes!,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppleColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // Responsável e Ações de Aprovação / Atribuição
+        if (issue.isStaging) ...[
+          if (canApprove)
+            ApplePressable(
+              onPressed: () => roomController.approveStagingIssue(
+                issue.id,
+                approvedBy: currentUser?.name,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppleColors.systemAmber.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppleColors.systemAmber),
+                ),
+                child: Text(
+                  'Aprovar',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppleColors.systemAmber,
+                  ),
+                ),
+              ),
+            ),
+        ] else if (canResolve) ...[
+          if (issue.assignedTo != null && issue.assignedTo!.isNotEmpty)
+            ApplePressable(
+              onPressed: () => AssignResponsibleDialog.show(
+                context: context,
+                issue: issue,
+                roomController: roomController,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppleColors.accentIndigo.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppleColors.accentIndigo.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.engineering_rounded,
+                      size: 12,
+                      color: AppleColors.accentIndigo,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      issue.assignedTo!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppleColors.accentIndigo,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              AppleStatusPill(
-                label: '${sectorIssues.length} pendente(s)',
-                color: AppleColors.systemOrange,
-                showDot: false,
+            )
+          else
+            ApplePressable(
+              onPressed: () => AssignResponsibleDialog.show(
+                context: context,
+                issue: issue,
+                roomController: roomController,
               ),
-            ],
-          ),
-          const Divider(height: 22),
-          ...issuesByProblem.entries.map((entry) {
-            final problemType = entry.key;
-            final groupIssues = entry.value;
-            final color = _getColorForProblem(problemType);
-            final activeIds = groupIssues
-                .where((i) => i.isActive)
-                .map((i) => i.id)
-                .toList();
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppleColors.backgroundSecondary,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getIconForProblem(problemType),
-                              color: color,
-                              size: 19,
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                problemType,
-                                style: TextStyle(
-                                  color: color,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14.5,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppleColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppleColors.glassBorder),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.person_add_alt_1_rounded,
+                      size: 12,
+                      color: AppleColors.textSecondary,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Atribuir',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppleColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
-                      if (canResolve && activeIds.isNotEmpty)
-                        ApplePressable(
-                          pressedScale: 0.95,
-                          onPressed: () async {
-                            await roomController.resolveIssuesBatch(
-                              activeIds,
-                              resolvedBy: currentUser?.name,
-                            );
-                            if (mounted) {
-                              showTopNotice(
-                                context,
-                                '${activeIds.length} chamado(s) de "$problemType" concluído(s) em ${sector.name}!',
-                              );
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppleColors.systemGreen,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.done_all_rounded,
-                                  size: 15,
-                                  color: Colors.black,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Concluir Tudo (${activeIds.length})',
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ...groupIssues.map((issue) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Row(
-                        children: [
-                          Icon(Icons.arrow_right_rounded,
-                              color: color, size: 16),
-                          Expanded(
-                            child: Text(
-                              issue.notes != null && issue.notes!.isNotEmpty
-                                  ? '${issue.targetDisplayLabel}: ${issue.notes}'
-                                  : issue.targetDisplayLabel,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppleColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if (canResolve && issue.isActive) ...[
-                            if (issue.assignedTo != null &&
-                                issue.assignedTo!.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppleColors.accentIndigo
-                                      .withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '👤 ${issue.assignedTo}',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    color: AppleColors.accentIndigo,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                            ],
-                            IconButton(
-                              icon: const Icon(Icons.assignment_ind_rounded,
-                                  size: 18),
-                              color: AppleColors.accentIndigo,
-                              visualDensity: VisualDensity.compact,
-                              tooltip: issue.assignedTo != null
-                                  ? 'Reatribuir responsável'
-                                  : 'Atribuir responsável',
-                              onPressed: () => AssignResponsibleDialog.show(
-                                context: context,
-                                issue: issue,
-                                roomController: roomController,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  size: 18),
-                              color: AppleColors.systemGreen,
-                              visualDensity: VisualDensity.compact,
-                              tooltip: 'Concluir chamado',
-                              onPressed: () async {
-                                await roomController.resolveIssue(
-                                  issue.id,
-                                  resolvedBy: currentUser?.name,
-                                );
-                                if (mounted) {
-                                  showTopNotice(
-                                    context,
-                                    'Chamado de ${sector.name} concluído!',
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  }),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            );
-          }),
+            ),
         ],
-      ),
+      ],
     );
   }
 
@@ -1057,7 +1143,7 @@ class _DefectSummaryPageState extends State<DefectSummaryPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildDefectCounterBar(countsByType, targetIssues.length),
+          _buildDefectCounterBar(targetIssues, countsByType),
           Expanded(
             child: totalSections == 0
                 ? Center(
