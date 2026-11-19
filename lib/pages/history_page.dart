@@ -434,7 +434,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               '$roomName • Infraestrutura (${issue.targetDisplayLabel})';
                         } else if (issue.isLightingIssue) {
                           itemTitle =
-                              '$roomName • Iluminação (${issue.seatId})';
+                              '$roomName • Iluminação (${issue.targetDisplayLabel})';
                         } else {
                           itemTitle = '$roomName • Poltrona ${issue.seatId}';
                         }

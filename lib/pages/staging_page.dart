@@ -81,7 +81,7 @@ class StagingPage extends StatelessWidget {
                     itemTitle = '$roomName • Infraestrutura (${issue.targetDisplayLabel})';
                     itemIcon = Icons.build_circle_outlined;
                   } else if (issue.isLightingIssue) {
-                    itemTitle = '$roomName • Iluminação (${issue.seatId})';
+                    itemTitle = '$roomName • Iluminação (${issue.targetDisplayLabel})';
                     itemIcon = Icons.lightbulb_outline_rounded;
                   } else {
                     itemTitle = '$roomName • Poltrona ${issue.seatId}';

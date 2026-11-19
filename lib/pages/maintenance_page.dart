@@ -1366,25 +1366,23 @@ class _MaintenancePageState extends State<MaintenancePage>
     final auth = Provider.of<AuthController>(context);
     final user = auth.currentUser;
 
-    final seatIssues = allRoomIssues.where((i) => i.isSeatIssue).toList();
-    final lightingIssues =
-        allRoomIssues.where((i) => i.isLightingIssue).toList();
-    final generalIssues = allRoomIssues.where((i) => i.isGeneralIssue).toList();
-
-    List<MaintenanceIssue> filteredIssues;
-    if (_listFilterCategory == 'seat') {
-      filteredIssues = seatIssues;
-    } else if (_listFilterCategory == 'lighting') {
-      filteredIssues = lightingIssues;
-    } else if (_listFilterCategory == 'general') {
-      filteredIssues = generalIssues;
-    } else {
-      filteredIssues = allRoomIssues;
+    // Contagem por domínio (organização única baseada em issue.domain)
+    final Map<IssueDomain, int> domainCounts = {
+      for (final d in IssueDomain.values) d: 0,
+    };
+    for (final i in allRoomIssues) {
+      domainCounts[i.domain] = (domainCounts[i.domain] ?? 0) + 1;
     }
+
+    final List<MaintenanceIssue> filteredIssues = _listFilterCategory == 'all'
+        ? allRoomIssues
+        : allRoomIssues
+            .where((i) => i.domain.name == _listFilterCategory)
+            .toList();
 
     return Column(
       children: [
-        // Filtros por Categoria
+        // Filtros por Domínio (só exibe grupos com ocorrências + o selecionado)
         Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
           child: SingleChildScrollView(
@@ -1395,21 +1393,16 @@ class _MaintenancePageState extends State<MaintenancePage>
                   label: 'Todos (${allRoomIssues.length})',
                   key: 'all',
                 ),
-                const SizedBox(width: 8),
-                _buildCategoryFilterChip(
-                  label: '💺 Poltronas (${seatIssues.length})',
-                  key: 'seat',
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryFilterChip(
-                  label: '💡 Iluminação (${lightingIssues.length})',
-                  key: 'lighting',
-                ),
-                const SizedBox(width: 8),
-                _buildCategoryFilterChip(
-                  label: '🏢 Infraestrutura (${generalIssues.length})',
-                  key: 'general',
-                ),
+                for (final d in IssueDomain.values)
+                  if ((domainCounts[d] ?? 0) > 0 ||
+                      d == IssueDomain.seat ||
+                      _listFilterCategory == d.name) ...[
+                    const SizedBox(width: 8),
+                    _buildCategoryFilterChip(
+                      label: '${d.emoji} ${d.label} (${domainCounts[d] ?? 0})',
+                      key: d.name,
+                    ),
+                  ],
               ],
             ),
           ),
@@ -1493,12 +1486,29 @@ class _MaintenancePageState extends State<MaintenancePage>
   ) {
     Color typeColor = AppleColors.accentBlue;
     IconData typeIcon = Icons.chair_rounded;
-    if (issue.isLightingIssue) {
-      typeColor = const Color(0xFFFFD60A);
-      typeIcon = Icons.lightbulb_rounded;
-    } else if (issue.isGeneralIssue) {
-      typeColor = AppleColors.systemCyan;
-      typeIcon = Icons.build_circle_rounded;
+    switch (issue.domain) {
+      case IssueDomain.lighting:
+        typeColor = const Color(0xFFFFD60A);
+        typeIcon = Icons.lightbulb_rounded;
+        break;
+      case IssueDomain.climate:
+        typeColor = AppleColors.systemCyan;
+        typeIcon = Icons.ac_unit_rounded;
+        break;
+      case IssueDomain.audioVideo:
+        typeColor = AppleColors.accentIndigo;
+        typeIcon = Icons.volume_up_rounded;
+        break;
+      case IssueDomain.cleaning:
+        typeColor = AppleColors.systemGreen;
+        typeIcon = Icons.cleaning_services_rounded;
+        break;
+      case IssueDomain.building:
+        typeColor = AppleColors.systemOrange;
+        typeIcon = Icons.build_circle_rounded;
+        break;
+      case IssueDomain.seat:
+        break;
     }
 
     final statusColor = issue.isActive
