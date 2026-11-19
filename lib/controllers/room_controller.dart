@@ -17,6 +17,13 @@ class RoomController extends ChangeNotifier {
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _issuesSubscription;
   String _activeCinemaId = '2159';
+  String? _queuedCinemaId;
+  bool _hasLoadedOnce = false;
+
+  final Set<String> _pendingWriteIds = {};
+  int _firestorePendingWritesCount = 0;
+  bool _isFromCache = false;
+  String? _lastSyncError;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -26,6 +33,16 @@ class RoomController extends ChangeNotifier {
 
   bool _hasMoreHistory = true;
   bool get hasMoreHistory => _hasMoreHistory;
+
+  bool get hasPendingSync =>
+      _pendingWriteIds.isNotEmpty || _firestorePendingWritesCount > 0;
+  int get pendingSyncCount =>
+      _pendingWriteIds.length > _firestorePendingWritesCount
+          ? _pendingWriteIds.length
+          : _firestorePendingWritesCount;
+  bool get isFromCache => _isFromCache;
+  String? get lastSyncError => _lastSyncError;
+  String get activeCinemaId => _activeCinemaId;
 
   DocumentSnapshot<Map<String, dynamic>>? _lastHistoryDoc;
 
@@ -37,30 +54,76 @@ class RoomController extends ChangeNotifier {
   Room? _selectRoom;
   Room? get selectRoom => _selectRoom;
 
+  void clearSyncError() {
+    if (_lastSyncError != null) {
+      _lastSyncError = null;
+      notifyListeners();
+    }
+  }
+
+  void resetSession() {
+    _issuesSubscription?.cancel();
+    _issuesSubscription = null;
+    _rooms = [];
+    _issues = [];
+    _activeIssues = [];
+    _historicalIssues = [];
+    _selectRoom = null;
+    _lastHistoryDoc = null;
+    _hasMoreHistory = true;
+    _hasLoadedOnce = false;
+    _queuedCinemaId = null;
+    _pendingWriteIds.clear();
+    _firestorePendingWritesCount = 0;
+    _isFromCache = false;
+    _lastSyncError = null;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _issuesSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> loadRooms({String? cinemaId}) async {
-    if (_isLoading) return;
+  Future<void> loadRooms({String? cinemaId, bool force = false}) async {
+    final targetCinemaId = (cinemaId != null && cinemaId.isNotEmpty)
+        ? cinemaId
+        : _activeCinemaId;
+
+    if (_isLoading) {
+      if (targetCinemaId != _activeCinemaId) {
+        _queuedCinemaId = targetCinemaId;
+      }
+      return;
+    }
+
+    if (!force &&
+        _hasLoadedOnce &&
+        targetCinemaId == _activeCinemaId &&
+        _rooms.isNotEmpty) {
+      return;
+    }
+
     _isLoading = true;
-    if (cinemaId != null && cinemaId.isNotEmpty && cinemaId != _activeCinemaId) {
-      _activeCinemaId = cinemaId;
+    if (targetCinemaId != _activeCinemaId) {
+      _activeCinemaId = targetCinemaId;
       _lastHistoryDoc = null;
       _hasMoreHistory = true;
       _historicalIssues.clear();
       _activeIssues.clear();
       _issues.clear();
+      _pendingWriteIds.clear();
+      _firestorePendingWritesCount = 0;
+      _lastSyncError = null;
     }
 
     try {
       final allRooms = await RoomRepository.loadRoomsFromJson();
 
-      final filteredRooms = (cinemaId != null && cinemaId.isNotEmpty)
-          ? allRooms.where((r) => r.theaterId == null || r.theaterId == cinemaId).toList()
-          : allRooms;
+      final filteredRooms = allRooms
+          .where((r) => r.theaterId == null || r.theaterId == _activeCinemaId)
+          .toList();
 
       for (var room in filteredRooms) {
         if (room.isGridLayout && room.seats.isNotEmpty) {
@@ -78,6 +141,7 @@ class RoomController extends ChangeNotifier {
       }
 
       _rooms = filteredRooms;
+      _hasLoadedOnce = true;
       await loadIssues();
       _listenToFirestoreIssues(_activeCinemaId);
       _syncSeatsWithIssues();
@@ -92,6 +156,12 @@ class RoomController extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+
+      final nextCinema = _queuedCinemaId;
+      if (nextCinema != null && nextCinema != _activeCinemaId) {
+        _queuedCinemaId = null;
+        unawaited(loadRooms(cinemaId: nextCinema, force: true));
+      }
     }
   }
 
@@ -101,13 +171,19 @@ class RoomController extends ChangeNotifier {
     _issuesSubscription?.cancel();
     try {
       // Passo 1: Ouve apenas demandas em triagem e em aberto (reduz até 90% das leituras diárias)
+      // includeMetadataChanges: true permite detectar pendências offline/cache sem custo extra de leituras
       _issuesSubscription = FirebaseFirestore.instance
           .collection('maintenance_issues')
           .where('cinemaId', isEqualTo: cinemaId)
           .where('status', whereIn: ['staging', 'active'])
-          .snapshots()
+          .snapshots(includeMetadataChanges: true)
           .listen(
         (snapshot) async {
+          _isFromCache = snapshot.metadata.isFromCache;
+          _firestorePendingWritesCount =
+              snapshot.docs.where((d) => d.metadata.hasPendingWrites).length;
+          _lastSyncError = null;
+
           final cloudActive = snapshot.docs.map((doc) {
             final data = Map<String, dynamic>.from(doc.data());
             data['id'] ??= doc.id;
@@ -121,6 +197,8 @@ class RoomController extends ChangeNotifier {
         },
         onError: (e) {
           debugPrint('Aviso listener Firestore (usando cache local): $e');
+          _isFromCache = true;
+          notifyListeners();
         },
       );
     } catch (e) {
@@ -203,16 +281,29 @@ class RoomController extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncIssueToFirestore(MaintenanceIssue issue) async {
+  void _queueIssueSyncToFirestore(MaintenanceIssue issue) {
     if (!isFirebaseInitialized) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('maintenance_issues')
-          .doc(issue.id)
-          .set(issue.toJson());
-    } catch (e) {
-      debugPrint('Erro ao sincronizar demanda no Firestore: $e');
-    }
+    _pendingWriteIds.add(issue.id);
+    _lastSyncError = null;
+    notifyListeners();
+
+    unawaited(() async {
+      try {
+        await FirebaseFirestore.instance
+            .collection('maintenance_issues')
+            .doc(issue.id)
+            .set(issue.toJson());
+        _pendingWriteIds.remove(issue.id);
+        _lastSyncError = null;
+      } catch (e) {
+        debugPrint('Erro ao sincronizar demanda no Firestore: $e');
+        _pendingWriteIds.remove(issue.id);
+        _lastSyncError =
+            'Falha ao sincronizar alteração com a nuvem. Verifique sua conexão ou permissões.';
+      } finally {
+        notifyListeners();
+      }
+    }());
   }
 
   Future<void> registerIssue(MaintenanceIssue issue) async {
@@ -221,7 +312,7 @@ class RoomController extends ChangeNotifier {
     _activeIssues.insert(0, issue);
     _mergeAndSyncIssues();
     await _saveIssuesLocally();
-    await _syncIssueToFirestore(issue);
+    _queueIssueSyncToFirestore(issue);
   }
 
   Future<void> approveStagingIssue(String issueId, {String? approvedBy}) async {
@@ -230,7 +321,7 @@ class RoomController extends ChangeNotifier {
       _activeIssues[index].status = IssueStatus.active;
       _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(_activeIssues[index]);
+      _queueIssueSyncToFirestore(_activeIssues[index]);
     }
   }
 
@@ -245,7 +336,7 @@ class RoomController extends ChangeNotifier {
       _historicalIssues.insert(0, item);
       _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(item);
+      _queueIssueSyncToFirestore(item);
     }
   }
 
@@ -268,7 +359,7 @@ class RoomController extends ChangeNotifier {
       _historicalIssues.insert(0, item);
       _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(item);
+      _queueIssueSyncToFirestore(item);
     }
   }
 
@@ -295,7 +386,7 @@ class RoomController extends ChangeNotifier {
     _mergeAndSyncIssues();
     await _saveIssuesLocally();
     for (final issue in updatedIssues) {
-      await _syncIssueToFirestore(issue);
+      _queueIssueSyncToFirestore(issue);
     }
   }
 
@@ -311,7 +402,7 @@ class RoomController extends ChangeNotifier {
       _activeIssues.insert(0, item);
       _mergeAndSyncIssues();
       await _saveIssuesLocally();
-      await _syncIssueToFirestore(item);
+      _queueIssueSyncToFirestore(item);
     }
   }
 
@@ -321,14 +412,27 @@ class RoomController extends ChangeNotifier {
     _mergeAndSyncIssues();
     await _saveIssuesLocally();
     if (isFirebaseInitialized) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('maintenance_issues')
-            .doc(issueId)
-            .delete();
-      } catch (e) {
-        debugPrint('Erro ao excluir demanda no Firestore: $e');
-      }
+      _pendingWriteIds.add(issueId);
+      _lastSyncError = null;
+      notifyListeners();
+
+      unawaited(() async {
+        try {
+          await FirebaseFirestore.instance
+              .collection('maintenance_issues')
+              .doc(issueId)
+              .delete();
+          _pendingWriteIds.remove(issueId);
+          _lastSyncError = null;
+        } catch (e) {
+          debugPrint('Erro ao excluir demanda no Firestore: $e');
+          _pendingWriteIds.remove(issueId);
+          _lastSyncError =
+              'Falha ao excluir chamado na nuvem. Verifique sua conexão ou permissões.';
+        } finally {
+          notifyListeners();
+        }
+      }());
     }
   }
 

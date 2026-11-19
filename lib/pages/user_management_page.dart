@@ -415,7 +415,6 @@ class _UserManagementPageState extends State<UserManagementPage> {
     final allowedRoles = _allowedRolesToAssign(caller);
 
     final nameCtrl = TextEditingController(text: targetUser.name);
-    final resetPassCtrl = TextEditingController();
     UserRole selectedRole = allowedRoles.contains(targetUser.role)
         ? targetUser.role
         : allowedRoles.first;
@@ -497,20 +496,6 @@ class _UserManagementPageState extends State<UserManagementPage> {
                             }
                           },
                         ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: resetPassCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Redefinir Senha (deixe vazio para manter)',
-                          hintText: 'Ex: 123456',
-                          prefixIcon: Icon(Icons.lock_reset_rounded, size: 18),
-                        ),
-                        onChanged: (val) {
-                          if (val.trim().isNotEmpty && !requirePassChange) {
-                            setModalState(() => requirePassChange = true);
-                          }
-                        },
-                      ),
                       const SizedBox(height: 8),
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
@@ -563,10 +548,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       active: isActive,
                       mustChangePassword: requirePassChange,
                     );
-                    await authController.updateEmployee(
-                      updated,
-                      newResetPassword: resetPassCtrl.text.trim(),
-                    );
+                    await authController.updateEmployee(updated);
                     if (!ctx.mounted) return;
                     Navigator.pop(ctx);
                     showTopNotice(
