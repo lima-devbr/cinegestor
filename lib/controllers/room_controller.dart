@@ -264,7 +264,10 @@ class RoomController extends ChangeNotifier {
   }
 
   void selectRoomById(String roomId) {
-    if (_selectRoom?.id == roomId) return;
+    if (_selectRoom?.id == roomId &&
+        _selectRoom?.theaterId == _activeCinemaId) {
+      return;
+    }
 
     try {
       final room = _rooms.firstWhere(
