@@ -32,7 +32,9 @@ rules_version = '2';
 //   - dateTime: string or timestamp (required, immutable) - Creation timestamp/ISO-8601
 //   - reportedBy: string or null (optional, 1..150 chars, immutable) - Reporter name/email
 //   - reportedRole: string or null (optional, 1..50 chars, immutable) - Reporter role key or label
-//   - status: string (required, enum: ['staging', 'active', 'resolved', 'rejected'])
+//   - status: string (required, enum: ['staging', 'active', 'inProgress', 'in_progress', 'resolved', 'rejected'])
+//   - assignedTo: string or null (optional, 1..150 chars) - Assigned technician name/email
+//   - assignedAt: string, timestamp, or null (optional) - Assignment timestamp/ISO-8601
 //   - resolvedAt: string, timestamp, or null (optional) - Resolution timestamp/ISO-8601
 //   - resolvedBy: string or null (optional, 1..150 chars) - Resolver name/email
 //   - rejectionReason: string or null (optional, 0..500 chars) - Triage rejection reason
@@ -265,8 +267,8 @@ service cloud.firestore {
       return hasOnlyAllowedFields([
           'id', 'cinemaId', 'roomId', 'seatId', 'problemType', 'urgency',
           'notes', 'dateTime', 'reportedBy', 'reportedRole', 'status',
-          'resolvedAt', 'resolvedBy', 'rejectionReason',
-          'beforePhotoBase64', 'afterPhotoBase64'
+          'assignedTo', 'assignedAt', 'resolvedAt', 'resolvedBy',
+          'rejectionReason', 'beforePhotoBase64', 'afterPhotoBase64'
         ]) &&
         hasRequiredFields([
           'id', 'cinemaId', 'roomId', 'seatId', 'problemType', 'urgency',
@@ -282,7 +284,11 @@ service cloud.firestore {
         isValidDateOrTimestamp(data.dateTime) &&
         isValidNullableString(data, 'reportedBy', 1, 150) &&
         isValidNullableString(data, 'reportedRole', 1, 50) &&
-        data.status in ['staging', 'active', 'resolved', 'rejected'] &&
+        data.status in ['staging', 'active', 'inProgress', 'in_progress', 'resolved', 'rejected'] &&
+        isValidNullableString(data, 'assignedTo', 1, 150) &&
+        (!('assignedAt' in data) ||
+          data.assignedAt == null ||
+          isValidDateOrTimestamp(data.assignedAt)) &&
         (!('resolvedAt' in data) ||
           data.resolvedAt == null ||
           isValidDateOrTimestamp(data.resolvedAt)) &&
@@ -312,15 +318,15 @@ service cloud.firestore {
       let newStatus = request.resource.data.status;
 
       return (
-        // Encarregado, Gerente, Supervisor, and Admin can approve or reject staging issues, or resolve active issues
+        // Encarregado, Gerente, Supervisor, and Admin can approve or reject staging issues, assign/start progress, or resolve active/in-progress issues
         (role in ['encarregado', 'gerente', 'supervisor', 'admin'] && (
-          (oldStatus == 'staging' && newStatus in ['staging', 'active', 'rejected']) ||
-          (oldStatus == 'active' && newStatus in ['active', 'resolved'])
+          (oldStatus == 'staging' && newStatus in ['staging', 'active', 'inProgress', 'in_progress', 'rejected']) ||
+          (oldStatus in ['active', 'inProgress', 'in_progress'] && newStatus in ['active', 'inProgress', 'in_progress', 'resolved'])
         )) ||
-        // Only Gerente, Supervisor, or Admin can reopen a resolved or rejected issue back to active
+        // Only Gerente, Supervisor, or Admin can reopen a resolved or rejected issue back to active or inProgress
         (role in ['gerente', 'supervisor', 'admin'] &&
           oldStatus in ['resolved', 'rejected'] &&
-          newStatus in ['active', 'resolved', 'rejected'])
+          newStatus in ['active', 'inProgress', 'in_progress', 'resolved', 'rejected'])
       );
     }
 

@@ -220,7 +220,7 @@ class _MaintenancePageState extends State<MaintenancePage>
     final roomController = widget.roomController;
     final issue = MaintenanceIssue(
       cinemaId: widget.room.theaterId ?? currentUser?.cinemaId ?? '2159',
-      roomId: roomController.selectRoom!.id,
+      roomId: widget.room.id,
       seatId: '${selectedSeat!.row}${selectedSeat!.number}',
       problemType: selectedIssueType!,
       urgency: selectedUrgency,

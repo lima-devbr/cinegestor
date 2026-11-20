@@ -212,8 +212,8 @@ class _QuickIssueSheetState extends State<_QuickIssueSheet> {
       final isRoom = _locationType == 'room';
       final roomId = isRoom ? _selectedRoom!.id : _selectedSector.id;
       final cinemaId = isRoom
-          ? (_selectedRoom!.theaterId ?? user?.cinemaId ?? '2159')
-          : (user?.cinemaId ?? '2159');
+          ? (_selectedRoom!.theaterId ?? widget.roomController.activeCinemaId)
+          : widget.roomController.activeCinemaId;
       final locationName = isRoom ? _selectedRoom!.nome : _selectedSector.name;
 
       // Garante rigorosamente que o problemType nunca exceda os 100 chars exigidos pelo firestore.rules
